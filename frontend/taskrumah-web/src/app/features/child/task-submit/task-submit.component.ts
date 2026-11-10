@@ -19,6 +19,8 @@ export class TaskSubmitComponent implements OnInit {
   photoPreview: string | null = null;
   loading = signal(true);
   submitting = signal(false);
+  compressing = signal(false);
+  compressionInfo = signal<string | null>(null);
   uploadsUrl = environment.uploadsUrl;
   AssignmentStatus = AssignmentStatus;
 
@@ -46,14 +48,97 @@ export class TaskSubmitComponent implements OnInit {
     return dueDateOnly >= yesterday;
   }
 
-  onPhotoSelected(event: Event) {
+  async onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.[0]) {
-      this.selectedPhoto = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => this.photoPreview = e.target?.result as string;
-      reader.readAsDataURL(this.selectedPhoto);
+      const rawFile = input.files[0];
+      const origSize = (rawFile.size / 1024).toFixed(0);
+
+      this.compressing.set(true);
+      try {
+        const compressed = await this.compressImage(rawFile, 1280, 1280, 0.75);
+        this.selectedPhoto = compressed;
+        const newSize = (compressed.size / 1024).toFixed(0);
+        
+        if (compressed.size < rawFile.size) {
+          const savedPct = Math.round((1 - (compressed.size / rawFile.size)) * 100);
+          this.compressionInfo.set(`${origSize} KB ➔ ${newSize} KB (hemat ${savedPct}%)`);
+        } else {
+          this.compressionInfo.set(`${newSize} KB`);
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => this.photoPreview = e.target?.result as string;
+        reader.readAsDataURL(compressed);
+      } catch (err) {
+        // Fallback to original file
+        this.selectedPhoto = rawFile;
+        const reader = new FileReader();
+        reader.onload = (e) => this.photoPreview = e.target?.result as string;
+        reader.readAsDataURL(rawFile);
+      } finally {
+        this.compressing.set(false);
+      }
     }
+  }
+
+  private compressImage(file: File, maxWidth = 1280, maxHeight = 1280, quality = 0.75): Promise<File> {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob || blob.size >= file.size) {
+                resolve(file);
+              } else {
+                const cleanName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+                const compressedFile = new File([blob], cleanName, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
   }
 
   submit() {
