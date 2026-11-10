@@ -6,6 +6,18 @@ import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AssignmentStatus, TaskAssignment } from '../../../core/models/task-assignment.model';
 
+export interface WeekDayItem {
+  date: Date;
+  dateStr: string;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  isYesterday: boolean;
+  isTomorrow: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+}
+
 @Component({
   selector: 'app-child-dashboard',
   standalone: true,
@@ -14,23 +26,36 @@ import { AssignmentStatus, TaskAssignment } from '../../../core/models/task-assi
 })
 export class ChildDashboardComponent implements OnInit {
   dashboard = signal<ChildDashboard | null>(null);
-  yesterdayTasks = signal<TaskAssignment[]>([]);
   loading = signal(true);
   currentWeekOffset = signal(0);
-  activeDayTab = signal<'today' | 'yesterday' | 'tomorrow'>('today');
   AssignmentStatus = AssignmentStatus;
+
   today = new Date();
   yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  selectedDateStr = signal<string>('');
+  selectedDateTasks = signal<TaskAssignment[]>([]);
+  loadingDayTasks = signal<boolean>(false);
 
   constructor(
     private dashboardService: DashboardService,
     private assignmentService: TaskAssignmentService,
     private auth: AuthService
-  ) {}
+  ) {
+    this.selectedDateStr.set(this.formatLocalDate(this.today));
+  }
 
   ngOnInit() {
     this.loadDashboard();
+  }
+
+  formatLocalDate(d: Date | string): string {
+    const date = new Date(d);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   loadDashboard() {
@@ -38,16 +63,83 @@ export class ChildDashboardComponent implements OnInit {
     if (!userId) return;
     this.loading.set(true);
     this.dashboardService.getChildDashboard(userId, this.currentWeekOffset()).subscribe({
-      next: (data) => { this.dashboard.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.dashboard.set(data);
+        this.loading.set(false);
+
+        // Determine active selected day
+        let targetDateStr = this.selectedDateStr();
+        const weekDays = this.getWeekDays();
+        const dateInWeek = weekDays.some(d => d.dateStr === targetDateStr);
+
+        if (!dateInWeek) {
+          // If viewing current week, select today; otherwise select Monday of that week
+          if (this.currentWeekOffset() === 0) {
+            targetDateStr = this.formatLocalDate(this.today);
+          } else if (weekDays.length > 0) {
+            targetDateStr = weekDays[0].dateStr;
+          }
+          this.selectedDateStr.set(targetDateStr);
+        }
+
+        this.loadDayTasks(targetDateStr);
+      },
       error: () => this.loading.set(false)
     });
+  }
 
-    const y = new Date();
-    y.setDate(y.getDate() - 1);
-    const yStr = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-    this.assignmentService.getSchedule(yStr).subscribe({
-      next: (data) => this.yesterdayTasks.set(data),
-      error: () => {}
+  getWeekDays(): WeekDayItem[] {
+    const dash = this.dashboard();
+    if (!dash?.weekStart) return [];
+
+    const [y, m, d] = dash.weekStart.slice(0, 10).split('-').map(Number);
+    const startDate = new Date(y, m - 1, d);
+
+    const days: WeekDayItem[] = [];
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+    const now = new Date();
+    const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yestTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+    const tomTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+
+    for (let i = 0; i < 7; i++) {
+      const cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+      const curTime = cur.getTime();
+      const dateStr = this.formatLocalDate(cur);
+
+      days.push({
+        date: cur,
+        dateStr: dateStr,
+        dayName: dayNames[cur.getDay()],
+        dayNumber: cur.getDate(),
+        isToday: curTime === todayTime,
+        isYesterday: curTime === yestTime,
+        isTomorrow: curTime === tomTime,
+        isPast: curTime < todayTime,
+        isFuture: curTime > todayTime
+      });
+    }
+    return days;
+  }
+
+  getSelectedDay(): WeekDayItem | undefined {
+    return this.getWeekDays().find(d => d.dateStr === this.selectedDateStr());
+  }
+
+  selectDay(day: WeekDayItem) {
+    this.selectedDateStr.set(day.dateStr);
+    this.loadDayTasks(day.dateStr);
+  }
+
+  loadDayTasks(dateStr: string) {
+    this.loadingDayTasks.set(true);
+    this.assignmentService.getSchedule(dateStr).subscribe({
+      next: (tasks) => {
+        this.selectedDateTasks.set(tasks);
+        this.loadingDayTasks.set(false);
+      },
+      error: () => this.loadingDayTasks.set(false)
     });
   }
 
@@ -58,6 +150,7 @@ export class ChildDashboardComponent implements OnInit {
 
   setWeek(offset: number) {
     this.currentWeekOffset.set(offset);
+    this.selectedDateStr.set(this.formatLocalDate(this.today));
     this.loadDashboard();
   }
 
