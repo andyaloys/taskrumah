@@ -2,8 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService, ChildDashboard } from '../../../core/services/dashboard.service';
+import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { AssignmentStatus } from '../../../core/models/task-assignment.model';
+import { AssignmentStatus, TaskAssignment } from '../../../core/models/task-assignment.model';
 
 @Component({
   selector: 'app-child-dashboard',
@@ -13,14 +14,20 @@ import { AssignmentStatus } from '../../../core/models/task-assignment.model';
 })
 export class ChildDashboardComponent implements OnInit {
   dashboard = signal<ChildDashboard | null>(null);
+  yesterdayTasks = signal<TaskAssignment[]>([]);
   loading = signal(true);
   currentWeekOffset = signal(0);
-  activeDayTab = signal<'today' | 'tomorrow'>('today');
+  activeDayTab = signal<'today' | 'yesterday' | 'tomorrow'>('today');
   AssignmentStatus = AssignmentStatus;
   today = new Date();
+  yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  constructor(private dashboardService: DashboardService, private auth: AuthService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private assignmentService: TaskAssignmentService,
+    private auth: AuthService
+  ) {}
 
   ngOnInit() {
     this.loadDashboard();
@@ -33,6 +40,14 @@ export class ChildDashboardComponent implements OnInit {
     this.dashboardService.getChildDashboard(userId, this.currentWeekOffset()).subscribe({
       next: (data) => { this.dashboard.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
+    });
+
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yStr = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
+    this.assignmentService.getSchedule(yStr).subscribe({
+      next: (data) => this.yesterdayTasks.set(data),
+      error: () => {}
     });
   }
 

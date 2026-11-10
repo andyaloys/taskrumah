@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -8,54 +9,137 @@ import { AuthService } from '../../../core/auth/auth.service';
 @Component({
   selector: 'app-my-tasks',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './my-tasks.component.html'
 })
 export class MyTasksComponent implements OnInit {
   assignments = signal<TaskAssignment[]>([]);
+  todayAssignments = signal<TaskAssignment[]>([]);
+  yesterdayAssignments = signal<TaskAssignment[]>([]);
   tomorrowAssignments = signal<TaskAssignment[]>([]);
+  customDateAssignments = signal<TaskAssignment[]>([]);
+  
   loading = signal(true);
-  activeView = signal<'today' | 'tomorrow' | 'all'>('today');
+  loadingCustom = signal(false);
+  
+  activeView = signal<'today' | 'yesterday' | 'tomorrow' | 'date' | 'all'>('today');
   filter = signal<AssignmentStatus | 'All'>('All');
   AssignmentStatus = AssignmentStatus;
-  today = new Date();
-  tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  constructor(private assignmentService: TaskAssignmentService, private auth: AuthService) {}
+  today: Date;
+  yesterday: Date;
+  tomorrow: Date;
+  selectedDate = signal<string>('');
 
-  ngOnInit() {
-    this.loadTasks();
+  constructor(private assignmentService: TaskAssignmentService, private auth: AuthService) {
+    const now = new Date();
+    this.today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    this.yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    this.tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    this.selectedDate.set(this.formatLocalDate(this.today));
   }
 
-  loadTasks() {
+  ngOnInit() {
+    this.loadAll();
+  }
+
+  formatLocalDate(d: Date | string): string {
+    const date = new Date(d);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  loadAll() {
     this.loading.set(true);
+
+    // 1. All assignments (for history)
     this.assignmentService.getAssignments().subscribe({
-      next: (data) => { this.assignments.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.assignments.set(data);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
 
-    const tomorrowStr = this.formatDate(this.tomorrow);
+    // 2. Today's schedule
+    const todayStr = this.formatLocalDate(this.today);
+    this.assignmentService.getSchedule(todayStr).subscribe({
+      next: (data) => this.todayAssignments.set(data),
+      error: () => {}
+    });
+
+    // 3. Yesterday's schedule (can still be modified/submitted if missed)
+    const yesterdayStr = this.formatLocalDate(this.yesterday);
+    this.assignmentService.getSchedule(yesterdayStr).subscribe({
+      next: (data) => this.yesterdayAssignments.set(data),
+      error: () => {}
+    });
+
+    // 4. Tomorrow's schedule
+    const tomorrowStr = this.formatLocalDate(this.tomorrow);
     this.assignmentService.getSchedule(tomorrowStr).subscribe({
       next: (data) => this.tomorrowAssignments.set(data),
       error: () => {}
     });
   }
 
-  formatDate(d: Date | string): string {
-    const date = new Date(d);
-    return date.toISOString().slice(0, 10);
+  setView(view: 'today' | 'yesterday' | 'tomorrow' | 'date' | 'all') {
+    this.activeView.set(view);
+    if (view === 'date' && this.customDateAssignments().length === 0) {
+      this.loadCustomDate(this.selectedDate());
+    }
   }
 
-  filteredTasks() {
-    if (this.activeView() === 'tomorrow') {
+  onDateSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      this.selectedDate.set(input.value);
+      this.loadCustomDate(input.value);
+    }
+  }
+
+  stepCustomDate(daysDelta: number) {
+    const current = new Date(this.selectedDate() + 'T00:00:00');
+    current.setDate(current.getDate() + daysDelta);
+    const newStr = this.formatLocalDate(current);
+    this.selectedDate.set(newStr);
+    this.loadCustomDate(newStr);
+  }
+
+  loadCustomDate(dateStr: string) {
+    this.loadingCustom.set(true);
+    this.assignmentService.getSchedule(dateStr).subscribe({
+      next: (data) => {
+        this.customDateAssignments.set(data);
+        this.loadingCustom.set(false);
+      },
+      error: () => this.loadingCustom.set(false)
+    });
+  }
+
+  yesterdayPendingCount(): number {
+    return this.yesterdayAssignments().filter(t =>
+      t.status === AssignmentStatus.Pending ||
+      t.status === AssignmentStatus.Late ||
+      t.status === AssignmentStatus.Rejected
+    ).length;
+  }
+
+  filteredTasks(): TaskAssignment[] {
+    const view = this.activeView();
+    if (view === 'today') {
+      return this.todayAssignments();
+    }
+    if (view === 'yesterday') {
+      return this.yesterdayAssignments();
+    }
+    if (view === 'tomorrow') {
       return this.tomorrowAssignments();
     }
-    if (this.activeView() === 'today') {
-      const todayStr = this.formatDate(this.today);
-      return this.assignments().filter(a => {
-        if (!a.dueDate) return false;
-        return this.formatDate(a.dueDate) === todayStr;
-      });
+    if (view === 'date') {
+      return this.customDateAssignments();
     }
     const f = this.filter();
     if (f === 'All') return this.assignments();
@@ -69,6 +153,24 @@ export class MyTasksComponent implements OnInit {
     const today = new Date();
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     return dueDateOnly >= yesterday;
+  }
+
+  isPastDate(dueDate: string | Date): boolean {
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
+    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return dueDateOnly < todayOnly;
+  }
+
+  isFutureDate(dueDate: string | Date): boolean {
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
+    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return dueDateOnly > todayOnly;
   }
 
   getStatusClass(status: AssignmentStatus): string {
