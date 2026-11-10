@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    container_name: taskrumah_db
+    environment:
+      POSTGRES_DB: taskrumah
+      POSTGRES_USER: taskrumah_user
+      POSTGRES_PASSWORD: TaskRumah@2024
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/TaskRumah.API/Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: taskrumah_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@taskrumah.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  backend:
+    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    container_name: taskrumah_backend
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./backend_docker:/app
+    environment:
+      - ASPNETCORE_URLS=http://+:5088
+      - ConnectionStrings__DefaultConnection=Host=taskrumah_db;Port=5432;Database=taskrumah;Username=taskrumah_user;Password=TaskRumah@2024
+    ports:
+      - "5088:5088"
+    depends_on:
+      - postgres
+
+  frontend:
+    image: andyaloys/finapp-frontend:latest
+    container_name: taskrumah_frontend
+    restart: always
+    volumes:
+      - ./frontend/taskrumah-web/dist/taskrumah-web/browser:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Nunito', sans-serif;
+  @apply bg-gray-50;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+  .btn-success {
+    @apply bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-400 to-rose-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+  .card {
+    @apply bg-white rounded-3xl shadow-md p-6;
+  }
+  .gradient-card {
+    @apply rounded-3xl shadow-lg p-6 text-white;
+  }
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold;
+  }
+}

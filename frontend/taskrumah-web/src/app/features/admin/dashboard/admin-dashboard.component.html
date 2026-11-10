@@ -1,0 +1,251 @@
+<div class="max-w-7xl mx-auto">
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-4xl font-black text-gray-800">Dashboard Admin 📊</h1>
+      <p class="text-gray-500 mt-1 font-semibold">Pantau tugas anak-anakmu hari ini</p>
+    </div>
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-5 py-3 rounded-2xl shadow-md flex items-center space-x-3 self-start md:self-auto">
+      <span class="text-2xl">🗓️</span>
+      <div>
+        <p class="text-xs text-purple-200 uppercase tracking-wider font-bold">Hari & Tanggal</p>
+        <p class="text-base font-black">{{ today | date:'EEEE, dd MMMM yyyy' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule / Date Selector Bar -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center flex-wrap gap-2">
+      <span class="text-xs font-black text-gray-500 uppercase tracking-wider mr-1">Lihat Jadwal:</span>
+      <button (click)="selectDateMode('today')"
+        [class]="dateViewMode() === 'today' && !selectedDate() ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'"
+        class="font-bold px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+        ⭐ Hari Ini
+      </button>
+      <button (click)="selectDateMode('tomorrow')"
+        [class]="dateViewMode() === 'tomorrow' ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'"
+        class="font-bold px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+        🔮 Besok ({{ tomorrow | date:'dd MMM' }})
+      </button>
+      <button (click)="selectDateMode('dayAfter')"
+        [class]="dateViewMode() === 'dayAfter' ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'"
+        class="font-bold px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+        🚀 Lusa ({{ dayAfter | date:'dd MMM' }})
+      </button>
+      <div class="flex items-center space-x-1.5 bg-gray-50 border border-gray-200 px-3 py-1 rounded-xl">
+        <label for="customDateInput" class="text-xs font-bold text-gray-600 cursor-pointer">🗓️ Pilih Tanggal:</label>
+        <input id="customDateInput" type="date"
+          [value]="selectedDate()"
+          (change)="onCustomDateChange($event)"
+          class="text-xs font-bold text-purple-700 bg-transparent border-none outline-none cursor-pointer">
+      </div>
+      @if (selectedDate()) {
+        <button (click)="selectDateMode('today')"
+          class="text-xs font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer ml-1">
+          ✕ Reset ke Hari Ini
+        </button>
+      }
+    </div>
+
+    <!-- Active Filter Indicator -->
+    @if (selectedDate()) {
+      <div class="inline-flex items-center space-x-2 bg-purple-100 text-purple-900 font-bold px-3 py-1.5 rounded-xl text-xs">
+        <span>📅</span>
+        <span>Jadwal: {{ dashboard()?.targetDate | date:'EEEE, dd MMMM yyyy':'UTC' }}</span>
+        @if (isFutureDate()) {
+          <span class="bg-purple-200 text-purple-900 px-2 py-0.5 rounded-md text-[10px] uppercase font-black">Mendatang</span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Week Navigator -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+    <div class="flex items-center space-x-2">
+      <button (click)="changeWeek(-1)"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3.5 py-2 rounded-xl text-sm transition-all flex items-center space-x-1 cursor-pointer">
+        <span>◀</span>
+        <span>Minggu Sebelumnya</span>
+      </button>
+      @if (currentWeekOffset() !== 0 || selectedDate()) {
+        <button (click)="setWeek(0)"
+          class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold px-3 py-2 rounded-xl text-xs transition-all cursor-pointer">
+          Minggu Ini
+        </button>
+      }
+      <button (click)="changeWeek(1)"
+        [disabled]="currentWeekOffset() >= 0"
+        [class.opacity-40]="currentWeekOffset() >= 0"
+        [class.cursor-not-allowed]="currentWeekOffset() >= 0"
+        [class.cursor-pointer]="currentWeekOffset() < 0"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3.5 py-2 rounded-xl text-sm transition-all flex items-center space-x-1">
+        <span>Minggu Berikutnya</span>
+        <span>▶</span>
+      </button>
+    </div>
+
+    <div class="text-center sm:text-right">
+      <div class="inline-flex items-center space-x-2 bg-purple-50 text-purple-800 font-bold px-4 py-2 rounded-xl text-sm border border-purple-100">
+        <span>🗓️</span>
+        <span>
+          {{ currentWeekOffset() === 0 ? 'Pekan Ini' : (currentWeekOffset() === -1 ? 'Pekan Lalu' : (abs(currentWeekOffset()) + ' Pekan Lalu')) }}:
+          {{ dashboard()?.weekStart | date:'dd MMM yyyy' }} - {{ dashboard()?.weekEnd | date:'dd MMM yyyy' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="text-6xl animate-spin">⏳</div>
+        <p class="mt-4 text-gray-500 font-semibold">Memuat data...</p>
+      </div>
+    </div>
+  } @else if (dashboard()) {
+    <!-- Stats Row -->
+    <div class="grid grid-cols-3 gap-6 mb-8">
+      <div class="gradient-card bg-gradient-to-r from-purple-500 to-indigo-600">
+        <p class="text-purple-100 font-semibold">
+          {{ currentWeekOffset() === 0 ? 'Total Tugas Hari Ini' : 'Total Tugas Pekan Ini' }}
+        </p>
+        <p class="text-5xl font-black mt-2">{{ dashboard()!.totalTasksToday }}</p>
+        <p class="text-purple-200 text-sm mt-1">📋 semua anak</p>
+      </div>
+      <div class="gradient-card bg-gradient-to-r from-green-400 to-emerald-500">
+        <p class="text-green-100 font-semibold">
+          {{ currentWeekOffset() === 0 ? 'Sudah Disetujui' : 'Disetujui Pekan Ini' }}
+        </p>
+        <p class="text-5xl font-black mt-2">{{ dashboard()!.totalApprovedToday }}</p>
+        <p class="text-green-200 text-sm mt-1">✅ selesai</p>
+      </div>
+      <div class="gradient-card bg-gradient-to-r from-orange-400 to-amber-500">
+        <p class="text-orange-100 font-semibold">Menunggu Review</p>
+        <p class="text-5xl font-black mt-2">{{ dashboard()!.pendingReviews.length }}</p>
+        <p class="text-orange-200 text-sm mt-1">📤 perlu ditinjau</p>
+      </div>
+    </div>
+
+    <!-- Pending Reviews -->
+    @if (dashboard()!.pendingReviews.length > 0) {
+      <div class="card mb-8">
+        <h2 class="text-2xl font-black text-gray-800 mb-4">🔔 Perlu Ditinjau Sekarang!</h2>
+        <div class="space-y-3">
+          @for (assignment of dashboard()!.pendingReviews; track assignment.id) {
+            <div class="flex items-center justify-between bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
+              <div class="flex items-center space-x-4">
+                <span class="text-3xl">{{ assignment.taskIconEmoji }}</span>
+                <div>
+                  <p class="font-bold text-gray-800">{{ assignment.taskTitle }}</p>
+                  <p class="text-sm text-gray-500">
+                    oleh <span class="font-semibold text-blue-600">{{ assignment.assignedToName }}</span> •
+                    <span class="text-xs font-semibold text-gray-400">📅 {{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
+                  </p>
+                  @if (assignment.submissionNote) {
+                    <p class="text-sm text-gray-600 italic mt-1">"{{ assignment.submissionNote }}"</p>
+                  }
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                @if (assignment.proofPhotoUrl) {
+                  <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">📸 Ada foto</span>
+                }
+                <span class="badge bg-yellow-100 text-yellow-800">+{{ assignment.taskPoints }} ⭐</span>
+                @if (canModify(assignment.dueDate)) {
+                  <button (click)="approve(assignment.id)"
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer">
+                    ✅ Setuju
+                  </button>
+                  <button (click)="reject(assignment.id)"
+                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer">
+                    ❌ Tolak
+                  </button>
+                } @else {
+                  <span class="text-xs text-gray-500 font-bold bg-gray-200 py-1.5 px-3 rounded-xl" title="Hanya tugas hari ini dan kemarin (H-1) yang dapat diubah">
+                    🔒 Terkunci (> 1 hari)
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Children Progress -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      @for (child of dashboard()!.children; track child.userId) {
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-2xl font-black text-white shadow-lg">
+                {{ child.name.charAt(0) }}
+              </div>
+              <div>
+                <h3 class="text-xl font-black text-gray-800">{{ child.name }}</h3>
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                  <span class="badge bg-yellow-100 text-yellow-800">⭐ {{ child.totalPoints }} total</span>
+                  <span class="badge bg-purple-100 text-purple-800 font-bold" title="Poin periode pekan yang dipilih">
+                    🗓️ {{ child.weeklyPoints }} pekan ini
+                  </span>
+                  <span class="badge bg-orange-100 text-orange-800">🔥 {{ child.currentStreak }} hari</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
+              <span>{{ currentWeekOffset() === 0 ? 'Progress Hari Ini' : 'Progress Pekan Ini' }}</span>
+              <span>{{ child.tasksCompleted }}/{{ child.tasksToday }}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-4">
+              <div class="bg-gradient-to-r from-green-400 to-emerald-500 h-4 rounded-full transition-all duration-500"
+                [style.width.%]="getProgressPercent(child.tasksCompleted, child.tasksToday)">
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-1">{{ getProgressPercent(child.tasksCompleted, child.tasksToday) }}% selesai</p>
+          </div>
+
+          <!-- Task List -->
+          <div class="space-y-2">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+              {{ selectedDate() ? ('Jadwal Tanggal ' + (dashboard()?.targetDate | date:'dd MMM yyyy')) : (currentWeekOffset() === 0 ? 'Tugas Hari Ini' : 'Daftar Tugas Pekan Ini') }}
+            </p>
+            @for (task of child.todayTasks; track (task.id || task.taskId)) {
+              <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                <div class="flex items-center space-x-3">
+                  <span class="text-xl">{{ task.taskIconEmoji }}</span>
+                  <div>
+                    <span class="font-semibold text-sm text-gray-700 block">{{ task.taskTitle }}</span>
+                    @if (currentWeekOffset() !== 0 || selectedDate()) {
+                      <span class="text-xs text-gray-400 font-medium">📅 {{ task.dueDate | date:'EEEE, dd MMM':'UTC' }}</span>
+                    }
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-bold text-yellow-600">+{{ task.taskPoints }} ⭐</span>
+                  @if (isFutureDate()) {
+                    <span class="badge text-xs bg-purple-100 text-purple-800">
+                      🔮 Terjadwal
+                    </span>
+                  } @else {
+                    <span class="badge text-xs {{ getStatusClass(task.status) }}">
+                      {{ getStatusEmoji(task.status) }} {{ task.status }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (child.todayTasks.length === 0) {
+              <div class="text-center py-4 text-gray-400 text-xs font-semibold">
+                Tidak ada tugas pada periode ini
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

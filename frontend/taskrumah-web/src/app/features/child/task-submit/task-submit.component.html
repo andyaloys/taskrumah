@@ -1,0 +1,82 @@
+<div>
+  <a routerLink="/child/tasks" class="inline-flex items-center text-purple-600 font-bold mb-6">← Kembali</a>
+
+  @if (loading()) {
+    <div class="text-center py-20 text-gray-400 font-semibold">⏳ Memuat...</div>
+  } @else if (assignment()) {
+    <!-- Task Info -->
+    <div class="bg-white rounded-3xl p-5 shadow-sm mb-6">
+      <div class="flex items-center space-x-4">
+        <span class="text-5xl">{{ assignment()!.taskIconEmoji }}</span>
+        <div>
+          <h1 class="text-2xl font-black text-gray-800">{{ assignment()!.taskTitle }}</h1>
+          <p class="font-bold text-yellow-600 mt-1">+{{ assignment()!.taskPoints }} ⭐ poin</p>
+          <span class="badge text-xs mt-1 {{ assignment()!.status === AssignmentStatus.Rejected ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
+            {{ assignment()!.status }}
+          </span>
+        </div>
+      </div>
+
+      @if (assignment()!.rejectionReason) {
+        <div class="mt-4 p-3 bg-red-50 border-2 border-red-200 rounded-2xl">
+          <p class="font-bold text-sm text-red-700">❌ Ditolak sebelumnya:</p>
+          <p class="text-red-700 text-sm">{{ assignment()!.rejectionReason }}</p>
+          <p class="text-red-600 text-xs mt-1">Perbaiki dan kirim ulang ya!</p>
+        </div>
+      }
+    </div>
+
+    <!-- Submit Form or Locked Alert -->
+    @if (!canModify()) {
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center">
+        <span class="text-4xl block mb-2">🔒</span>
+        <h3 class="text-lg font-black text-gray-800">Tugas Ini Sudah Dikunci</h3>
+        <p class="text-xs text-gray-500 max-w-sm mx-auto mt-1">
+          Batas waktu pengerjaan/pengubahan tugas telah lewat. Hanya tugas hari ini dan kemarin (H-1) yang dapat dikerjakan atau diubah.
+        </p>
+        <a routerLink="/child/tasks" class="mt-4 inline-block btn-secondary text-sm font-bold py-2 px-5 rounded-xl">
+          Kembali ke Tugasku
+        </a>
+      </div>
+    } @else {
+      <div class="bg-white rounded-3xl p-5 shadow-sm">
+        <h2 class="text-xl font-black text-gray-800 mb-4">📤 Kirim Bukti Tugasmu!</h2>
+
+        <!-- Photo Upload -->
+        <div class="mb-5">
+          <label class="block font-bold text-gray-700 mb-2">📸 Foto Bukti (opsional)</label>
+
+          @if (photoPreview) {
+            <div class="relative mb-3">
+              <img [src]="photoPreview" alt="Preview" class="w-full max-h-48 object-cover rounded-2xl" />
+              <button (click)="selectedPhoto = null; photoPreview = null"
+                class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold text-sm">✕</button>
+            </div>
+          }
+
+          <label class="flex items-center justify-center w-full h-24 border-2 border-dashed border-purple-300 rounded-2xl cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all">
+            <div class="text-center">
+              <p class="text-3xl">📸</p>
+              <p class="text-sm font-semibold text-purple-600 mt-1">Ambil/Upload Foto</p>
+            </div>
+            <input type="file" accept="image/*" class="hidden" (change)="onPhotoSelected($event)" />
+          </label>
+        </div>
+
+        <!-- Note -->
+        <div class="mb-5">
+          <label class="block font-bold text-gray-700 mb-2">📝 Catatan (opsional)</label>
+          <textarea [(ngModel)]="note" rows="3"
+            class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold resize-none"
+            placeholder="Ceritakan apa yang sudah kamu kerjakan..."></textarea>
+        </div>
+
+        <button (click)="submit()" [disabled]="submitting()"
+          class="w-full btn-primary text-lg disabled:opacity-50 cursor-pointer">
+          @if (submitting()) { <span>⏳ Mengirim...</span> }
+          @else { <span>🚀 Kirim Tugas!</span> }
+        </button>
+      </div>
+    }
+  }
+</div>

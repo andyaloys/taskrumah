@@ -1,0 +1,61 @@
+<div>
+  <div class="mb-6">
+    <h1 class="text-3xl font-black text-gray-800">🎁 Toko Hadiah</h1>
+    <div class="mt-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-black px-4 py-2 rounded-2xl inline-block">
+      ⭐ Poinku: {{ getUserPoints() }}
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-16 text-gray-400 font-semibold">⏳ Memuat...</div>
+  } @else {
+    <div class="grid grid-cols-1 gap-4 mb-8">
+      @for (reward of rewards(); track reward.id) {
+        <div class="bg-white rounded-2xl p-5 shadow-sm"
+          [class.opacity-50]="getUserPoints() < reward.pointsRequired">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <span class="text-5xl">{{ reward.iconEmoji }}</span>
+              <div>
+                <h3 class="text-lg font-black text-gray-800">{{ reward.title }}</h3>
+                @if (reward.description) {
+                  <p class="text-sm text-gray-500">{{ reward.description }}</p>
+                }
+                <span class="badge bg-yellow-100 text-yellow-800 font-black mt-1">⭐ {{ reward.pointsRequired }} poin</span>
+              </div>
+            </div>
+            <button (click)="redeem(reward)"
+              [disabled]="getUserPoints() < reward.pointsRequired || redeeming() === reward.id"
+              class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black py-2 px-4 rounded-xl text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-lg">
+              @if (redeeming() === reward.id) { ⏳ } @else { Tukar! }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Redemption History -->
+    @if (myRedemptions().length > 0) {
+      <div>
+        <h2 class="text-xl font-black text-gray-800 mb-3">📜 Riwayat Penukaran</h2>
+        <div class="space-y-2">
+          @for (r of myRedemptions(); track r.id) {
+            <div class="bg-white rounded-2xl p-3 shadow-sm flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <span class="text-2xl">{{ r.rewardIconEmoji }}</span>
+                <div>
+                  <p class="font-bold text-sm text-gray-800">{{ r.rewardTitle }}</p>
+                  <p class="text-xs text-gray-400">{{ r.requestedAt | date:'dd MMM yyyy' }}</p>
+                </div>
+              </div>
+              <span [class]="
+                r.status === RedemptionStatus.Approved ? 'bg-green-100 text-green-800' :
+                r.status === RedemptionStatus.Rejected ? 'bg-red-100 text-red-800' :
+                'bg-yellow-100 text-yellow-800'" class="badge text-xs">{{ r.status }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

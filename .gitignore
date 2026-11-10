@@ -1,0 +1,38 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.log
+wmi_test.txt
+
+# Backend published output & local docker mounts
+backend_docker/
+backend_dist/
+
+# Frontend
+**/node_modules/
+**/dist/
+**/.angular/cache/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.user
+*.suo
+*.userprefs
+
+# OS generated files
+.DS_Store
+Thumbs.db

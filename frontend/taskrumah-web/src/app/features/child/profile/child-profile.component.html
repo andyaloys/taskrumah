@@ -1,0 +1,145 @@
+<div>
+  @if (user()) {
+    <!-- Profile Header -->
+    <div class="gradient-card bg-gradient-to-r from-purple-500 to-pink-500 text-center mb-6 relative">
+      <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl font-black text-white mx-auto mb-3">
+        {{ user()!.name.charAt(0) }}
+      </div>
+      <div class="flex items-center justify-center space-x-2">
+        <h1 class="text-2xl font-black">{{ user()!.name }}</h1>
+        <button
+          (click)="openEditModal()"
+          title="Ubah nama panggilan"
+          class="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-all text-sm">
+          ✏️
+        </button>
+      </div>
+      <p class="text-purple-100 mt-1">{{ getLevel().emoji }} {{ getLevel().name }}</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-4xl font-black text-yellow-500">{{ user()!.totalPoints }}</p>
+        <p class="text-sm font-bold text-gray-500 mt-1">⭐ Total Poin</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-4xl font-black text-orange-500">{{ user()!.currentStreak }}</p>
+        <p class="text-sm font-bold text-gray-500 mt-1">🔥 Streak Sekarang</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-4xl font-black text-purple-500">{{ user()!.longestStreak }}</p>
+        <p class="text-sm font-bold text-gray-500 mt-1">🏆 Rekor Streak</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+        <p class="text-4xl font-black text-green-500">{{ stats().approved }}</p>
+        <p class="text-sm font-bold text-gray-500 mt-1">✅ Tugas Selesai</p>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm mb-4">
+      <h2 class="text-xl font-black text-gray-800 mb-4">🏅 Lencana</h2>
+      <div class="grid grid-cols-3 gap-3">
+        <div [class.opacity-30]="stats().approved < 1" class="text-center p-3 bg-yellow-50 rounded-2xl">
+          <p class="text-3xl">🌱</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">Pemula</p>
+          <p class="text-xs text-gray-400">1 tugas</p>
+        </div>
+        <div [class.opacity-30]="stats().approved < 10" class="text-center p-3 bg-blue-50 rounded-2xl">
+          <p class="text-3xl">💪</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">Pekerja Keras</p>
+          <p class="text-xs text-gray-400">10 tugas</p>
+        </div>
+        <div [class.opacity-30]="stats().approved < 50" class="text-center p-3 bg-purple-50 rounded-2xl">
+          <p class="text-3xl">🏆</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">Master</p>
+          <p class="text-xs text-gray-400">50 tugas</p>
+        </div>
+        <div [class.opacity-30]="user()!.currentStreak < 3" class="text-center p-3 bg-orange-50 rounded-2xl">
+          <p class="text-3xl">🔥</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">On Fire!</p>
+          <p class="text-xs text-gray-400">3 hari beruntun</p>
+        </div>
+        <div [class.opacity-30]="user()!.currentStreak < 7" class="text-center p-3 bg-red-50 rounded-2xl">
+          <p class="text-3xl">⚡</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">Konsisten</p>
+          <p class="text-xs text-gray-400">7 hari beruntun</p>
+        </div>
+        <div [class.opacity-30]="user()!.totalPoints < 100" class="text-center p-3 bg-green-50 rounded-2xl">
+          <p class="text-3xl">💰</p>
+          <p class="text-xs font-bold text-gray-700 mt-1">Kaya Poin</p>
+          <p class="text-xs text-gray-400">100 poin</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Stats -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <h2 class="text-xl font-black text-gray-800 mb-3">📊 Statistik Tugas</h2>
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-gray-600">✅ Disetujui</span>
+          <span class="font-black text-green-600">{{ stats().approved }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-gray-600">❌ Ditolak</span>
+          <span class="font-black text-red-600">{{ stats().rejected }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-gray-600">⏰ Terlambat</span>
+          <span class="font-black text-gray-600">{{ stats().late }}</span>
+        </div>
+        <div class="flex justify-between items-center border-t pt-2 mt-2">
+          <span class="font-bold text-gray-700">Total Dikerjakan</span>
+          <span class="font-black text-purple-600">{{ stats().total }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Name Modal -->
+    @if (isEditing()) {
+      <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-black text-gray-800">✏️ Ganti Namaku</h3>
+            <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Nama Panggilan</label>
+              <input
+                type="text"
+                [value]="editName()"
+                (input)="onNameInput($event)"
+                placeholder="Nama kamu..."
+                class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold transition-all"
+              />
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+              <button
+                (click)="closeEditModal()"
+                type="button"
+                class="px-4 py-2 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition-all">
+                Batal
+              </button>
+              <button
+                (click)="saveName()"
+                [disabled]="isSaving() || !editName().trim()"
+                type="button"
+                class="btn-primary px-6 py-2 rounded-xl text-white font-bold disabled:opacity-50">
+                @if (isSaving()) {
+                  <span>Menyimpan...</span>
+                } @else {
+                  <span>Simpan ✨</span>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

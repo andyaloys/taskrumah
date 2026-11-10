@@ -1,0 +1,96 @@
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-4xl font-black text-gray-800">Kelola Hadiah 🎁</h1>
+      <p class="text-gray-500 mt-1 font-semibold">Buat hadiah seru untuk memotivasi anak-anakmu</p>
+    </div>
+    <button (click)="openCreate()" class="btn-primary">➕ Tambah Hadiah</button>
+  </div>
+
+  <!-- Pending Redemptions Alert -->
+  @if (getPendingRedemptions().length > 0) {
+    <div class="card mb-6 border-2 border-orange-200 bg-orange-50">
+      <h2 class="text-xl font-black text-orange-800 mb-4">🔔 Permintaan Hadiah Menunggu</h2>
+      <div class="space-y-3">
+        @for (redemption of getPendingRedemptions(); track redemption.id) {
+          <div class="flex items-center justify-between bg-white rounded-2xl p-4">
+            <div class="flex items-center space-x-3">
+              <span class="text-3xl">{{ redemption.rewardIconEmoji }}</span>
+              <div>
+                <p class="font-bold text-gray-800">{{ redemption.rewardTitle }}</p>
+                <p class="text-sm text-gray-500">diminta oleh <span class="font-semibold text-orange-600">{{ redemption.userName }}</span></p>
+                <p class="text-xs text-gray-400">Butuh {{ redemption.pointsRequired }} ⭐</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button (click)="processRedemption(redemption.id, RedemptionStatus.Approved)"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl text-sm">✅ Setuju</button>
+              <button (click)="processRedemption(redemption.id, RedemptionStatus.Rejected)"
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl text-sm">❌ Tolak</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Form Modal -->
+  @if (showForm()) {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg">
+        <h2 class="text-2xl font-black text-gray-800 mb-6">{{ editingReward() ? '✏️ Edit Hadiah' : '➕ Hadiah Baru' }}</h2>
+        <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Nama Hadiah</label>
+            <input formControlName="title" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold"
+              placeholder="Contoh: Es Krim Favorit" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Deskripsi (opsional)</label>
+            <textarea formControlName="description" rows="2"
+              class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Poin yang Dibutuhkan ⭐</label>
+            <input formControlName="pointsRequired" type="number" min="1"
+              class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Emoji Icon</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              @for (emoji of emojiOptions; track emoji) {
+                <button type="button" (click)="selectEmoji(emoji)"
+                  [class.ring-4]="form.get('iconEmoji')?.value === emoji"
+                  class="w-10 h-10 text-xl rounded-xl border-2 border-gray-200 hover:border-purple-400 ring-purple-400">{{ emoji }}</button>
+              }
+            </div>
+            <input formControlName="iconEmoji" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold" />
+          </div>
+          <div class="flex space-x-3 pt-2">
+            <button type="submit" [disabled]="saving()" class="flex-1 btn-primary">{{ saving() ? '⏳...' : '💾 Simpan' }}</button>
+            <button type="button" (click)="showForm.set(false)"
+              class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-2xl">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Rewards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    @for (reward of rewards(); track reward.id) {
+      <div class="card text-center">
+        <div class="text-6xl mb-3">{{ reward.iconEmoji }}</div>
+        <h3 class="text-xl font-black text-gray-800 mb-1">{{ reward.title }}</h3>
+        @if (reward.description) {
+          <p class="text-sm text-gray-500 mb-3">{{ reward.description }}</p>
+        }
+        <div class="badge bg-yellow-100 text-yellow-800 text-lg font-black mb-4">⭐ {{ reward.pointsRequired }} poin</div>
+        <div class="flex space-x-2">
+          <button (click)="openEdit(reward)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 rounded-xl text-sm transition-colors">✏️ Edit</button>
+          <button (click)="deleteReward(reward)" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-xl text-sm transition-colors">🗑️ Hapus</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

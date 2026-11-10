@@ -1,0 +1,205 @@
+<div class="max-w-5xl mx-auto">
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-4xl font-black text-gray-800">Profil Anak-anak 👨‍👧‍👦</h1>
+      <p class="text-gray-500 mt-1 font-semibold">Lihat perkembangan dan kelola riwayat tugas anak</p>
+    </div>
+    <div class="bg-purple-100 text-purple-900 font-bold px-4 py-2.5 rounded-2xl text-sm flex items-center space-x-2 shadow-sm self-start md:self-auto">
+      <span>🗓️</span>
+      <span>Hari ini: {{ today | date:'EEEE, dd MMMM yyyy' }}</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Child Cards -->
+    <div class="space-y-4">
+      @for (child of children(); track child.id) {
+        <div (click)="selectChild(child)"
+          [class.border-purple-400]="selectedChild()?.id === child.id"
+          class="card cursor-pointer hover:shadow-lg transition-all border-2"
+          [class.border-transparent]="selectedChild()?.id !== child.id">
+          <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-2xl font-black text-white">
+              {{ child.name.charAt(0) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-black text-gray-800 truncate">{{ child.name }}</h3>
+                <button
+                  (click)="openEditModal(child, $event)"
+                  title="Ubah nama anak"
+                  class="text-gray-400 hover:text-purple-600 p-1.5 rounded-lg hover:bg-purple-50 transition-colors ml-2">
+                  ✏️
+                </button>
+              </div>
+              <div class="flex items-center space-x-2 mt-1">
+                <span class="badge bg-yellow-100 text-yellow-800 text-xs">⭐ {{ child.totalPoints }}</span>
+                <span class="badge bg-orange-100 text-orange-800 text-xs">🔥 {{ child.currentStreak }}hari</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Rekor: {{ child.longestStreak }} hari berturut</p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Assignment History -->
+    <div class="md:col-span-2">
+      @if (selectedChild()) {
+        <div class="card">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-1">
+            <div>
+              <h2 class="text-2xl font-black text-gray-800">📋 {{ activeDateFilter() === 'all' ? 'Riwayat Tugas' : 'Jadwal Tugas' }} {{ selectedChild()!.name }}</h2>
+              @if (activeDateFilter() === 'all') {
+                <p class="text-xs text-purple-700 font-semibold mt-0.5">ℹ️ Hanya tugas hari ini dan kemarin (H-1) yang dapat diubah</p>
+              } @else if (isFuture()) {
+                <p class="text-xs text-purple-700 font-semibold mt-0.5">🔮 Menampilkan proyeksi tugas mendatang untuk tanggal terpilih</p>
+              }
+            </div>
+          </div>
+
+          <!-- Date Filter Tabs -->
+          <div class="flex items-center flex-wrap gap-1.5 mb-4 bg-gray-50 p-1.5 rounded-2xl border border-gray-200">
+            <span class="text-xs font-black text-gray-500 uppercase px-2">Jadwal:</span>
+            <button (click)="setDateFilter('today')"
+              [class]="activeDateFilter() === 'today' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 bg-white'"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">
+              ⭐ Hari Ini
+            </button>
+            <button (click)="setDateFilter('tomorrow')"
+              [class]="activeDateFilter() === 'tomorrow' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 bg-white'"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">
+              🔮 Besok
+            </button>
+            <button (click)="setDateFilter('dayAfter')"
+              [class]="activeDateFilter() === 'dayAfter' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 bg-white'"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">
+              🚀 Lusa
+            </button>
+            <button (click)="setDateFilter('all')"
+              [class]="activeDateFilter() === 'all' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 bg-white'"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">
+              📚 Semua Riwayat
+            </button>
+            <div class="flex items-center space-x-1 bg-white px-2.5 py-1 rounded-xl shadow-sm border border-gray-200">
+              <label for="childCustomDate" class="text-xs font-bold text-gray-600 cursor-pointer">🗓️ Pilih:</label>
+              <input id="childCustomDate" type="date"
+                [value]="selectedDate()"
+                (change)="onCustomDateChange($event)"
+                class="text-xs font-bold text-purple-700 bg-transparent border-none outline-none cursor-pointer">
+            </div>
+          </div>
+
+          <div class="space-y-2 max-h-[30rem] overflow-y-auto pr-1">
+            @for (a of assignments(); track (a.id || a.taskId)) {
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors gap-2 border border-gray-100">
+                <div class="flex items-center space-x-3">
+                  <span class="text-2xl">{{ a.taskIconEmoji }}</span>
+                  <div>
+                    <p class="font-bold text-sm text-gray-800">{{ a.taskTitle }}</p>
+                    <div class="flex items-center space-x-2 mt-0.5">
+                      @if (isFuture()) {
+                        <span class="badge text-xs bg-purple-100 text-purple-800 border-purple-200">🔮 Terjadwal</span>
+                      } @else {
+                        <span class="badge text-xs {{ getStatusClass(a.status) }}">{{ a.status }}</span>
+                      }
+                      <span class="text-xs text-gray-500 font-medium">📅 {{ a.dueDate | date:'EEEE, dd MMM yyyy':'UTC' }}</span>
+                      <span class="text-xs text-yellow-600 font-bold">+{{ a.taskPoints }}⭐</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-1.5 self-end sm:self-center">
+                  @if (isFuture()) {
+                    <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
+                      ⏳ Belum Waktunya
+                    </span>
+                  } @else if (canModify(a.dueDate)) {
+                    @if (a.status !== AssignmentStatus.Approved) {
+                      <button (click)="quickApprove(a)" title="Setujui dan berikan poin langsung"
+                        class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2.5 rounded-xl text-xs transition-colors shadow-sm cursor-pointer">
+                        ✅ Setujui
+                      </button>
+                    } @else {
+                      <button (click)="quickReset(a)" title="Batalkan persetujuan (kurangi poin)"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2.5 rounded-xl text-xs transition-colors cursor-pointer">
+                        🔄 Reset
+                      </button>
+                    }
+                    @if (a.status !== AssignmentStatus.Rejected) {
+                      <button (click)="quickReject(a)" title="Tolak tugas"
+                        class="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-1 px-2.5 rounded-xl text-xs transition-colors cursor-pointer">
+                        ❌ Tolak
+                      </button>
+                    }
+                  } @else {
+                    <span class="text-xs text-gray-500 font-bold bg-gray-200/80 px-2.5 py-1 rounded-xl" title="Tugas lewat lebih dari 1 hari terkunci">
+                      🔒 Terkunci (> 1 hari)
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (assignments().length === 0) {
+              <div class="text-center py-12 text-gray-400">
+                <p class="text-3xl">📭</p>
+                <p class="mt-2 font-semibold">Belum ada tugas untuk {{ selectedChild()!.name }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="card flex items-center justify-center h-48 text-center text-gray-400">
+          <div>
+            <p class="text-4xl">👆</p>
+            <p class="mt-2 font-semibold">Pilih anak untuk melihat detail</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Edit Child Modal -->
+  @if (isEditing()) {
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 animate-fade-in">
+      <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-black text-gray-800">✏️ Ubah Nama Anak</h3>
+          <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Nama Anak</label>
+            <input
+              type="text"
+              [value]="editName()"
+              (input)="onNameInput($event)"
+              placeholder="Masukkan nama anak..."
+              class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold transition-all"
+            />
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-2">
+            <button
+              (click)="closeEditModal()"
+              type="button"
+              class="px-4 py-2 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition-all">
+              Batal
+            </button>
+            <button
+              (click)="saveChildName()"
+              [disabled]="isSaving() || !editName().trim()"
+              type="button"
+              class="btn-primary px-6 py-2 rounded-xl text-white font-bold disabled:opacity-50">
+              @if (isSaving()) {
+                <span>Menyimpan...</span>
+              } @else {
+                <span>Simpan</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

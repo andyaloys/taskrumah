@@ -1,0 +1,6 @@
+@TaskRumah.API_HostAddress = http://localhost:5088
+
+GET {{TaskRumah.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
