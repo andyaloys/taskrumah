@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RewardService } from '../../../core/services/reward.service';
 import { Reward, RewardRedemption, RedemptionStatus } from '../../../core/models/reward.model';
+import { DialogService } from '../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-admin-rewards',
@@ -20,9 +21,13 @@ export class AdminRewardsComponent implements OnInit {
   saving = signal(false);
   RedemptionStatus = RedemptionStatus;
 
-  emojiOptions = ['🍦', '🎮', '🎬', '🏖️', '🍕', '🧁', '📱', '🚲', '🎪', '🎠'];
+  emojiOptions = ['🍦', '🎮', '🎬', '🏖️', '🍕', '🧁', '📱', '🚲', '🎪', '🎡'];
 
-  constructor(private rewardService: RewardService, private fb: FormBuilder) {
+  constructor(
+    private rewardService: RewardService,
+    private fb: FormBuilder,
+    private dialog: DialogService
+  ) {
     this.form = this.fb.group({
       title: ['', Validators.required],
       description: [''],
@@ -62,21 +67,48 @@ export class AdminRewardsComponent implements OnInit {
       : this.rewardService.createReward(data);
 
     request.subscribe({
-      next: () => { this.showForm.set(false); this.loadData(); this.saving.set(false); },
-      error: () => this.saving.set(false)
+      next: () => {
+        this.showForm.set(false);
+        this.loadData();
+        this.saving.set(false);
+        this.dialog.success(this.editingReward() ? 'Hadiah berhasil diperbarui!' : 'Hadiah baru berhasil dibuat!');
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.dialog.error(err.error?.message || 'Gagal menyimpan hadiah');
+      }
     });
   }
 
   processRedemption(id: string, status: RedemptionStatus) {
     const notes = status === RedemptionStatus.Rejected ? prompt('Alasan penolakan:') || undefined : undefined;
-    this.rewardService.processRedemption(id, status, notes).subscribe(() => this.loadData());
+    this.rewardService.processRedemption(id, status, notes).subscribe({
+      next: () => {
+        this.loadData();
+        this.dialog.success(status === RedemptionStatus.Approved ? 'Klaim hadiah disetujui & poin dipotong.' : 'Klaim hadiah ditolak.');
+      },
+      error: (err) => this.dialog.error(err.error?.message || 'Gagal memproses hadiah')
+    });
   }
 
-  deleteReward(reward: Reward) {
-    if (!confirm(`Yakin ingin menghapus hadiah '${reward.title}'?`)) return;
+  async deleteReward(reward: Reward) {
+    const confirmed = await this.dialog.confirm({
+      title: 'Hapus Hadiah?',
+      message: `Yakin ingin menghapus hadiah "${reward.title}"?`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      icon: '🗑️',
+      type: 'danger'
+    });
+
+    if (!confirmed) return;
+
     this.rewardService.deleteReward(reward.id).subscribe({
-      next: () => this.loadData(),
-      error: (err) => alert('Gagal menghapus hadiah: ' + (err.error?.message || 'Error'))
+      next: () => {
+        this.loadData();
+        this.dialog.success(`Hadiah "${reward.title}" berhasil dihapus.`);
+      },
+      error: (err) => this.dialog.error('Gagal menghapus hadiah: ' + (err.error?.message || 'Error'))
     });
   }
 

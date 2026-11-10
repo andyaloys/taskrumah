@@ -4,6 +4,7 @@ import { UserService } from '../../../core/services/user.service';
 import { User } from '../../../core/models/user.model';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
+import { DialogService } from '../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-admin-children',
@@ -31,7 +32,11 @@ export class AdminChildrenComponent implements OnInit {
   editingChild = signal<User | null>(null);
   editName = signal('');
 
-  constructor(private userService: UserService, private assignmentService: TaskAssignmentService) {}
+  constructor(
+    private userService: UserService,
+    private assignmentService: TaskAssignmentService,
+    private dialog: DialogService
+  ) {}
 
   ngOnInit() {
     this.loadChildren();
@@ -117,8 +122,9 @@ export class AdminChildrenComponent implements OnInit {
       next: () => {
         this.loadChildren();
         if (this.selectedChild()) this.selectChild(this.selectedChild()!);
+        this.dialog.success(`Tugas '${a.taskTitle}' disetujui! Poin ditambahkan.`);
       },
-      error: (err) => alert('Gagal menyetujui: ' + (err.error?.message || 'Error'))
+      error: (err) => this.dialog.error('Gagal menyetujui: ' + (err.error?.message || 'Error'))
     });
   }
 
@@ -128,8 +134,9 @@ export class AdminChildrenComponent implements OnInit {
       next: () => {
         this.loadChildren();
         if (this.selectedChild()) this.selectChild(this.selectedChild()!);
+        this.dialog.info(`Tugas '${a.taskTitle}' ditolak.`);
       },
-      error: (err) => alert('Gagal menolak: ' + (err.error?.message || 'Error'))
+      error: (err) => this.dialog.error('Gagal menolak: ' + (err.error?.message || 'Error'))
     });
   }
 
@@ -138,8 +145,9 @@ export class AdminChildrenComponent implements OnInit {
       next: () => {
         this.loadChildren();
         if (this.selectedChild()) this.selectChild(this.selectedChild()!);
+        this.dialog.info(`Status tugas '${a.taskTitle}' direset ke Menunggu.`);
       },
-      error: (err) => alert('Gagal reset: ' + (err.error?.message || 'Error'))
+      error: (err) => this.dialog.error('Gagal reset: ' + (err.error?.message || 'Error'))
     });
   }
 
@@ -175,10 +183,11 @@ export class AdminChildrenComponent implements OnInit {
         }
         this.isSaving.set(false);
         this.closeEditModal();
+        this.dialog.success(`Nama berhasil diubah menjadi '${updated.name}'`);
       },
       error: () => {
         this.isSaving.set(false);
-        alert('Gagal memperbarui nama anak.');
+        this.dialog.error('Gagal memperbarui nama anak.');
       }
     });
   }

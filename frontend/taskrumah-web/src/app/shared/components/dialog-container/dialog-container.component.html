@@ -1,0 +1,65 @@
+<!-- Toast Notifications Container -->
+<div class="fixed top-4 inset-x-0 sm:inset-x-auto sm:right-4 z-50 flex flex-col items-center sm:items-end space-y-2 pointer-events-none px-4 sm:px-0 max-w-md w-full">
+  @for (toast of dialog.toasts(); track toast.id) {
+    <div [class]="getToastBg(toast.type)"
+      class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-lg backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-4 w-full sm:w-auto sm:min-w-[300px]">
+      
+      <div [class]="getToastIconColor(toast.type)" class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0">
+        @if (toast.type === 'success') {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        } @else if (toast.type === 'error') {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        } @else if (toast.type === 'warning') {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        }
+      </div>
+
+      <p class="text-xs font-semibold leading-relaxed flex-1">{{ toast.message }}</p>
+
+      <button (click)="dialog.removeToast(toast.id)" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  }
+</div>
+
+<!-- Confirmation Modal Dialog -->
+@if (dialog.activeConfirm(); as confirmData) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200/80 animate-in zoom-in-95 duration-200 text-center">
+      
+      <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl mb-4"
+        [class]="confirmData.type === 'danger' ? 'bg-rose-50 text-rose-600 border border-rose-200/80' : (confirmData.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-200/80' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/80')">
+        {{ confirmData.icon || (confirmData.type === 'danger' ? '⚠️' : '✨') }}
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900">{{ confirmData.title }}</h3>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed whitespace-pre-line">{{ confirmData.message }}</p>
+
+      <div class="grid grid-cols-2 gap-2.5 mt-6">
+        <button (click)="dialog.handleConfirm(false)"
+          class="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer">
+          {{ confirmData.cancelText }}
+        </button>
+
+        <button (click)="dialog.handleConfirm(true)"
+          [class]="confirmData.type === 'danger' ? 'bg-rose-600 hover:bg-rose-700 text-white' : (confirmData.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'btn-primary')"
+          class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+          {{ confirmData.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

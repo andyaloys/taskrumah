@@ -5,6 +5,7 @@ import { UserService } from '../../../core/services/user.service';
 import { User } from '../../../core/models/user.model';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
+import { DialogService } from '../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-child-profile',
@@ -23,7 +24,8 @@ export class ChildProfileComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private userService: UserService,
-    private assignmentService: TaskAssignmentService
+    private assignmentService: TaskAssignmentService,
+    private dialog: DialogService
   ) {}
 
   ngOnInit() {
@@ -78,10 +80,11 @@ export class ChildProfileComponent implements OnInit {
         }
         this.isSaving.set(false);
         this.closeEditModal();
+        this.dialog.success(`Nama berhasil diubah menjadi '${updated.name}'`);
       },
       error: () => {
         this.isSaving.set(false);
-        alert('Gagal mengubah nama.');
+        this.dialog.error('Gagal mengubah nama.');
       }
     });
   }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RewardService } from '../../../core/services/reward.service';
 import { Reward, RewardRedemption, RedemptionStatus } from '../../../core/models/reward.model';
 import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-child-rewards',
@@ -17,30 +18,44 @@ export class ChildRewardsComponent implements OnInit {
   redeeming = signal<string | null>(null);
   RedemptionStatus = RedemptionStatus;
 
-  constructor(private rewardService: RewardService, private auth: AuthService) {}
+  constructor(
+    private rewardService: RewardService,
+    private auth: AuthService,
+    private dialog: DialogService
+  ) {}
 
   ngOnInit() {
     this.rewardService.getRewards().subscribe(r => { this.rewards.set(r); this.loading.set(false); });
     this.rewardService.getRedemptions().subscribe(r => this.myRedemptions.set(r));
   }
 
-  redeem(reward: Reward) {
+  async redeem(reward: Reward) {
     const userPoints = this.auth.currentUser()?.totalPoints || 0;
     if (userPoints < reward.pointsRequired) {
-      alert(`Poinmu belum cukup! Kamu punya ${userPoints} poin, butuh ${reward.pointsRequired} poin`);
+      this.dialog.warning(`Poinmu belum cukup! Kamu punya ${userPoints} poin, butuh ${reward.pointsRequired} poin.`);
       return;
     }
-    if (!confirm(`Tukarkan "${reward.title}" seharga ${reward.pointsRequired} poin?`)) return;
+
+    const confirmed = await this.dialog.confirm({
+      title: 'Tukarkan Hadiah?',
+      message: `Tukarkan "${reward.title}" seharga ${reward.pointsRequired} poin?\nPermintaan akan dikirimkan ke orang tua untuk disetujui.`,
+      confirmText: 'Ya, Tukarkan',
+      cancelText: 'Batal',
+      icon: reward.iconEmoji || '🎁',
+      type: 'primary'
+    });
+
+    if (!confirmed) return;
 
     this.redeeming.set(reward.id);
     this.rewardService.redeemReward(reward.id).subscribe({
       next: () => {
         this.rewardService.getRedemptions().subscribe(r => this.myRedemptions.set(r));
-        alert('✅ Permintaan hadiah dikirim! Tunggu persetujuan orang tua ya!');
+        this.dialog.success(`Permintaan hadiah "${reward.title}" berhasil dikirim! Tunggu persetujuan orang tua ya.`);
         this.redeeming.set(null);
       },
       error: (err) => {
-        alert(err.error?.message || 'Gagal menukarkan hadiah');
+        this.dialog.error(err.error?.message || 'Gagal menukarkan hadiah');
         this.redeeming.set(null);
       }
     });

@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { RouterLink } from '@angular/router';
 import { TaskService } from '../../../core/services/task.service';
 import { UserService } from '../../../core/services/user.service';
+import { DialogService } from '../../../core/services/dialog.service';
 import { ChoreTask, TaskType } from '../../../core/models/task.model';
 import { User } from '../../../core/models/user.model';
 
@@ -44,7 +45,12 @@ export class AdminTasksComponent implements OnInit {
 
   emojiOptions = ['🧹', '🌱', '📚', '🍽️', '🛏️', '🚾', '🗑️', '🛒', '🧺', '🧼', '🐕', '🌙', '☀️', '🍳', '🧴'];
 
-  constructor(private taskService: TaskService, private userService: UserService, private fb: FormBuilder) {
+  constructor(
+    private taskService: TaskService,
+    private userService: UserService,
+    private fb: FormBuilder,
+    private dialog: DialogService
+  ) {
     this.form = this.fb.group({
       title: ['', Validators.required],
       description: [''],
@@ -174,11 +180,11 @@ export class AdminTasksComponent implements OnInit {
       next: () => {
         this.isAssigning.set(false);
         this.showAssignModal.set(false);
-        alert(`Tugas '${task.title}' berhasil ditugaskan!`);
+        this.dialog.success(`Tugas '${task.title}' berhasil ditugaskan!`);
       },
       error: (err) => {
         this.isAssigning.set(false);
-        alert('Gagal menugaskan: ' + (err.error?.message || 'Error'));
+        this.dialog.error('Gagal menugaskan: ' + (err.error?.message || 'Error'));
       }
     });
   }
