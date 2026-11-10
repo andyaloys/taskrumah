@@ -80,8 +80,22 @@ export class AdminRewardsComponent implements OnInit {
     });
   }
 
-  processRedemption(id: string, status: RedemptionStatus) {
-    const notes = status === RedemptionStatus.Rejected ? prompt('Alasan penolakan:') || undefined : undefined;
+  async processRedemption(id: string, status: RedemptionStatus) {
+    let notes: string | undefined = undefined;
+    if (status === RedemptionStatus.Rejected) {
+      const input = await this.dialog.prompt({
+        title: 'Tolak Permintaan Hadiah?',
+        message: 'Masukkan alasan/catatan penolakan hadiah (opsional):',
+        placeholder: 'Contoh: Poin belum mencukupi / tunda dulu',
+        confirmText: 'Tolak Hadiah',
+        cancelText: 'Batal',
+        type: 'danger',
+        icon: '❌'
+      });
+      if (input === null) return; // User cancelled
+      notes = input || undefined;
+    }
+
     this.rewardService.processRedemption(id, status, notes).subscribe({
       next: () => {
         this.loadData();

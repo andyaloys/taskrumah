@@ -71,8 +71,8 @@ export class TaskAssignmentService {
     return this.http.post<TaskAssignment>(`${this.apiUrl}/${id}/approve`, {});
   }
 
-  rejectTask(id: string, reason: string) {
-    return this.http.post<TaskAssignment>(`${this.apiUrl}/${id}/reject`, { rejectionReason: reason });
+  rejectTask(id: string, reason?: string) {
+    return this.http.post<TaskAssignment>(`${this.apiUrl}/${id}/reject`, { rejectionReason: reason || 'Ditolak oleh orang tua' });
   }
 
   updateStatus(id: string, status: AssignmentStatus, reason?: string) {

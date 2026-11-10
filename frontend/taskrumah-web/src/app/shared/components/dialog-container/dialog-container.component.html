@@ -63,3 +63,47 @@
     </div>
   </div>
 }
+
+<!-- Input Prompt Modal Dialog -->
+@if (dialog.activePrompt(); as promptData) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200/80 animate-in zoom-in-95 duration-200">
+      
+      <div class="text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl mb-4"
+          [class]="promptData.type === 'danger' ? 'bg-rose-50 text-rose-600 border border-rose-200/80' : (promptData.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-200/80' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/80')">
+          {{ promptData.icon || (promptData.type === 'danger' ? '✏️' : '💬') }}
+        </div>
+
+        <h3 class="text-base font-bold text-slate-900">{{ promptData.title }}</h3>
+        @if (promptData.message) {
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed whitespace-pre-line">{{ promptData.message }}</p>
+        }
+      </div>
+
+      <div class="mt-4">
+        <input type="text"
+          [placeholder]="promptData.placeholder || 'Tuliskan di sini...'"
+          [value]="dialog.promptValue()"
+          (input)="dialog.promptValue.set($any($event.target).value)"
+          (keyup.enter)="dialog.handlePrompt(true)"
+          (keyup.escape)="dialog.handlePrompt(false)"
+          autofocus
+          class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none transition-colors" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 mt-5">
+        <button (click)="dialog.handlePrompt(false)"
+          class="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer">
+          {{ promptData.cancelText }}
+        </button>
+
+        <button (click)="dialog.handlePrompt(true)"
+          [class]="promptData.type === 'danger' ? 'bg-rose-600 hover:bg-rose-700 text-white' : (promptData.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'btn-primary')"
+          class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+          {{ promptData.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

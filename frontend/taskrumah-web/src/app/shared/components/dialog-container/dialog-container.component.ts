@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DialogService, ToastItem } from '../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-dialog-container',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dialog-container.component.html'
 })
 export class DialogContainerComponent {

@@ -17,12 +17,26 @@ export interface ConfirmDialogOptions {
   resolve?: (value: boolean) => void;
 }
 
+export interface PromptDialogOptions {
+  title: string;
+  message?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'primary' | 'danger' | 'warning';
+  icon?: string;
+  resolve?: (value: string | null) => void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class DialogService {
   toasts = signal<ToastItem[]>([]);
   activeConfirm = signal<ConfirmDialogOptions | null>(null);
+  activePrompt = signal<PromptDialogOptions | null>(null);
+  promptValue = signal<string>('');
 
   toast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success', duration = 3500) {
     const id = Math.random().toString(36).substring(2, 9);
@@ -81,5 +95,36 @@ export class DialogService {
       dialog.resolve(result);
     }
     this.activeConfirm.set(null);
+  }
+
+  prompt(options: {
+    title: string;
+    message?: string;
+    placeholder?: string;
+    defaultValue?: string;
+    confirmText?: string;
+    cancelText?: string;
+    type?: 'primary' | 'danger' | 'warning';
+    icon?: string;
+  }): Promise<string | null> {
+    return new Promise((resolve) => {
+      this.promptValue.set(options.defaultValue || '');
+      this.activePrompt.set({
+        ...options,
+        confirmText: options.confirmText || 'Kirim',
+        cancelText: options.cancelText || 'Batal',
+        type: options.type || 'primary',
+        resolve
+      });
+    });
+  }
+
+  handlePrompt(submit: boolean) {
+    const dialog = this.activePrompt();
+    if (dialog && dialog.resolve) {
+      dialog.resolve(submit ? this.promptValue() : null);
+    }
+    this.activePrompt.set(null);
+    this.promptValue.set('');
   }
 }

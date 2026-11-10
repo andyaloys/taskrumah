@@ -128,9 +128,20 @@ export class AdminChildrenComponent implements OnInit {
     });
   }
 
-  quickReject(a: TaskAssignment) {
-    const reason = prompt('Masukkan alasan penolakan/catatan (opsional):') || undefined;
-    this.assignmentService.updateStatus(a.id, AssignmentStatus.Rejected, reason).subscribe({
+  async quickReject(a: TaskAssignment) {
+    const reason = await this.dialog.prompt({
+      title: 'Tolak Tugas?',
+      message: `Tolak tugas "${a.taskTitle}"?\nMasukkan catatan/alasan penolakan untuk anak:`,
+      placeholder: 'Contoh: Belum bersih, rapikan lagi ya',
+      confirmText: 'Tolak Tugas',
+      cancelText: 'Batal',
+      type: 'danger',
+      icon: '❌'
+    });
+
+    if (reason === null) return; // User clicked Cancel
+
+    this.assignmentService.updateStatus(a.id, AssignmentStatus.Rejected, reason || undefined).subscribe({
       next: () => {
         this.loadChildren();
         if (this.selectedChild()) this.selectChild(this.selectedChild()!);

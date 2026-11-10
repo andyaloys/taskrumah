@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService, AdminDashboard } from '../../../core/services/dashboard.service';
 import { TaskAssignmentService } from '../../../core/services/task.service';
+import { DialogService } from '../../../core/services/dialog.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
 
 @Component({
@@ -23,7 +24,8 @@ export class AdminDashboardComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private assignmentService: TaskAssignmentService
+    private assignmentService: TaskAssignmentService,
+    private dialog: DialogService
   ) {}
 
   ngOnInit() {
@@ -104,14 +106,35 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   approve(assignmentId: string) {
-    this.assignmentService.approveTask(assignmentId).subscribe(() => this.loadDashboard());
+    this.assignmentService.approveTask(assignmentId).subscribe({
+      next: () => {
+        this.loadDashboard();
+        this.dialog.success('Tugas berhasil disetujui! Poin telah ditambahkan ke anak.');
+      },
+      error: (err) => this.dialog.error('Gagal menyetujui: ' + (err.error?.message || 'Error'))
+    });
   }
 
-  reject(assignmentId: string) {
-    const reason = prompt('Alasan penolakan:');
-    if (reason) {
-      this.assignmentService.rejectTask(assignmentId, reason).subscribe(() => this.loadDashboard());
-    }
+  async reject(assignmentId: string) {
+    const reason = await this.dialog.prompt({
+      title: 'Tolak Tugas?',
+      message: 'Masukkan catatan/alasan penolakan untuk anak (opsional):',
+      placeholder: 'Contoh: Belum selesai atau kurang rapi',
+      confirmText: 'Tolak Tugas',
+      cancelText: 'Batal',
+      type: 'danger',
+      icon: '❌'
+    });
+
+    if (reason === null) return; // User cancelled
+
+    this.assignmentService.rejectTask(assignmentId, reason || undefined).subscribe({
+      next: () => {
+        this.loadDashboard();
+        this.dialog.info('Tugas ditolak.');
+      },
+      error: (err) => this.dialog.error('Gagal menolak: ' + (err.error?.message || 'Error'))
+    });
   }
 
   getStatusClass(status: AssignmentStatus): string {

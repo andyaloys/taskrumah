@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskAssignmentService } from '../../../core/services/task.service';
+import { DialogService } from '../../../core/services/dialog.service';
 import { TaskAssignment, TaskComment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -24,6 +25,7 @@ export class TaskDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private assignmentService: TaskAssignmentService,
+    private dialog: DialogService,
     public auth: AuthService
   ) {}
 
@@ -43,15 +45,36 @@ export class TaskDetailComponent implements OnInit {
 
   approve() {
     const id = this.assignment()!.id;
-    this.assignmentService.approveTask(id).subscribe(() => this.loadData(id));
+    this.assignmentService.approveTask(id).subscribe({
+      next: () => {
+        this.loadData(id);
+        this.dialog.success('Tugas berhasil disetujui! Poin telah ditambahkan.');
+      },
+      error: (err) => this.dialog.error('Gagal menyetujui: ' + (err.error?.message || 'Error'))
+    });
   }
 
-  reject() {
-    const reason = prompt('Alasan penolakan:');
-    if (reason) {
-      const id = this.assignment()!.id;
-      this.assignmentService.rejectTask(id, reason).subscribe(() => this.loadData(id));
-    }
+  async reject() {
+    const reason = await this.dialog.prompt({
+      title: 'Tolak Tugas?',
+      message: 'Masukkan catatan/alasan penolakan untuk anak (opsional):',
+      placeholder: 'Contoh: Belum selesai atau kurang rapi',
+      confirmText: 'Tolak Tugas',
+      cancelText: 'Batal',
+      type: 'danger',
+      icon: '❌'
+    });
+
+    if (reason === null) return; // User cancelled
+
+    const id = this.assignment()!.id;
+    this.assignmentService.rejectTask(id, reason || undefined).subscribe({
+      next: () => {
+        this.loadData(id);
+        this.dialog.info('Tugas ditolak.');
+      },
+      error: (err) => this.dialog.error('Gagal menolak: ' + (err.error?.message || 'Error'))
+    });
   }
 
   sendComment() {
