@@ -1,140 +1,140 @@
-<div>
+<div class="space-y-6">
   @if (user()) {
     <!-- Profile Header -->
-    <div class="gradient-card bg-gradient-to-r from-purple-500 to-pink-500 text-center mb-6 relative">
-      <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl font-black text-white mx-auto mb-3">
+    <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-sm border border-slate-800 text-center relative">
+      <div class="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl font-bold text-white mx-auto mb-3 shadow-inner">
         {{ user()!.name.charAt(0) }}
       </div>
       <div class="flex items-center justify-center space-x-2">
-        <h1 class="text-2xl font-black">{{ user()!.name }}</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-white">{{ user()!.name }}</h1>
         <button
           (click)="openEditModal()"
           title="Ubah nama panggilan"
-          class="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-all text-sm">
-          ✏️
+          class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
         </button>
       </div>
-      <p class="text-purple-100 mt-1">{{ getLevel().emoji }} {{ getLevel().name }}</p>
+      <p class="text-xs font-semibold text-indigo-400 mt-1 uppercase tracking-wider">{{ getLevel().name }}</p>
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
-        <p class="text-4xl font-black text-yellow-500">{{ user()!.totalPoints }}</p>
-        <p class="text-sm font-bold text-gray-500 mt-1">⭐ Total Poin</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div class="bg-white rounded-xl p-4 text-center shadow-xs border border-slate-200/90">
+        <p class="text-2xl font-bold text-amber-600">{{ user()!.totalPoints }}</p>
+        <p class="text-xs font-semibold text-slate-500 mt-0.5">Total Tabungan Poin</p>
       </div>
-      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
-        <p class="text-4xl font-black text-orange-500">{{ user()!.currentStreak }}</p>
-        <p class="text-sm font-bold text-gray-500 mt-1">🔥 Streak Sekarang</p>
+      <div class="bg-white rounded-xl p-4 text-center shadow-xs border border-slate-200/90">
+        <p class="text-2xl font-bold text-slate-800">{{ user()!.currentStreak }}</p>
+        <p class="text-xs font-semibold text-slate-500 mt-0.5">Hari Berturut-turut</p>
       </div>
-      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
-        <p class="text-4xl font-black text-purple-500">{{ user()!.longestStreak }}</p>
-        <p class="text-sm font-bold text-gray-500 mt-1">🏆 Rekor Streak</p>
+      <div class="bg-white rounded-xl p-4 text-center shadow-xs border border-slate-200/90">
+        <p class="text-2xl font-bold text-indigo-600">{{ user()!.longestStreak }}</p>
+        <p class="text-xs font-semibold text-slate-500 mt-0.5">Rekor Konsistensi Tertinggi</p>
       </div>
-      <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
-        <p class="text-4xl font-black text-green-500">{{ stats().approved }}</p>
-        <p class="text-sm font-bold text-gray-500 mt-1">✅ Tugas Selesai</p>
+      <div class="bg-white rounded-xl p-4 text-center shadow-xs border border-slate-200/90">
+        <p class="text-2xl font-bold text-emerald-600">{{ stats().approved }}</p>
+        <p class="text-xs font-semibold text-slate-500 mt-0.5">Total Tugas Selesai</p>
       </div>
     </div>
 
-    <!-- Badges -->
-    <div class="bg-white rounded-2xl p-5 shadow-sm mb-4">
-      <h2 class="text-xl font-black text-gray-800 mb-4">🏅 Lencana</h2>
-      <div class="grid grid-cols-3 gap-3">
-        <div [class.opacity-30]="stats().approved < 1" class="text-center p-3 bg-yellow-50 rounded-2xl">
-          <p class="text-3xl">🌱</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">Pemula</p>
-          <p class="text-xs text-gray-400">1 tugas</p>
+    <!-- Badges / Pencapaian -->
+    <div class="bg-white rounded-xl p-5 shadow-xs border border-slate-200/90">
+      <h2 class="font-bold text-base text-slate-900 mb-3 pb-2 border-b border-slate-100">Pencapaian & Lencana</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div [class.opacity-40]="stats().approved < 1" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">🌱</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Pemula</p>
+          <p class="text-[11px] text-slate-400">1 tugas selesai</p>
         </div>
-        <div [class.opacity-30]="stats().approved < 10" class="text-center p-3 bg-blue-50 rounded-2xl">
-          <p class="text-3xl">💪</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">Pekerja Keras</p>
-          <p class="text-xs text-gray-400">10 tugas</p>
+        <div [class.opacity-40]="stats().approved < 10" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">⚡</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Pekerja Tekun</p>
+          <p class="text-[11px] text-slate-400">10 tugas selesai</p>
         </div>
-        <div [class.opacity-30]="stats().approved < 50" class="text-center p-3 bg-purple-50 rounded-2xl">
-          <p class="text-3xl">🏆</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">Master</p>
-          <p class="text-xs text-gray-400">50 tugas</p>
+        <div [class.opacity-40]="stats().approved < 50" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">🏆</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Master Tugas</p>
+          <p class="text-[11px] text-slate-400">50 tugas selesai</p>
         </div>
-        <div [class.opacity-30]="user()!.currentStreak < 3" class="text-center p-3 bg-orange-50 rounded-2xl">
-          <p class="text-3xl">🔥</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">On Fire!</p>
-          <p class="text-xs text-gray-400">3 hari beruntun</p>
+        <div [class.opacity-40]="user()!.currentStreak < 3" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">🔥</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Konsisten</p>
+          <p class="text-[11px] text-slate-400">3 hari streak</p>
         </div>
-        <div [class.opacity-30]="user()!.currentStreak < 7" class="text-center p-3 bg-red-50 rounded-2xl">
-          <p class="text-3xl">⚡</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">Konsisten</p>
-          <p class="text-xs text-gray-400">7 hari beruntun</p>
+        <div [class.opacity-40]="user()!.currentStreak < 7" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">⭐</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Sangat Disiplin</p>
+          <p class="text-[11px] text-slate-400">7 hari streak</p>
         </div>
-        <div [class.opacity-30]="user()!.totalPoints < 100" class="text-center p-3 bg-green-50 rounded-2xl">
-          <p class="text-3xl">💰</p>
-          <p class="text-xs font-bold text-gray-700 mt-1">Kaya Poin</p>
-          <p class="text-xs text-gray-400">100 poin</p>
+        <div [class.opacity-40]="user()!.totalPoints < 100" class="text-center p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+          <p class="text-2xl">💎</p>
+          <p class="text-xs font-bold text-slate-800 mt-1">Kolektor Poin</p>
+          <p class="text-[11px] text-slate-400">100 akumulasi poin</p>
         </div>
       </div>
     </div>
 
     <!-- Task Stats -->
-    <div class="bg-white rounded-2xl p-5 shadow-sm">
-      <h2 class="text-xl font-black text-gray-800 mb-3">📊 Statistik Tugas</h2>
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="font-semibold text-gray-600">✅ Disetujui</span>
-          <span class="font-black text-green-600">{{ stats().approved }}</span>
+    <div class="bg-white rounded-xl p-5 shadow-xs border border-slate-200/90">
+      <h2 class="font-bold text-base text-slate-900 mb-3 pb-2 border-b border-slate-100">Statistik Riwayat Pengerjaan</h2>
+      <div class="space-y-2.5 text-xs">
+        <div class="flex justify-between items-center py-1">
+          <span class="font-medium text-slate-600">Disetujui Orang Tua</span>
+          <span class="font-bold text-emerald-600">{{ stats().approved }}</span>
         </div>
-        <div class="flex justify-between items-center">
-          <span class="font-semibold text-gray-600">❌ Ditolak</span>
-          <span class="font-black text-red-600">{{ stats().rejected }}</span>
+        <div class="flex justify-between items-center py-1">
+          <span class="font-medium text-slate-600">Perlu Diperbaiki (Ditolak)</span>
+          <span class="font-bold text-rose-600">{{ stats().rejected }}</span>
         </div>
-        <div class="flex justify-between items-center">
-          <span class="font-semibold text-gray-600">⏰ Terlambat</span>
-          <span class="font-black text-gray-600">{{ stats().late }}</span>
+        <div class="flex justify-between items-center py-1">
+          <span class="font-medium text-slate-600">Terlambat Diserahkan</span>
+          <span class="font-bold text-slate-500">{{ stats().late }}</span>
         </div>
-        <div class="flex justify-between items-center border-t pt-2 mt-2">
-          <span class="font-bold text-gray-700">Total Dikerjakan</span>
-          <span class="font-black text-purple-600">{{ stats().total }}</span>
+        <div class="flex justify-between items-center border-t border-slate-100 pt-2.5 mt-1">
+          <span class="font-bold text-slate-800">Total Tugas Diproses</span>
+          <span class="font-bold text-indigo-600">{{ stats().total }}</span>
         </div>
       </div>
     </div>
 
     <!-- Edit Name Modal -->
     @if (isEditing()) {
-      <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 animate-fade-in">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-black text-gray-800">✏️ Ganti Namaku</h3>
-            <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+      <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl border border-slate-200">
+          <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+            <h3 class="text-base font-bold text-slate-900">Ubah Nama Profil</h3>
+            <button (click)="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Nama Panggilan</label>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Nama Panggilan</label>
               <input
                 type="text"
                 [value]="editName()"
                 (input)="onNameInput($event)"
                 placeholder="Nama kamu..."
-                class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none text-sm text-slate-800"
               />
             </div>
 
-            <div class="flex justify-end space-x-3 pt-2">
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
               <button
                 (click)="closeEditModal()"
                 type="button"
-                class="px-4 py-2 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition-all">
+                class="btn-secondary">
                 Batal
               </button>
               <button
                 (click)="saveName()"
                 [disabled]="isSaving() || !editName().trim()"
                 type="button"
-                class="btn-primary px-6 py-2 rounded-xl text-white font-bold disabled:opacity-50">
-                @if (isSaving()) {
-                  <span>Menyimpan...</span>
-                } @else {
-                  <span>Simpan ✨</span>
-                }
+                class="btn-primary">
+                {{ isSaving() ? 'Menyimpan...' : 'Simpan Nama' }}
               </button>
             </div>
           </div>

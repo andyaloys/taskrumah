@@ -65,4 +65,26 @@ export class TaskSubmitComponent implements OnInit {
         error: () => this.submitting.set(false)
       });
   }
+
+  getStatusClass(status: AssignmentStatus): string {
+    const classes: Record<AssignmentStatus, string> = {
+      [AssignmentStatus.Pending]: 'bg-amber-50 text-amber-700 border border-amber-200/80',
+      [AssignmentStatus.Submitted]: 'bg-sky-50 text-sky-700 border border-sky-200/80',
+      [AssignmentStatus.Approved]: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
+      [AssignmentStatus.Rejected]: 'bg-rose-50 text-rose-700 border border-rose-200/80',
+      [AssignmentStatus.Late]: 'bg-slate-100 text-slate-600 border border-slate-200/80',
+    };
+    return classes[status] || 'bg-slate-100 text-slate-700 border border-slate-200/80';
+  }
+
+  getStatusLabel(status: AssignmentStatus): string {
+    const labels: Record<AssignmentStatus, string> = {
+      [AssignmentStatus.Pending]: 'Menunggu',
+      [AssignmentStatus.Submitted]: 'Terkirim',
+      [AssignmentStatus.Approved]: 'Disetujui',
+      [AssignmentStatus.Rejected]: 'Ditolak',
+      [AssignmentStatus.Late]: 'Terlambat',
+    };
+    return labels[status] || status;
+  }
 }

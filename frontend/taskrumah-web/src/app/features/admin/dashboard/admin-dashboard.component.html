@@ -155,43 +155,73 @@
       </div>
     </div>
 
-    <!-- Pending Reviews -->
+    <!-- Pending Reviews Section -->
     @if (dashboard()!.pendingReviews.length > 0) {
-      <div class="card mb-8">
-        <h2 class="text-2xl font-black text-gray-800 mb-4">🔔 Perlu Ditinjau Sekarang!</h2>
+      <div class="card p-6 bg-white border border-slate-200/90 shadow-xs rounded-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></div>
+            <h2 class="text-base font-bold text-slate-900">Perlu Peninjauan Tugas</h2>
+          </div>
+          <span class="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">
+            {{ dashboard()!.pendingReviews.length }} permintaan
+          </span>
+        </div>
+
         <div class="space-y-3">
           @for (assignment of dashboard()!.pendingReviews; track assignment.id) {
-            <div class="flex items-center justify-between bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
-              <div class="flex items-center space-x-4">
-                <span class="text-3xl">{{ assignment.taskIconEmoji }}</span>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 transition-all gap-3">
+              <div class="flex items-start space-x-3.5">
+                <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xl shadow-2xs shrink-0">
+                  {{ assignment.taskIconEmoji || '📋' }}
+                </div>
                 <div>
-                  <p class="font-bold text-gray-800">{{ assignment.taskTitle }}</p>
-                  <p class="text-sm text-gray-500">
-                    oleh <span class="font-semibold text-blue-600">{{ assignment.assignedToName }}</span> •
-                    <span class="text-xs font-semibold text-gray-400">📅 {{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
+                  <div class="flex items-center space-x-2">
+                    <p class="font-bold text-slate-900 text-sm">{{ assignment.taskTitle }}</p>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      +{{ assignment.taskPoints }} poin
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Dikerjakan oleh <span class="font-semibold text-slate-700">{{ assignment.assignedToName }}</span> •
+                    <span>{{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
                   </p>
                   @if (assignment.submissionNote) {
-                    <p class="text-sm text-gray-600 italic mt-1">"{{ assignment.submissionNote }}"</p>
+                    <p class="text-xs text-slate-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 mt-2 italic">
+                      "{{ assignment.submissionNote }}"
+                    </p>
                   }
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
+
+              <div class="flex items-center space-x-2 self-end sm:self-center">
                 @if (assignment.proofPhotoUrl) {
-                  <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">📸 Ada foto</span>
+                  <a [href]="assignment.proofPhotoUrl" target="_blank"
+                    class="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 shadow-2xs">
+                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Foto Bukti</span>
+                  </a>
                 }
-                <span class="badge bg-yellow-100 text-yellow-800">+{{ assignment.taskPoints }} ⭐</span>
                 @if (canModify(assignment.dueDate)) {
                   <button (click)="approve(assignment.id)"
-                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer">
-                    ✅ Setuju
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Setujui</span>
                   </button>
                   <button (click)="reject(assignment.id)"
-                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer">
-                    ❌ Tolak
+                    class="bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    <span>Tolak</span>
                   </button>
                 } @else {
-                  <span class="text-xs text-gray-500 font-bold bg-gray-200 py-1.5 px-3 rounded-xl" title="Hanya tugas hari ini dan kemarin (H-1) yang dapat diubah">
-                    🔒 Terkunci (> 1 hari)
+                  <span class="text-xs text-slate-400 font-medium bg-slate-100 py-1.5 px-2.5 rounded-lg border border-slate-200" title="Hanya tugas hari ini dan kemarin (H-1) yang dapat diubah">
+                    Terkunci (> 1 hari)
                   </span>
                 }
               </div>
@@ -201,23 +231,28 @@
       </div>
     }
 
-    <!-- Children Progress -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Children Progress Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       @for (child of dashboard()!.children; track child.userId) {
-        <div class="card">
-          <div class="flex items-center justify-between mb-4">
+        <div class="card p-5 bg-white border border-slate-200/90 shadow-xs rounded-xl">
+          <!-- Child Header -->
+          <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
             <div class="flex items-center space-x-3">
-              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-2xl font-black text-white shadow-lg">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
                 {{ child.name.charAt(0) }}
               </div>
               <div>
-                <h3 class="text-xl font-black text-gray-800">{{ child.name }}</h3>
-                <div class="flex flex-wrap items-center gap-2 mt-1">
-                  <span class="badge bg-yellow-100 text-yellow-800">⭐ {{ child.totalPoints }} total</span>
-                  <span class="badge bg-purple-100 text-purple-800 font-bold" title="Poin periode pekan yang dipilih">
-                    🗓️ {{ child.weeklyPoints }} pekan ini
+                <h3 class="text-base font-bold text-slate-900">{{ child.name }}</h3>
+                <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
+                    {{ child.totalPoints }} total poin
                   </span>
-                  <span class="badge bg-orange-100 text-orange-800">🔥 {{ child.currentStreak }} hari</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200/70">
+                    +{{ child.weeklyPoints }} pekan ini
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/70">
+                    {{ child.currentStreak }} hari streak
+                  </span>
                 </div>
               </div>
             </div>
@@ -225,50 +260,50 @@
 
           <!-- Progress Bar -->
           <div class="mb-4">
-            <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
-              <span>{{ currentWeekOffset() === 0 ? 'Progress Hari Ini' : 'Progress Pekan Ini' }}</span>
-              <span>{{ child.tasksCompleted }}/{{ child.tasksToday }}</span>
+            <div class="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
+              <span>{{ currentWeekOffset() === 0 ? 'Penyelesaian Hari Ini' : 'Penyelesaian Pekan Ini' }}</span>
+              <span class="text-slate-700">{{ child.tasksCompleted }}/{{ child.tasksToday }} selesai ({{ getProgressPercent(child.tasksCompleted, child.tasksToday) }}%)</span>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-4">
-              <div class="bg-gradient-to-r from-green-400 to-emerald-500 h-4 rounded-full transition-all duration-500"
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500"
                 [style.width.%]="getProgressPercent(child.tasksCompleted, child.tasksToday)">
               </div>
             </div>
-            <p class="text-sm text-gray-500 mt-1">{{ getProgressPercent(child.tasksCompleted, child.tasksToday) }}% selesai</p>
           </div>
 
           <!-- Task List -->
           <div class="space-y-2">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-              {{ selectedDate() ? ('Jadwal Tanggal ' + (dashboard()?.targetDate | date:'dd MMM yyyy')) : (currentWeekOffset() === 0 ? 'Tugas Hari Ini' : 'Daftar Tugas Pekan Ini') }}
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              {{ selectedDate() ? ('Jadwal Tanggal ' + (dashboard()?.targetDate | date:'dd MMM yyyy')) : (currentWeekOffset() === 0 ? 'Daftar Tugas Hari Ini' : 'Daftar Tugas Pekan Ini') }}
             </p>
             @for (task of child.todayTasks; track (task.id || task.taskId)) {
-              <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-                <div class="flex items-center space-x-3">
-                  <span class="text-xl">{{ task.taskIconEmoji }}</span>
+              <div class="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-lg">{{ task.taskIconEmoji || '📋' }}</span>
                   <div>
-                    <span class="font-semibold text-sm text-gray-700 block">{{ task.taskTitle }}</span>
+                    <span class="font-semibold text-xs text-slate-800 block">{{ task.taskTitle }}</span>
                     @if (currentWeekOffset() !== 0 || selectedDate()) {
-                      <span class="text-xs text-gray-400 font-medium">📅 {{ task.dueDate | date:'EEEE, dd MMM':'UTC' }}</span>
+                      <span class="text-[10px] text-slate-400 font-medium">{{ task.dueDate | date:'EEEE, dd MMM':'UTC' }}</span>
                     }
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold text-yellow-600">+{{ task.taskPoints }} ⭐</span>
+                  <span class="text-xs font-semibold text-slate-600">+{{ task.taskPoints }} poin</span>
                   @if (isFutureDate()) {
-                    <span class="badge text-xs bg-purple-100 text-purple-800">
-                      🔮 Terjadwal
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Terjadwal
                     </span>
                   } @else {
-                    <span class="badge text-xs {{ getStatusClass(task.status) }}">
-                      {{ getStatusEmoji(task.status) }} {{ task.status }}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ getStatusClass(task.status) }}">
+                      <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                      {{ getStatusLabel(task.status) }}
                     </span>
                   }
                 </div>
               </div>
             }
             @if (child.todayTasks.length === 0) {
-              <div class="text-center py-4 text-gray-400 text-xs font-semibold">
+              <div class="text-center py-5 text-slate-400 text-xs">
                 Tidak ada tugas pada periode ini
               </div>
             }

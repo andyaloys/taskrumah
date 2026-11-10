@@ -49,4 +49,22 @@ export class ChildRewardsComponent implements OnInit {
   getUserPoints(): number {
     return this.auth.currentUser()?.totalPoints || 0;
   }
+
+  getRedemptionStatusLabel(status: RedemptionStatus): string {
+    const labels: Record<RedemptionStatus, string> = {
+      [RedemptionStatus.Pending]: 'Menunggu Persetujuan',
+      [RedemptionStatus.Approved]: 'Disetujui',
+      [RedemptionStatus.Rejected]: 'Ditolak',
+    };
+    return labels[status] || status;
+  }
+
+  getRedemptionStatusClass(status: RedemptionStatus): string {
+    const classes: Record<RedemptionStatus, string> = {
+      [RedemptionStatus.Pending]: 'bg-amber-50 text-amber-700 border border-amber-200/80',
+      [RedemptionStatus.Approved]: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
+      [RedemptionStatus.Rejected]: 'bg-rose-50 text-rose-700 border border-rose-200/80',
+    };
+    return classes[status] || 'bg-slate-100 text-slate-700 border border-slate-200/80';
+  }
 }
