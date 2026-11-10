@@ -9,51 +9,68 @@ import { NotificationService } from '../../../core/services/notification.service
   standalone: true,
   imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="min-h-screen bg-slate-50 text-slate-800">
       <!-- Top Nav -->
-      <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="text-2xl">🏠</span>
-            <span class="font-black text-xl text-purple-700">TaskRumah</span>
+      <header class="bg-white border-b border-slate-200/80 sticky top-0 z-10">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+              TR
+            </div>
+            <span class="font-bold text-base tracking-tight text-slate-900">TaskRumah</span>
           </div>
           <div class="flex items-center space-x-3">
             <div class="text-right">
-              <p class="text-sm font-black text-gray-800">{{ currentUser()?.name }}</p>
-              <p class="text-xs text-yellow-600 font-bold">⭐ {{ currentUser()?.totalPoints }} poin</p>
+              <p class="text-xs font-bold text-slate-800">{{ currentUser()?.name }}</p>
+              <div class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded text-[11px] border border-amber-200/60">
+                <span>⭐</span>
+                <span>{{ currentUser()?.totalPoints }} poin</span>
+              </div>
             </div>
-            <button (click)="logout()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-xl text-sm font-bold">🚪</button>
+            <button (click)="logout()" title="Keluar" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl text-xs font-semibold transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+            </button>
           </div>
         </div>
       </header>
 
       <!-- Main Content -->
-      <main class="max-w-lg mx-auto px-4 py-6 pb-24">
+      <main class="max-w-md mx-auto px-4 py-5 pb-24">
         <router-outlet></router-outlet>
       </main>
 
       <!-- Bottom Nav -->
-      <nav class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 shadow-xl">
-        <div class="max-w-lg mx-auto flex">
-          <a routerLink="/child/dashboard" routerLinkActive="text-purple-600"
-            class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-600 transition-all">
-            <span class="text-2xl">🏠</span>
-            <span class="text-xs font-bold mt-1">Beranda</span>
+      <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-20 shadow-lg">
+        <div class="max-w-md mx-auto flex">
+          <a routerLink="/child/dashboard" routerLinkActive="text-indigo-600 font-bold"
+            class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            <span>Beranda</span>
           </a>
-          <a routerLink="/child/tasks" routerLinkActive="text-purple-600"
-            class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-600 transition-all">
-            <span class="text-2xl">📋</span>
-            <span class="text-xs font-bold mt-1">Tugasku</span>
+          <a routerLink="/child/tasks" routerLinkActive="text-indigo-600 font-bold"
+            class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span>Tugasku</span>
           </a>
-          <a routerLink="/child/rewards" routerLinkActive="text-purple-600"
-            class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-600 transition-all">
-            <span class="text-2xl">🎁</span>
-            <span class="text-xs font-bold mt-1">Hadiah</span>
+          <a routerLink="/child/rewards" routerLinkActive="text-indigo-600 font-bold"
+            class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+            </svg>
+            <span>Hadiah</span>
           </a>
-          <a routerLink="/child/profile" routerLinkActive="text-purple-600"
-            class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-purple-600 transition-all">
-            <span class="text-2xl">👤</span>
-            <span class="text-xs font-bold mt-1">Profil</span>
+          <a routerLink="/child/profile" routerLinkActive="text-indigo-600 font-bold"
+            class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span>Profil</span>
           </a>
         </div>
       </nav>
