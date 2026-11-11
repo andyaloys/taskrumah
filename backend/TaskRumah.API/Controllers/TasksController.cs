@@ -142,7 +142,10 @@ public class TasksController : ControllerBase
         var task = await _db.ChoreTasks.FindAsync(id);
         if (task == null || !task.IsActive) return NotFound();
 
-        var targetDate = req.DueDate?.Date ?? DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var targetDate = req.DueDate.HasValue
+            ? DateTime.SpecifyKind(req.DueDate.Value.Date, DateTimeKind.Utc)
+            : today;
         var assignees = new List<Guid>();
 
         if (req.AssignedToId.HasValue)
@@ -162,6 +165,7 @@ public class TasksController : ControllerBase
             assignees.AddRange(children);
         }
 
+        var dueDate = targetDate.AddDays(1).AddSeconds(-1);
         foreach (var childId in assignees)
         {
             _db.TaskAssignments.Add(new TaskAssignment
@@ -169,7 +173,7 @@ public class TasksController : ControllerBase
                 Id = Guid.NewGuid(),
                 TaskId = task.Id,
                 AssignedToId = childId,
-                DueDate = targetDate.AddDays(1).AddSeconds(-1),
+                DueDate = dueDate,
                 Status = AssignmentStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             });
@@ -195,11 +199,12 @@ public class TasksController : ControllerBase
 
     private async Task SyncTodayAssignmentsForTaskAsync(ChoreTask task)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var tomorrow = today.AddDays(1);
         var dayNum = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 
         var todayPending = await _db.TaskAssignments
-            .Where(a => a.TaskId == task.Id && a.DueDate.Date == today && a.Status == AssignmentStatus.Pending)
+            .Where(a => a.TaskId == task.Id && a.DueDate >= today && a.DueDate < tomorrow && a.Status == AssignmentStatus.Pending)
             .ToListAsync();
 
         if (!task.IsActive)
@@ -253,7 +258,7 @@ public class TasksController : ControllerBase
         }
 
         var existingChildIds = await _db.TaskAssignments
-            .Where(a => a.TaskId == task.Id && a.DueDate.Date == today)
+            .Where(a => a.TaskId == task.Id && a.DueDate >= today && a.DueDate < tomorrow)
             .Select(a => a.AssignedToId)
             .ToListAsync();
 
@@ -279,7 +284,7 @@ public class TasksController : ControllerBase
 
     private async Task CreateTodayAssignmentsAsync(ChoreTask task, DateTime? targetDate = null)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var dayNum = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 
         if (task.TaskType == TaskType.SpecificDays)
@@ -288,7 +293,10 @@ public class TasksController : ControllerBase
                 return;
         }
 
-        var dueDate = (targetDate?.Date ?? today).AddDays(1).AddSeconds(-1);
+        DateTime target = targetDate.HasValue
+            ? DateTime.SpecifyKind(targetDate.Value.Date, DateTimeKind.Utc)
+            : today;
+        var dueDate = target.AddDays(1).AddSeconds(-1);
         var assignees = new List<Guid>();
 
         if (task.AssignedToId.HasValue)

@@ -39,7 +39,9 @@ public class TaskAssignmentsController : ControllerBase
         [FromQuery] DateTime? date,
         [FromQuery] Guid? userId)
     {
-        var targetDate = date?.Date ?? DateTime.UtcNow.Date;
+        var targetDate = date.HasValue
+            ? DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc)
+            : DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         Guid? targetUserId = userId;
 
         if (CurrentRole == "Child")
@@ -71,7 +73,11 @@ public class TaskAssignmentsController : ControllerBase
             query = query.Where(a => a.Status == status.Value);
 
         if (date.HasValue)
-            query = query.Where(a => a.DueDate.Date == date.Value.Date);
+        {
+            var dateUtc = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
+            var nextDayUtc = dateUtc.AddDays(1);
+            query = query.Where(a => a.DueDate >= dateUtc && a.DueDate < nextDayUtc);
+        }
 
         var assignments = await query
             .OrderByDescending(a => a.DueDate)
@@ -111,7 +117,7 @@ public class TaskAssignmentsController : ControllerBase
         if (CurrentRole == "Child" && assignment.AssignedToId != CurrentUserId)
             return Forbid();
 
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var minAllowedDate = today.AddDays(-1);
         if (assignment.DueDate.Date < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
@@ -149,7 +155,7 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var minAllowedDate = today.AddDays(-1);
         if (assignment.DueDate.Date < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
@@ -206,7 +212,7 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var minAllowedDate = today.AddDays(-1);
         if (assignment.DueDate.Date < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
@@ -249,7 +255,7 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var minAllowedDate = today.AddDays(-1);
         if (assignment.DueDate.Date < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });

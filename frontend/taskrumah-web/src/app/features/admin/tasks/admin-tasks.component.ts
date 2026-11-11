@@ -130,7 +130,7 @@ export class AdminTasksComponent implements OnInit {
   }
 
   save() {
-    if (this.form.invalid) return;
+    if (this.saving() || this.form.invalid) return;
     this.saving.set(true);
     const formVal = this.form.value;
     const data: any = {
@@ -147,7 +147,8 @@ export class AdminTasksComponent implements OnInit {
       data.daysOfWeek = this.selectedDays().join(',');
     }
 
-    const request = this.editingTask()
+    const isEdit = !!this.editingTask();
+    const request = isEdit
       ? this.taskService.updateTask(this.editingTask()!.id, data)
       : this.taskService.createTask(data);
 
@@ -156,8 +157,13 @@ export class AdminTasksComponent implements OnInit {
         this.showForm.set(false);
         this.loadData();
         this.saving.set(false);
+        this.dialog.success(isEdit ? 'Tugas berhasil diperbarui!' : 'Tugas baru berhasil dibuat!');
       },
-      error: () => this.saving.set(false)
+      error: (err) => {
+        this.saving.set(false);
+        const msg = err?.error?.message || 'Gagal menyimpan tugas. Silakan coba lagi.';
+        this.dialog.error(msg);
+      }
     });
   }
 
