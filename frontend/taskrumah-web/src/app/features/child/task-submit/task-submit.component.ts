@@ -38,11 +38,25 @@ export class TaskSubmitComponent implements OnInit {
     });
   }
 
+  backUrl(): string {
+    const from = this.route.snapshot.queryParamMap.get('from');
+    return from === 'tasks' ? '/child/tasks' : '/child/dashboard';
+  }
+
+  backLabel(): string {
+    const from = this.route.snapshot.queryParamMap.get('from');
+    return from === 'tasks' ? 'Kembali ke Daftar Tugas' : 'Kembali ke Beranda';
+  }
+
   canModify(): boolean {
     const a = this.assignment();
-    if (!a) return false;
-    const due = new Date(a.dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    if (!a || !a.dueDate) return false;
+    const raw = typeof (a.dueDate as any) === 'string'
+      ? (a.dueDate as any)
+      : ((a.dueDate as any).toISOString ? (a.dueDate as any).toISOString() : String(a.dueDate));
+    const dateStr = raw.substring(0, 10);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dueDateOnly = new Date(y, m - 1, d);
     const today = new Date();
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     return dueDateOnly >= yesterday;
@@ -146,7 +160,14 @@ export class TaskSubmitComponent implements OnInit {
     this.submitting.set(true);
     this.assignmentService.submitTask(this.assignment()!.id, this.note, this.selectedPhoto || undefined)
       .subscribe({
-        next: () => { this.router.navigate(['/child/tasks']); },
+        next: () => {
+          const from = this.route.snapshot.queryParamMap.get('from');
+          if (from === 'tasks') {
+            this.router.navigate(['/child/tasks']);
+          } else {
+            this.router.navigate(['/child/dashboard']);
+          }
+        },
         error: () => this.submitting.set(false)
       });
   }

@@ -21,7 +21,16 @@ export class AdminRewardsComponent implements OnInit {
   saving = signal(false);
   RedemptionStatus = RedemptionStatus;
 
-  emojiOptions = ['🍦', '🎮', '🎬', '🏖️', '🍕', '🧁', '📱', '🚲', '🎪', '🎡'];
+  emojiOptions = [
+    // Hadiah Uang & Belanja
+    '💵', '💰', '🪙', '💸', '💳', '🤑', '🛍️',
+    // Tempat Bermain, Arcade, Timezone & Hiburan
+    '🕹️', '🎮', '👾', '🎟️', '🎡', '🎢', '🎳', '🎪',
+    // Mainan, Gadget & Rekreasi
+    '📱', '🚲', '🛹', '🧸', '🎁', '⭐',
+    // Makanan & Minuman Favorit
+    '🍦', '🍕', '🧁', '🍔', '🍟', '🍩', '🍫', '🍿', '🎬', '🏖️'
+  ];
 
   constructor(
     private rewardService: RewardService,

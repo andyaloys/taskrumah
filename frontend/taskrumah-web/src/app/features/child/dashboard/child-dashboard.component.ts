@@ -160,8 +160,9 @@ export class ChildDashboardComponent implements OnInit {
 
   canModify(dueDate: string | Date): boolean {
     if (!dueDate) return false;
-    const due = new Date(dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const dateStr = typeof dueDate === 'string' ? dueDate.substring(0, 10) : new Date(dueDate).toISOString().substring(0, 10);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dueDateOnly = new Date(y, m - 1, d);
     const today = new Date();
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     return dueDateOnly >= yesterday;

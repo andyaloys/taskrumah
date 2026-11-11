@@ -43,7 +43,20 @@ export class AdminTasksComponent implements OnInit {
   assignDueDate = signal(new Date().toISOString().substring(0, 10));
   isAssigning = signal(false);
 
-  emojiOptions = ['🧹', '🌱', '📚', '🍽️', '🛏️', '🚾', '🗑️', '🛒', '🧺', '🧼', '🐕', '🌙', '☀️', '🍳', '🧴'];
+  emojiOptions = [
+    // Olahraga & Aktivitas Fisik
+    '🏃', '🚴', '⚽', '🏀', '🏸', '🧘', '🏊', '🤸',
+    // Ibadah Sholat & Doa
+    '🕌', '🤲', '📿', '🛐', '📖',
+    // Bangun Tidur & Rutinitas Pagi/Malam
+    '⏰', '🌅', '🥱', '🛌', '🌄', '☀️', '🌙',
+    // Pintu & Keamanan Rumah
+    '🚪', '🔐', '🔒', '🔑',
+    // Kebersihan & Rumah Tangga
+    '🧹', '🌱', '📚', '🍽️', '🛏️', '🚾', '🗑️', '🛒', '🧺', '🧼', '🍳', '🧴',
+    // Lain-lain & Belajar
+    '🐕', '🐱', '🎒', '✏️', '💻', '✅'
+  ];
 
   constructor(
     private taskService: TaskService,

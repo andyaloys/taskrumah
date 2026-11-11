@@ -128,7 +128,7 @@
               <div class="min-w-0">
                 <p class="font-bold text-xs text-slate-900 truncate">{{ task.taskTitle }}</p>
                 <div class="flex items-center space-x-1.5 mt-0.5">
-                  @if (activeView() === 'tomorrow' || isFutureDate(task.dueDate)) {
+                  @if (activeView() === 'tomorrow' || (activeView() !== 'today' && activeView() !== 'yesterday' && isFutureDate(task.dueDate) && task.status === AssignmentStatus.Pending)) {
                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                       Terjadwal
                     </span>
@@ -151,15 +151,25 @@
             </div>
 
             <div class="shrink-0">
-              @if (activeView() === 'tomorrow' || isFutureDate(task.dueDate)) {
+              @if (activeView() === 'tomorrow' || (activeView() !== 'today' && activeView() !== 'yesterday' && isFutureDate(task.dueDate) && task.status === AssignmentStatus.Pending)) {
                 <span class="text-[11px] text-slate-400 font-medium bg-slate-100 py-1 px-2.5 rounded-lg border border-slate-200 inline-block">
                   Terjadwal
                 </span>
+              } @else if (task.status === AssignmentStatus.Approved) {
+                <span class="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                  <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  Disetujui
+                </span>
+              } @else if (task.status === AssignmentStatus.Submitted) {
+                <span class="inline-flex items-center text-xs font-semibold text-sky-700 bg-sky-50 px-2.5 py-1.5 rounded-lg border border-sky-200">
+                  <svg class="w-3.5 h-3.5 mr-1 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Menunggu Review
+                </span>
               } @else if (task.status === AssignmentStatus.Pending || task.status === AssignmentStatus.Rejected || task.status === AssignmentStatus.Late) {
                 @if (canModify(task.dueDate)) {
-                  <a [routerLink]="['/child/tasks', (task.id || task.taskId), 'submit']"
-                    class="btn-primary text-xs py-1.5 px-3">
-                    {{ activeView() === 'yesterday' || isPastDate(task.dueDate) ? 'Kerjakan Susulan' : 'Kerjakan' }}
+                  <a [routerLink]="['/child/tasks', (task.id || task.taskId), 'submit']" [queryParams]="{ from: 'tasks' }"
+                    [class]="task.status === AssignmentStatus.Rejected ? 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-1.5 px-3 rounded-xl shadow-xs transition-colors' : 'btn-primary text-xs py-1.5 px-3'">
+                    {{ task.status === AssignmentStatus.Rejected ? 'Perbaiki & Kirim Ulang' : (activeView() === 'yesterday' || isPastDate(task.dueDate) ? 'Kerjakan Susulan' : 'Kerjakan') }}
                   </a>
                 } @else {
                   <span class="text-[11px] text-slate-400 font-medium bg-slate-100 py-1.5 px-2 rounded-lg border border-slate-200" title="Tugas lewat lebih dari 1 hari telah dikunci">

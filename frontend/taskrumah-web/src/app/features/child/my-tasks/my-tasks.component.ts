@@ -146,10 +146,16 @@ export class MyTasksComponent implements OnInit {
     return this.assignments().filter(a => a.status === f);
   }
 
+  private getDueDateOnly(dueDate: string | Date): Date {
+    if (!dueDate) return new Date();
+    const dateStr = typeof dueDate === 'string' ? dueDate.substring(0, 10) : new Date(dueDate).toISOString().substring(0, 10);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   canModify(dueDate: string | Date): boolean {
     if (!dueDate) return false;
-    const due = new Date(dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const dueDateOnly = this.getDueDateOnly(dueDate);
     const today = new Date();
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     return dueDateOnly >= yesterday;
@@ -157,8 +163,7 @@ export class MyTasksComponent implements OnInit {
 
   isPastDate(dueDate: string | Date): boolean {
     if (!dueDate) return false;
-    const due = new Date(dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const dueDateOnly = this.getDueDateOnly(dueDate);
     const today = new Date();
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return dueDateOnly < todayOnly;
@@ -166,8 +171,7 @@ export class MyTasksComponent implements OnInit {
 
   isFutureDate(dueDate: string | Date): boolean {
     if (!dueDate) return false;
-    const due = new Date(dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const dueDateOnly = this.getDueDateOnly(dueDate);
     const today = new Date();
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return dueDateOnly > todayOnly;
