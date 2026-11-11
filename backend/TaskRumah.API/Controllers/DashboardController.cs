@@ -154,9 +154,9 @@ public class DashboardController : ControllerBase
         var tomorrowTasks = await _scheduleService.GetAssignmentsForDateAsync(tomorrow, userId);
 
         var weeklyPoints = await _db.TaskAssignments
-            .Include(a => a.Task)
             .Where(a => a.AssignedToId == userId && a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeek && a.DueDate <= endOfWeek)
-            .SumAsync(a => a.Task.Points);
+            .Select(a => (int?)a.Task.Points)
+            .SumAsync() ?? 0;
 
         var recentNotifications = await _db.Notifications
             .Where(n => n.UserId == userId && !n.IsRead)
