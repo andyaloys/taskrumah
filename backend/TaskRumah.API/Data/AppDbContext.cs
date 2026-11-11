@@ -111,7 +111,7 @@ public class AppDbContext : DbContext
             new User
             {
                 Id = ayahId,
-                Name = "Ayah",
+                Name = "Papah",
                 Email = "ayah@taskrumah.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Ayah@123"),
                 Role = UserRole.Admin,
@@ -125,7 +125,7 @@ public class AppDbContext : DbContext
             new User
             {
                 Id = ibuId,
-                Name = "Ibu",
+                Name = "Mamah",
                 Email = "ibu@taskrumah.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Ibu@123"),
                 Role = UserRole.Admin,
