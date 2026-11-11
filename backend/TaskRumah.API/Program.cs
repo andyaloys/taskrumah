@@ -92,6 +92,44 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("ALTER TABLE \"ChoreTasks\" ADD COLUMN IF NOT EXISTS \"DaysOfWeek\" text;");
+
+    // Configure database timezone to Asia/Jakarta (WIB)
+    try
+    {
+        db.Database.ExecuteSqlRaw("ALTER DATABASE taskrumah SET timezone TO 'Asia/Jakarta';");
+        db.Database.ExecuteSqlRaw("ALTER ROLE taskrumah_user SET timezone TO 'Asia/Jakarta';");
+        db.Database.ExecuteSqlRaw("SET TIME ZONE 'Asia/Jakarta';");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Timezone config note: {ex.Message}");
+    }
+
+    // Update existing records to align with Jakarta Time (WIB)
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            UPDATE ""TaskAssignments""
+            SET ""DueDate"" = ""DueDate"" - INTERVAL '7 hours'
+            WHERE EXTRACT(HOUR FROM ""DueDate"" AT TIME ZONE 'UTC') = 23;
+        ");
+
+        db.Database.ExecuteSqlRaw(@"
+            UPDATE ""TaskAssignments""
+            SET ""DueDate"" = ""DueDate"" + INTERVAL '16 hours 59 minutes 59 seconds'
+            WHERE EXTRACT(HOUR FROM ""DueDate"" AT TIME ZONE 'UTC') = 0 AND EXTRACT(MINUTE FROM ""DueDate"" AT TIME ZONE 'UTC') = 0;
+        ");
+
+        db.Database.ExecuteSqlRaw(@"
+            UPDATE ""Users""
+            SET ""LastStreakDate"" = ""LastStreakDate"" - INTERVAL '7 hours'
+            WHERE EXTRACT(HOUR FROM ""LastStreakDate"" AT TIME ZONE 'UTC') = 0;
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Data migration note: {ex.Message}");
+    }
 }
 
 app.Run();

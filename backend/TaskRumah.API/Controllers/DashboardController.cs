@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,20 +30,16 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAdminDashboard([FromQuery] int weekOffset = 0, [FromQuery] string? date = null)
     {
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        DateTime targetDate;
-        if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
-        {
-            targetDate = DateTime.SpecifyKind(parsedDate.Date, DateTimeKind.Utc);
-        }
-        else
-        {
-            targetDate = DateTime.SpecifyKind(today.AddDays(weekOffset * 7), DateTimeKind.Utc);
-        }
+        var today = JakartaTime.Today;
+        DateTime targetDate = (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+            ? parsedDate.Date
+            : today.AddDays(weekOffset * 7);
 
         int diff = (7 + (int)targetDate.DayOfWeek - (int)DayOfWeek.Monday) % 7;
         var startOfWeek = targetDate.AddDays(-diff);
-        var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+        var endOfWeek = startOfWeek.AddDays(6);
+        var startOfWeekUtc = JakartaTime.StartOfDayUtc(startOfWeek);
+        var endOfWeekUtc = JakartaTime.EndOfDayUtc(endOfWeek);
 
         var children = await _db.Users
             .Where(u => u.Role == UserRole.Child && u.IsActive)
@@ -60,7 +57,7 @@ public class DashboardController : ControllerBase
                 .Include(a => a.AssignedTo)
                 .Include(a => a.ReviewedBy)
                 .Include(a => a.Comments)
-                .Where(a => a.DueDate >= startOfWeek && a.DueDate <= endOfWeek)
+                .Where(a => a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
                 .OrderByDescending(a => a.DueDate)
                 .ToListAsync();
             displayAssignmentDtos = rawAssignments.Select(MapAssignmentToDto).ToList();
@@ -68,7 +65,7 @@ public class DashboardController : ControllerBase
 
         var weeklyAssignments = await _db.TaskAssignments
             .Include(a => a.Task)
-            .Where(a => a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeek && a.DueDate <= endOfWeek)
+            .Where(a => a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
             .ToListAsync();
 
         var childProgressList = children.Select(child =>
@@ -117,20 +114,16 @@ public class DashboardController : ControllerBase
         var user = await _db.Users.FindAsync(userId);
         if (user == null) return NotFound();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        DateTime targetDate;
-        if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
-        {
-            targetDate = DateTime.SpecifyKind(parsedDate.Date, DateTimeKind.Utc);
-        }
-        else
-        {
-            targetDate = DateTime.SpecifyKind(today.AddDays(weekOffset * 7), DateTimeKind.Utc);
-        }
+        var today = JakartaTime.Today;
+        DateTime targetDate = (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+            ? parsedDate.Date
+            : today.AddDays(weekOffset * 7);
 
         int diff = (7 + (int)targetDate.DayOfWeek - (int)DayOfWeek.Monday) % 7;
         var startOfWeek = targetDate.AddDays(-diff);
-        var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+        var endOfWeek = startOfWeek.AddDays(6);
+        var startOfWeekUtc = JakartaTime.StartOfDayUtc(startOfWeek);
+        var endOfWeekUtc = JakartaTime.EndOfDayUtc(endOfWeek);
 
         List<TaskAssignmentDto> displayAssignmentDtos;
         if (weekOffset == 0 || !string.IsNullOrEmpty(date))
@@ -144,7 +137,7 @@ public class DashboardController : ControllerBase
                 .Include(a => a.AssignedTo)
                 .Include(a => a.ReviewedBy)
                 .Include(a => a.Comments)
-                .Where(a => a.AssignedToId == userId && a.DueDate >= startOfWeek && a.DueDate <= endOfWeek)
+                .Where(a => a.AssignedToId == userId && a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
                 .OrderByDescending(a => a.DueDate)
                 .ToListAsync();
             displayAssignmentDtos = rawAssignments.Select(MapAssignmentToDto).ToList();
@@ -154,7 +147,7 @@ public class DashboardController : ControllerBase
         var tomorrowTasks = await _scheduleService.GetAssignmentsForDateAsync(tomorrow, userId);
 
         var weeklyPoints = await _db.TaskAssignments
-            .Where(a => a.AssignedToId == userId && a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeek && a.DueDate <= endOfWeek)
+            .Where(a => a.AssignedToId == userId && a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
             .Select(a => (int?)a.Task.Points)
             .SumAsync() ?? 0;
 

@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -50,7 +51,7 @@ public class RewardsController : ControllerBase
             IconEmoji = req.IconEmoji,
             CreatedById = CurrentUserId,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = JakartaTime.UtcNow
         };
         _db.Rewards.Add(reward);
         await _db.SaveChangesAsync();
@@ -104,7 +105,7 @@ public class RewardsController : ControllerBase
             RewardId = id,
             UserId = CurrentUserId,
             Status = RedemptionStatus.Pending,
-            RequestedAt = DateTime.UtcNow
+            RequestedAt = JakartaTime.UtcNow
         };
         _db.RewardRedemptions.Add(redemption);
         await _db.SaveChangesAsync();
@@ -158,7 +159,7 @@ public class RewardsController : ControllerBase
             return BadRequest(new { message = "Permintaan sudah diproses" });
 
         redemption.Status = req.Status;
-        redemption.ProcessedAt = DateTime.UtcNow;
+        redemption.ProcessedAt = JakartaTime.UtcNow;
         redemption.ProcessedById = CurrentUserId;
         redemption.Notes = req.Notes;
 

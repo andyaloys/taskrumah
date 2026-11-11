@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using Microsoft.EntityFrameworkCore;
 using TaskRumah.API.Data;
 using TaskRumah.API.DTOs;
@@ -16,9 +17,9 @@ public class TaskScheduleService
 
     public async Task<List<TaskAssignmentDto>> GetAssignmentsForDateAsync(DateTime targetDate, Guid? childId = null)
     {
-        var startOfDay = DateTime.SpecifyKind(targetDate.Date, DateTimeKind.Utc);
-        var endOfDay = startOfDay.AddDays(1).AddSeconds(-1);
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var startOfDay = JakartaTime.StartOfDayUtc(targetDate);
+        var endOfDay = JakartaTime.EndOfDayUtc(targetDate);
+        var today = JakartaTime.Today;
 
         // 1. Fetch existing assignments from DB for that date
         var query = _db.TaskAssignments
@@ -37,9 +38,9 @@ public class TaskScheduleService
         var result = existingAssignments.Select(MapAssignmentToDto).ToList();
 
         // 2. If target date is today or in the future, project active recurring tasks
-        if (startOfDay >= today)
+        if (targetDate.Date >= today)
         {
-            var dayNum = startOfDay.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)startOfDay.DayOfWeek;
+            var dayNum = targetDate.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)targetDate.DayOfWeek;
 
             var activeTasks = await _db.ChoreTasks
                 .Include(t => t.AssignedTo)

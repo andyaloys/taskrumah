@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using Microsoft.EntityFrameworkCore;
 using TaskRumah.API.Data;
 using TaskRumah.API.Models;
@@ -24,7 +25,7 @@ public class NotificationService
             Type = type,
             IsRead = false,
             RelatedEntityId = relatedEntityId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = JakartaTime.UtcNow
         };
         _db.Notifications.Add(notification);
         await _db.SaveChangesAsync();
@@ -44,7 +45,7 @@ public class NotificationService
                 Type = type,
                 IsRead = false,
                 RelatedEntityId = relatedEntityId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = JakartaTime.UtcNow
             });
         }
         await _db.SaveChangesAsync();

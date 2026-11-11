@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-taskrumah}
       POSTGRES_USER: ${DB_USER:-taskrumah_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -22,6 +24,7 @@ services:
     container_name: taskrumah_api
     restart: unless-stopped
     environment:
+      TZ: Asia/Jakarta
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${DB_NAME:-taskrumah};Username=${DB_USER:-taskrumah_user};Password=${DB_PASSWORD}"

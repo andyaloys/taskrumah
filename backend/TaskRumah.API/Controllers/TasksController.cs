@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -76,7 +77,7 @@ public class TasksController : ControllerBase
             Points = req.Points,
             IconEmoji = req.IconEmoji,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = JakartaTime.UtcNow
         };
 
         _db.ChoreTasks.Add(task);
@@ -142,9 +143,9 @@ public class TasksController : ControllerBase
         var task = await _db.ChoreTasks.FindAsync(id);
         if (task == null || !task.IsActive) return NotFound();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var today = JakartaTime.Today;
         var targetDate = req.DueDate.HasValue
-            ? DateTime.SpecifyKind(req.DueDate.Value.Date, DateTimeKind.Utc)
+            ? req.DueDate.Value.Date
             : today;
         var assignees = new List<Guid>();
 
@@ -165,7 +166,7 @@ public class TasksController : ControllerBase
             assignees.AddRange(children);
         }
 
-        var dueDate = targetDate.AddDays(1).AddSeconds(-1);
+        var dueDate = JakartaTime.EndOfDayUtc(targetDate);
         foreach (var childId in assignees)
         {
             _db.TaskAssignments.Add(new TaskAssignment
@@ -175,7 +176,7 @@ public class TasksController : ControllerBase
                 AssignedToId = childId,
                 DueDate = dueDate,
                 Status = AssignmentStatus.Pending,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = JakartaTime.UtcNow
             });
         }
 
@@ -199,12 +200,13 @@ public class TasksController : ControllerBase
 
     private async Task SyncTodayAssignmentsForTaskAsync(ChoreTask task)
     {
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        var tomorrow = today.AddDays(1);
+        var today = JakartaTime.Today;
+        var startOfDay = JakartaTime.StartOfDayUtc(today);
+        var endOfDay = JakartaTime.EndOfDayUtc(today);
         var dayNum = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 
         var todayPending = await _db.TaskAssignments
-            .Where(a => a.TaskId == task.Id && a.DueDate >= today && a.DueDate < tomorrow && a.Status == AssignmentStatus.Pending)
+            .Where(a => a.TaskId == task.Id && a.DueDate >= startOfDay && a.DueDate <= endOfDay && a.Status == AssignmentStatus.Pending)
             .ToListAsync();
 
         if (!task.IsActive)
@@ -258,11 +260,11 @@ public class TasksController : ControllerBase
         }
 
         var existingChildIds = await _db.TaskAssignments
-            .Where(a => a.TaskId == task.Id && a.DueDate >= today && a.DueDate < tomorrow)
+            .Where(a => a.TaskId == task.Id && a.DueDate >= startOfDay && a.DueDate <= endOfDay)
             .Select(a => a.AssignedToId)
             .ToListAsync();
 
-        var dueDate = today.AddDays(1).AddSeconds(-1);
+        var dueDate = JakartaTime.EndOfDayUtc(today);
         foreach (var childId in targetAssignees)
         {
             if (!existingChildIds.Contains(childId))
@@ -284,7 +286,7 @@ public class TasksController : ControllerBase
 
     private async Task CreateTodayAssignmentsAsync(ChoreTask task, DateTime? targetDate = null)
     {
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var today = JakartaTime.Today;
         var dayNum = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 
         if (task.TaskType == TaskType.SpecificDays)
@@ -294,9 +296,9 @@ public class TasksController : ControllerBase
         }
 
         DateTime target = targetDate.HasValue
-            ? DateTime.SpecifyKind(targetDate.Value.Date, DateTimeKind.Utc)
+            ? targetDate.Value.Date
             : today;
-        var dueDate = target.AddDays(1).AddSeconds(-1);
+        var dueDate = JakartaTime.EndOfDayUtc(target);
         var assignees = new List<Guid>();
 
         if (task.AssignedToId.HasValue)
@@ -321,7 +323,7 @@ public class TasksController : ControllerBase
                 AssignedToId = assigneeId,
                 DueDate = dueDate,
                 Status = AssignmentStatus.Pending,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = JakartaTime.UtcNow
             });
         }
 

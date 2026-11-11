@@ -7,6 +7,8 @@ services:
       POSTGRES_DB: taskrumah
       POSTGRES_USER: taskrumah_user
       POSTGRES_PASSWORD: TaskRumah@2024
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
     ports:
       - "5433:5432"
     volumes:

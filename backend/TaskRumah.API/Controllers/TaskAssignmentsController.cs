@@ -1,3 +1,4 @@
+using TaskRumah.API.Common;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,9 +40,7 @@ public class TaskAssignmentsController : ControllerBase
         [FromQuery] DateTime? date,
         [FromQuery] Guid? userId)
     {
-        var targetDate = date.HasValue
-            ? DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc)
-            : DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var targetDate = date.HasValue ? date.Value.Date : JakartaTime.Today;
         Guid? targetUserId = userId;
 
         if (CurrentRole == "Child")
@@ -74,9 +73,9 @@ public class TaskAssignmentsController : ControllerBase
 
         if (date.HasValue)
         {
-            var dateUtc = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
-            var nextDayUtc = dateUtc.AddDays(1);
-            query = query.Where(a => a.DueDate >= dateUtc && a.DueDate < nextDayUtc);
+            var startUtc = JakartaTime.StartOfDayUtc(date.Value);
+            var endUtc = JakartaTime.EndOfDayUtc(date.Value);
+            query = query.Where(a => a.DueDate >= startUtc && a.DueDate <= endUtc);
         }
 
         var assignments = await query
@@ -117,9 +116,9 @@ public class TaskAssignmentsController : ControllerBase
         if (CurrentRole == "Child" && assignment.AssignedToId != CurrentUserId)
             return Forbid();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        var minAllowedDate = today.AddDays(-1);
-        if (assignment.DueDate.Date < minAllowedDate)
+        var today = JakartaTime.Today;
+        var minAllowedDate = JakartaTime.StartOfDayUtc(today.AddDays(-1));
+        if (assignment.DueDate < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
 
         if (assignment.Status != AssignmentStatus.Pending && assignment.Status != AssignmentStatus.Rejected && assignment.Status != AssignmentStatus.Late)
@@ -130,11 +129,11 @@ public class TaskAssignmentsController : ControllerBase
 
         assignment.SubmissionNote = req.SubmissionNote;
         assignment.Status = AssignmentStatus.Submitted;
-        assignment.CompletedAt = DateTime.UtcNow;
+        assignment.CompletedAt = JakartaTime.UtcNow;
 
         await _db.SaveChangesAsync();
 
-        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
+        var timeStr = JakartaTime.FormatWib();
         await _notificationService.CreateForAdminsAsync(
             $"Tugas Dikirim! 📋",
             $"{assignment.AssignedTo.Name} telah mengajukan bukti tugas '{assignment.Task.Title}' pada {timeStr}",
@@ -156,16 +155,16 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        var minAllowedDate = today.AddDays(-1);
-        if (assignment.DueDate.Date < minAllowedDate)
+        var today = JakartaTime.Today;
+        var minAllowedDate = JakartaTime.StartOfDayUtc(today.AddDays(-1));
+        if (assignment.DueDate < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
 
         if (assignment.Status == AssignmentStatus.Approved)
             return BadRequest(new { message = "Tugas sudah disetujui sebelumnya" });
 
         assignment.Status = AssignmentStatus.Approved;
-        assignment.ReviewedAt = DateTime.UtcNow;
+        assignment.ReviewedAt = JakartaTime.UtcNow;
         assignment.ReviewedById = CurrentUserId;
 
         // Add points to user
@@ -178,20 +177,20 @@ public class TaskAssignmentsController : ControllerBase
             if (user.LastStreakDate.Date == today.AddDays(-1))
             {
                 user.CurrentStreak++;
-                user.LastStreakDate = today;
+                user.LastStreakDate = JakartaTime.StartOfDayUtc(today);
                 if (user.CurrentStreak > user.LongestStreak)
                     user.LongestStreak = user.CurrentStreak;
             }
             else if (user.LastStreakDate.Date != today)
             {
                 user.CurrentStreak = 1;
-                user.LastStreakDate = today;
+                user.LastStreakDate = JakartaTime.StartOfDayUtc(today);
             }
         }
 
         await _db.SaveChangesAsync();
 
-        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
+        var timeStr = JakartaTime.FormatWib();
         await _notificationService.CreateAsync(
             assignment.AssignedToId,
             "Tugas Disetujui! 🎉",
@@ -214,9 +213,9 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        var minAllowedDate = today.AddDays(-1);
-        if (assignment.DueDate.Date < minAllowedDate)
+        var today = JakartaTime.Today;
+        var minAllowedDate = JakartaTime.StartOfDayUtc(today.AddDays(-1));
+        if (assignment.DueDate < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
 
         var oldStatus = assignment.Status;
@@ -226,12 +225,12 @@ public class TaskAssignmentsController : ControllerBase
             return Ok(MapToDto(assignment));
 
         var user = await _db.Users.FindAsync(assignment.AssignedToId);
-        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
+        var timeStr = JakartaTime.FormatWib();
 
         if (newStatus == AssignmentStatus.Approved && oldStatus != AssignmentStatus.Approved)
         {
             if (user != null) user.TotalPoints += assignment.Task.Points;
-            assignment.ReviewedAt = DateTime.UtcNow;
+            assignment.ReviewedAt = JakartaTime.UtcNow;
             assignment.ReviewedById = CurrentUserId;
 
             await _notificationService.CreateAsync(
@@ -276,22 +275,22 @@ public class TaskAssignmentsController : ControllerBase
 
         if (assignment == null) return NotFound();
 
-        var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        var minAllowedDate = today.AddDays(-1);
-        if (assignment.DueDate.Date < minAllowedDate)
+        var today = JakartaTime.Today;
+        var minAllowedDate = JakartaTime.StartOfDayUtc(today.AddDays(-1));
+        if (assignment.DueDate < minAllowedDate)
             return BadRequest(new { message = "Data tugas yang sudah lewat lebih dari 1 hari telah dikunci dan tidak dapat diubah lagi." });
 
         if (assignment.Status != AssignmentStatus.Submitted)
             return BadRequest(new { message = "Tugas harus dalam status Submitted untuk ditolak" });
 
         assignment.Status = AssignmentStatus.Rejected;
-        assignment.ReviewedAt = DateTime.UtcNow;
+        assignment.ReviewedAt = JakartaTime.UtcNow;
         assignment.ReviewedById = CurrentUserId;
         assignment.RejectionReason = req.RejectionReason;
 
         await _db.SaveChangesAsync();
 
-        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
+        var timeStr = JakartaTime.FormatWib();
         await _notificationService.CreateAsync(
             assignment.AssignedToId,
             "Tugas Ditolak 😢",
@@ -332,7 +331,7 @@ public class TaskAssignmentsController : ControllerBase
             TaskAssignmentId = id,
             UserId = CurrentUserId,
             Comment = req.Comment,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = JakartaTime.UtcNow
         };
 
         _db.TaskComments.Add(comment);
