@@ -3,6 +3,8 @@ services:
     image: postgres:16
     container_name: taskrumah_db
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${DB_NAME:-taskrumah}
       POSTGRES_USER: ${DB_USER:-taskrumah_user}
