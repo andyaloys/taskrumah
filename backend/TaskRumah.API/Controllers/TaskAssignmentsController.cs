@@ -134,9 +134,10 @@ public class TaskAssignmentsController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
         await _notificationService.CreateForAdminsAsync(
             $"Tugas Dikirim! 📋",
-            $"{assignment.AssignedTo.Name} telah menyelesaikan tugas '{assignment.Task.Title}'",
+            $"{assignment.AssignedTo.Name} telah mengajukan bukti tugas '{assignment.Task.Title}' pada {timeStr}",
             NotificationType.TaskSubmitted,
             assignment.Id
         );
@@ -190,10 +191,11 @@ public class TaskAssignmentsController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
         await _notificationService.CreateAsync(
             assignment.AssignedToId,
             "Tugas Disetujui! 🎉",
-            $"Tugas '{assignment.Task.Title}' kamu disetujui! +{assignment.Task.Points} poin",
+            $"Tugas '{assignment.Task.Title}' kamu telah disetujui pada {timeStr}! (+{assignment.Task.Points} poin)",
             NotificationType.TaskApproved,
             assignment.Id
         );
@@ -224,16 +226,35 @@ public class TaskAssignmentsController : ControllerBase
             return Ok(MapToDto(assignment));
 
         var user = await _db.Users.FindAsync(assignment.AssignedToId);
+        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
 
         if (newStatus == AssignmentStatus.Approved && oldStatus != AssignmentStatus.Approved)
         {
             if (user != null) user.TotalPoints += assignment.Task.Points;
             assignment.ReviewedAt = DateTime.UtcNow;
             assignment.ReviewedById = CurrentUserId;
+
+            await _notificationService.CreateAsync(
+                assignment.AssignedToId,
+                "Tugas Disetujui! 🎉",
+                $"Tugas '{assignment.Task.Title}' kamu telah disetujui pada {timeStr}! (+{assignment.Task.Points} poin)",
+                NotificationType.TaskApproved,
+                assignment.Id
+            );
         }
         else if (oldStatus == AssignmentStatus.Approved && newStatus != AssignmentStatus.Approved)
         {
             if (user != null) user.TotalPoints = Math.Max(0, user.TotalPoints - assignment.Task.Points);
+        }
+        else if (newStatus == AssignmentStatus.Rejected && oldStatus != AssignmentStatus.Rejected)
+        {
+            await _notificationService.CreateAsync(
+                assignment.AssignedToId,
+                "Tugas Ditolak 😢",
+                $"Tugas '{assignment.Task.Title}' ditolak pada {timeStr}. Catatan: {req.Reason ?? "Belum memenuhi kriteria"}",
+                NotificationType.TaskRejected,
+                assignment.Id
+            );
         }
 
         assignment.Status = newStatus;
@@ -270,10 +291,11 @@ public class TaskAssignmentsController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        var timeStr = DateTime.UtcNow.AddHours(7).ToString("dd MMM yyyy, HH:mm") + " WIB";
         await _notificationService.CreateAsync(
             assignment.AssignedToId,
             "Tugas Ditolak 😢",
-            $"Tugas '{assignment.Task.Title}' ditolak: {req.RejectionReason}",
+            $"Tugas '{assignment.Task.Title}' ditolak pada {timeStr}. Catatan: {req.RejectionReason}",
             NotificationType.TaskRejected,
             assignment.Id
         );

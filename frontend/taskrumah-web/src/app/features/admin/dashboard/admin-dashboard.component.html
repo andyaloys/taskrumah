@@ -184,7 +184,10 @@
                   </div>
                   <p class="text-xs text-slate-500 mt-0.5">
                     Dikerjakan oleh <span class="font-semibold text-slate-700">{{ assignment.assignedToName }}</span> •
-                    <span>{{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
+                    <span>Jatuh Tempo: {{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
+                    @if (assignment.completedAt) {
+                      • <span class="text-indigo-600 font-semibold">Diajukan: {{ assignment.completedAt | date:'dd MMM yyyy, HH:mm' }}</span>
+                    }
                   </p>
                   @if (assignment.submissionNote) {
                     <p class="text-xs text-slate-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 mt-2 italic">
@@ -313,3 +316,4 @@
     </div>
   }
 </div>
+
