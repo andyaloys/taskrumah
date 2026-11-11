@@ -17,9 +17,7 @@ import { NotificationService } from '../../../core/services/notification.service
           <!-- Brand Header -->
           <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm font-black tracking-wider text-sm">
-                FT
-              </div>
+              <img src="assets/icons/icon_ft.png" alt="FamilyTask" class="w-9 h-9 rounded-xl object-cover shadow-sm bg-white" />
               <div>
                 <h1 class="font-extrabold text-white text-base tracking-tight">Family<span class="text-indigo-400">Task</span></h1>
                 <p class="text-slate-400 text-xs font-medium">Family Management</p>
@@ -87,11 +85,9 @@ import { NotificationService } from '../../../core/services/notification.service
       <header class="md:hidden bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
         <div class="px-4 py-2.5 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-2xs">
-              TR
-            </div>
+            <img src="assets/icons/icon_ft.png" alt="FamilyTask" class="w-8 h-8 rounded-xl object-cover shadow-2xs bg-white" />
             <div>
-              <span class="font-bold text-sm tracking-tight text-slate-900 block leading-tight">TaskRumah</span>
+              <span class="font-bold text-sm tracking-tight text-slate-900 block leading-tight">Family<span class="text-indigo-600">Task</span></span>
               <span class="text-[10px] text-slate-500 font-medium block leading-none">Orang Tua • {{ currentUser()?.name }}</span>
             </div>
           </div>

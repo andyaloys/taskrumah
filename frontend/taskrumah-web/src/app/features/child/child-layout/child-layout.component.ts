@@ -14,9 +14,7 @@ import { NotificationService } from '../../../core/services/notification.service
       <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
         <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-black flex items-center justify-center text-xs shadow-2xs tracking-wider">
-              FT
-            </div>
+            <img src="assets/icons/icon_ft.png" alt="FamilyTask" class="w-8 h-8 rounded-xl object-cover shadow-2xs bg-white" />
             <div>
               <span class="font-extrabold text-sm tracking-tight text-slate-900 block leading-tight">Family<span class="text-indigo-600">Task</span></span>
               <span class="text-[10px] text-slate-400 font-medium block leading-none">Hai, {{ currentUser()?.name }}</span>
