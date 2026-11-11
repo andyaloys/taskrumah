@@ -13,6 +13,9 @@ services:
       - internal
 
   api:
+    build:
+      context: ./backend/TaskRumah.API
+      dockerfile: Dockerfile
     image: taskrumah-api:latest
     container_name: taskrumah_api
     restart: unless-stopped
@@ -33,6 +36,9 @@ services:
       - web
 
   frontend:
+    build:
+      context: ./frontend/taskrumah-web
+      dockerfile: Dockerfile
     image: taskrumah-frontend:latest
     container_name: taskrumah_frontend
     restart: unless-stopped
