@@ -10,5 +10,5 @@ import { DialogContainerComponent } from './shared/components/dialog-container/d
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'taskrumah-web';
+  title = 'FamilyTask';
 }

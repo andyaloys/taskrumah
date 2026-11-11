@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>TaskRumah - Kelola Tugas & Hadiah Anak</title>
+  <title>FamilyTask - Kelola Tugas & Hadiah Anak</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
@@ -16,12 +16,12 @@
   <!-- PWA Manifest & Colors -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#4f46e5">
-  <meta name="description" content="Aplikasi pembiasaan mandiri dan penghargaan tugas rumah anak">
+  <meta name="description" content="FamilyTask - Aplikasi pembiasaan mandiri dan penghargaan tugas keluarga">
 
   <!-- iOS / Apple Web App Meta -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="TaskRumah">
+  <meta name="apple-mobile-web-app-title" content="FamilyTask">
   <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
 </head>
 <body class="bg-slate-50 antialiased selection:bg-purple-500 selection:text-white">
@@ -29,9 +29,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=3')
+        navigator.serviceWorker.register('/sw.js?v=4')
           .then((reg) => {
-            console.log('TaskRumah PWA Service Worker terdaftar:', reg.scope);
+            console.log('FamilyTask PWA Service Worker terdaftar:', reg.scope);
             reg.update();
           })
           .catch((err) => console.warn('Gagal mendaftarkan Service Worker:', err));

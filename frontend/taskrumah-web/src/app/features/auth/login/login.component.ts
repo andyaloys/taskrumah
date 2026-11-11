@@ -16,12 +16,17 @@ export class LoginComponent {
   form: FormGroup;
   loading = signal(false);
   error = signal('');
+  showPassword = signal(false);
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+  }
+
+  togglePassword() {
+    this.showPassword.update(v => !v);
   }
 
   onSubmit() {

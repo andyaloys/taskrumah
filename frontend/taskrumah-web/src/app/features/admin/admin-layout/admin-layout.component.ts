@@ -17,11 +17,11 @@ import { NotificationService } from '../../../core/services/notification.service
           <!-- Brand Header -->
           <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm font-bold">
-                TR
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm font-black tracking-wider text-sm">
+                FT
               </div>
               <div>
-                <h1 class="font-bold text-white text-base tracking-tight">TaskRumah</h1>
+                <h1 class="font-extrabold text-white text-base tracking-tight">Family<span class="text-indigo-400">Task</span></h1>
                 <p class="text-slate-400 text-xs font-medium">Family Management</p>
               </div>
             </div>
