@@ -1,79 +1,30 @@
-name: Deploy TaskRumah to VPS
+name: Auto Deploy TaskRumah to VPS
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build API image
-        run: |
-          docker build \
-            -t taskrumah-api:latest \
-            -f backend/TaskRumah.API/Dockerfile \
-            backend/TaskRumah.API/
-
-      - name: Build Frontend image
-        run: |
-          docker build \
-            -t taskrumah-frontend:latest \
-            -f frontend/taskrumah-web/Dockerfile \
-            frontend/taskrumah-web/
-
-      - name: Save Docker images
-        run: |
-          docker save taskrumah-api:latest | gzip > taskrumah-api.tar.gz
-          docker save taskrumah-frontend:latest | gzip > taskrumah-frontend.tar.gz
-
-      - name: Copy images to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          source: "taskrumah-api.tar.gz,taskrumah-frontend.tar.gz,docker-compose.prod.yml,nginx-proxy.conf"
-          target: "/opt/taskrumah"
-
-      - name: Deploy on VPS
+      - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
+          host: 43.157.208.95
+          username: ubuntu
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script_stop: true
           script: |
             cd /opt/taskrumah
+            echo "${{ secrets.VPS_PASSWORD }}" | sudo -S git fetch --all
+            echo "${{ secrets.VPS_PASSWORD }}" | sudo -S git reset --hard origin/main
+            echo "${{ secrets.VPS_PASSWORD }}" | sudo -S docker compose -f docker-compose.prod.yml up -d --build
+            echo "${{ secrets.VPS_PASSWORD }}" | sudo -S docker image prune -f
+            echo "🚀 Status Container:"
+            docker ps
 
-            # Load new Docker images
-            docker load < taskrumah-api.tar.gz
-            docker load < taskrumah-frontend.tar.gz
-
-            # Create .env if not exists (first deploy)
-            if [ ! -f .env ]; then
-              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
-              echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
-            fi
-
-            # Restart services
-            docker compose -f docker-compose.prod.yml down --remove-orphans
-            docker compose -f docker-compose.prod.yml up -d
-
-            # Cleanup
-            rm -f taskrumah-api.tar.gz taskrumah-frontend.tar.gz
-
-            # Wait and verify
-            sleep 5
-            docker ps | grep taskrumah
-
-      - name: Notify deploy success
-        run: echo "✅ Deploy ke VPS ${{ secrets.VPS_HOST }} berhasil!"
+      - name: Deploy Success Notification
+        run: echo "✅ TaskRumah berhasil ter-update di http://43.157.208.95!"
