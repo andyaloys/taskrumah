@@ -2,228 +2,474 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Master Tugas</h1>
-      <p class="text-slate-500 text-sm mt-0.5">Kelola daftar tugas rutin harian, hari tertentu, dan tugas insidental</p>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Kelola Tugas & Ibadah</h1>
+      <p class="text-slate-500 text-sm mt-0.5">Kelola daftar tugas harian dan pantau ibadah 5 waktu serta mengaji anak</p>
     </div>
-    <button (click)="openCreate()" class="btn-primary">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      <span>Tambah Tugas Baru</span>
+    @if (activeTab() === 'tasks') {
+      <button (click)="openCreate()" class="btn-primary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Tambah Tugas Baru</span>
+      </button>
+    }
+  </div>
+
+  <!-- Tab Switcher -->
+  <div class="flex items-center space-x-2 border-b border-slate-200">
+    <button type="button" (click)="activeTab.set('tasks')"
+      [class]="activeTab() === 'tasks' 
+        ? 'border-b-2 border-indigo-600 text-indigo-600 font-bold bg-indigo-50/50' 
+        : 'text-slate-500 hover:text-slate-800 font-medium hover:bg-slate-50'"
+      class="px-4 py-2.5 text-sm rounded-t-xl transition-all flex items-center gap-2">
+      <span>📋</span>
+      <span>Daftar Tugas Rumah</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-700 font-semibold">{{ tasks().length }}</span>
+    </button>
+    <button type="button" (click)="switchToWorshipTab()"
+      [class]="activeTab() === 'worship' 
+        ? 'border-b-2 border-indigo-600 text-indigo-600 font-bold bg-indigo-50/50' 
+        : 'text-slate-500 hover:text-slate-800 font-medium hover:bg-slate-50'"
+      class="px-4 py-2.5 text-sm rounded-t-xl transition-all flex items-center gap-2">
+      <span>🕌</span>
+      <span>Pengaturan & Pantau Ibadah</span>
     </button>
   </div>
 
-  <!-- Create/Edit Form Modal -->
-  @if (showForm()) {
-    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 w-full max-w-lg">
-        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-          <h2 class="text-lg font-bold text-slate-900">
-            {{ editingTask() ? 'Edit Master Tugas' : 'Buat Tugas Baru' }}
-          </h2>
-          <button (click)="showForm.set(false)" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Nama Tugas</label>
-            <input formControlName="title" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800"
-              placeholder="Contoh: Merapikan Tempat Tidur" />
+  <!-- TAB 1: DAFTAR TUGAS RUMAH -->
+  @if (activeTab() === 'tasks') {
+    <!-- Create/Edit Form Modal -->
+    @if (showForm()) {
+      <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 w-full max-w-lg">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+            <h2 class="text-lg font-bold text-slate-900">
+              {{ editingTask() ? 'Edit Master Tugas' : 'Buat Tugas Baru' }}
+            </h2>
+            <button (click)="showForm.set(false)" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Deskripsi / Petunjuk</label>
-            <textarea formControlName="description" rows="2"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800 resize-none"
-              placeholder="Instruksi pengerjaan tugas..."></textarea>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
+          <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Jadwal Tugas</label>
-              <select formControlName="taskType" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800">
-                <option [value]="TaskType.Daily">Rutin Setiap Hari</option>
-                <option [value]="TaskType.SpecificDays">Hari Tertentu</option>
-                <option [value]="TaskType.OneTime">Sekali Saja</option>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Nama Tugas</label>
+              <input formControlName="title" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800"
+                placeholder="Contoh: Merapikan Tempat Tidur" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Deskripsi / Petunjuk</label>
+              <textarea formControlName="description" rows="2"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800 resize-none"
+                placeholder="Instruksi pengerjaan tugas..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Jadwal Tugas</label>
+                <select formControlName="taskType" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800">
+                  <option [value]="TaskType.Daily">Rutin Setiap Hari</option>
+                  <option [value]="TaskType.SpecificDays">Hari Tertentu</option>
+                  <option [value]="TaskType.OneTime">Sekali Saja</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Reward Poin</label>
+                <input formControlName="points" type="number" min="1" max="100"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800" />
+              </div>
+            </div>
+
+            <!-- SpecificDays Schedule Selector -->
+            @if (form.get('taskType')?.value === TaskType.SpecificDays) {
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Pilih Hari Pelaksanaan:</label>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (day of daysList; track day.id) {
+                    <button type="button" (click)="toggleDay(day.id)"
+                      [class]="selectedDays().includes(day.id) ? 'bg-indigo-600 text-white font-semibold' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'"
+                      class="px-3 py-1.5 rounded-lg text-xs transition-all shadow-2xs">
+                      {{ day.label }} {{ selectedDays().includes(day.id) ? '✓' : '' }}
+                    </button>
+                  }
+                </div>
+                @if (selectedDays().length === 0) {
+                  <p class="text-xs text-rose-500 mt-2 font-medium">Pilih minimal 1 hari pelaksanaan!</p>
+                }
+              </div>
+            }
+
+            <!-- OneTime Due Date Selector -->
+            @if (form.get('taskType')?.value === TaskType.OneTime) {
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Target Pelaksanaan:</label>
+                <input formControlName="dueDate" type="date"
+                  class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none text-xs bg-white text-slate-800" />
+              </div>
+            }
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Penugasan</label>
+              <select formControlName="assignedToId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800">
+                <option value="">Semua Anak (Umum)</option>
+                @for (child of children(); track child.id) {
+                  <option [value]="child.id">{{ child.name }}</option>
+                }
               </select>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Reward Poin</label>
-              <input formControlName="points" type="number" min="1" max="100"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800" />
-            </div>
-          </div>
 
-          <!-- SpecificDays Schedule Selector -->
-          @if (form.get('taskType')?.value === TaskType.SpecificDays) {
-            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Pilih Hari Pelaksanaan:</label>
-              <div class="flex flex-wrap gap-1.5">
-                @for (day of daysList; track day.id) {
-                  <button type="button" (click)="toggleDay(day.id)"
-                    [class]="selectedDays().includes(day.id) ? 'bg-indigo-600 text-white font-semibold' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'"
-                    class="px-3 py-1.5 rounded-lg text-xs transition-all shadow-2xs">
-                    {{ day.label }} {{ selectedDays().includes(day.id) ? '✓' : '' }}
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Ikon Tugas</label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                @for (emoji of emojiOptions; track emoji) {
+                  <button type="button" (click)="selectEmoji(emoji)"
+                    [class.ring-2]="form.get('iconEmoji')?.value === emoji"
+                    class="w-9 h-9 text-lg rounded-lg border border-slate-200 hover:border-indigo-400 bg-white transition-all ring-indigo-600">
+                    {{ emoji }}
                   </button>
                 }
               </div>
-              @if (selectedDays().length === 0) {
-                <p class="text-xs text-rose-500 mt-2 font-medium">Pilih minimal 1 hari pelaksanaan!</p>
-              }
+              <input formControlName="iconEmoji" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-600 focus:outline-none text-xs text-slate-800"
+                placeholder="Atau masukkan emoji khusus" />
             </div>
-          }
 
-          <!-- OneTime Due Date Selector -->
-          @if (form.get('taskType')?.value === TaskType.OneTime) {
-            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Target Pelaksanaan:</label>
-              <input formControlName="dueDate" type="date"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none text-xs bg-white text-slate-800" />
+            <div class="flex space-x-3 pt-3 border-t border-slate-100">
+              <button type="submit" [disabled]="saving() || (form.get('taskType')?.value === TaskType.SpecificDays && selectedDays().length === 0)" class="flex-1 btn-primary">
+                {{ saving() ? 'Menyimpan...' : 'Simpan Perubahan' }}
+              </button>
+              <button type="button" (click)="showForm.set(false)" class="btn-secondary">
+                Batal
+              </button>
             </div>
-          }
+          </form>
+        </div>
+      </div>
+    }
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Penugasan</label>
-            <select formControlName="assignedToId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800">
-              <option value="">Semua Anak (Umum)</option>
-              @for (child of children(); track child.id) {
-                <option [value]="child.id">{{ child.name }}</option>
-              }
-            </select>
+    <!-- Assign Anytime Modal -->
+    @if (showAssignModal() && assigningTask()) {
+      <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 w-full max-w-md">
+          <h2 class="text-lg font-bold text-slate-900 mb-1">Tugaskan Sekarang</h2>
+          <p class="text-xs text-slate-500 mb-4">Tugaskan '{{ assigningTask()!.title }}' ke anak pada tanggal yang dipilih.</p>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Pilih Anak:</label>
+              <select [value]="assignChildId()" (change)="assignChildId.set($any($event.target).value)"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none text-sm text-slate-800">
+                <option value="">Semua Anak</option>
+                @for (c of children(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Pelaksanaan:</label>
+              <input type="date" [value]="assignDueDate()" (change)="assignDueDate.set($any($event.target).value)"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none text-sm text-slate-800" />
+            </div>
+
+            <div class="flex space-x-3 pt-3 border-t border-slate-100">
+              <button (click)="submitAssign()" [disabled]="isAssigning()" class="flex-1 btn-primary">
+                {{ isAssigning() ? 'Memproses...' : 'Tugaskan Sekarang' }}
+              </button>
+              <button (click)="showAssignModal.set(false)" class="btn-secondary">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tasks List -->
+    @if (loading()) {
+      <div class="text-center py-20">
+        <div class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="mt-3 text-slate-500 text-sm font-medium">Memuat master tugas...</p>
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (task of tasks(); track task.id) {
+          <div class="card p-4.5 bg-white border border-slate-200/90 shadow-xs rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all" [class.opacity-60]="!task.isActive">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-2xl shadow-2xs shrink-0">
+                {{ task.iconEmoji || '📋' }}
+              </div>
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-sm font-bold text-slate-900">{{ task.title }}</h3>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    {{ getScheduleLabel(task) }}
+                  </span>
+                  @if (!task.isActive) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                      Nonaktif
+                    </span>
+                  }
+                </div>
+                @if (task.description) {
+                  <p class="text-xs text-slate-500 mt-1 line-clamp-1">{{ task.description }}</p>
+                }
+                <div class="flex items-center space-x-3 mt-1.5">
+                  <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+                    +{{ task.points }} poin
+                  </span>
+                  @if (task.assignedToName) {
+                    <span class="text-xs text-slate-500">
+                      Ditugaskan khusus: <strong class="text-slate-800">{{ task.assignedToName }}</strong>
+                    </span>
+                  } @else {
+                    <span class="text-xs text-slate-500">
+                      Ditugaskan ke: <strong class="text-slate-700">Semua anak</strong>
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2 self-end md:self-center shrink-0">
+              <button (click)="openAssignModal(task)" title="Tugaskan ke anak sewaktu-waktu"
+                class="btn-secondary text-xs py-1.5 px-3">
+                Tugaskan
+              </button>
+              <button (click)="openEdit(task)" class="btn-secondary text-xs py-1.5 px-3">
+                Edit
+              </button>
+              <button (click)="toggleActive(task)"
+                [class]="task.isActive ? 'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white'"
+                class="font-semibold py-1.5 px-3 rounded-xl text-xs transition-all shadow-2xs">
+                {{ task.isActive ? 'Nonaktifkan' : 'Aktifkan' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- TAB 2: PENGATURAN & PANTAU IBADAH -->
+  @if (activeTab() === 'worship') {
+    <div class="space-y-6">
+      <!-- Section 1: Pengaturan Poin Ibadah -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+              ⚙️
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Pengaturan Poin Ibadah</h2>
+              <p class="text-xs text-slate-500">Poin yang diperoleh anak setiap kali mengisi status sholat 5 waktu & ngaji</p>
+            </div>
+          </div>
+        </div>
+
+        <form [formGroup]="worshipForm" (ngSubmit)="saveWorshipSetting()" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Sholat Sendiri / Sekolah -->
+            <div class="p-4 rounded-xl border border-sky-100 bg-sky-50/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">🏫</span>
+                <label class="text-xs font-bold text-sky-900 uppercase tracking-wider">Sholat Sekolah / Sendiri</label>
+              </div>
+              <p class="text-xs text-slate-500 mb-3">Poin per waktu sholat jika sholat di sekolah atau sendirian di rumah</p>
+              <div class="flex items-center gap-2">
+                <input formControlName="soloPoints" type="number" min="0" max="100"
+                  class="w-24 px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-sm font-bold text-slate-900 text-center" />
+                <span class="text-xs font-semibold text-slate-600">poin / waktu</span>
+              </div>
+            </div>
+
+            <!-- Sholat Berjamaah di Masjid -->
+            <div class="p-4 rounded-xl border border-emerald-100 bg-emerald-50/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">🕌</span>
+                <label class="text-xs font-bold text-emerald-900 uppercase tracking-wider">Jamaah di Masjid</label>
+              </div>
+              <p class="text-xs text-slate-500 mb-3">Poin per waktu sholat jika sholat berjamaah di masjid</p>
+              <div class="flex items-center gap-2">
+                <input formControlName="mosquePoints" type="number" min="0" max="100"
+                  class="w-24 px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-sm font-bold text-slate-900 text-center" />
+                <span class="text-xs font-semibold text-slate-600">poin / waktu</span>
+              </div>
+            </div>
+
+            <!-- Ngaji / Tilawah -->
+            <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">📖</span>
+                <label class="text-xs font-bold text-amber-900 uppercase tracking-wider">Ngaji / Tilawah</label>
+              </div>
+              <p class="text-xs text-slate-500 mb-3">Poin harian jika anak mengaji / tilawah Al-Qur'an hari ini</p>
+              <div class="flex items-center gap-2">
+                <input formControlName="quranPoints" type="number" min="0" max="100"
+                  class="w-24 px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-sm font-bold text-slate-900 text-center" />
+                <span class="text-xs font-semibold text-slate-600">poin / hari</span>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Ikon Tugas</label>
-            <div class="flex flex-wrap gap-2 mb-2">
-              @for (emoji of emojiOptions; track emoji) {
-                <button type="button" (click)="selectEmoji(emoji)"
-                  [class.ring-2]="form.get('iconEmoji')?.value === emoji"
-                  class="w-9 h-9 text-lg rounded-lg border border-slate-200 hover:border-indigo-400 bg-white transition-all ring-indigo-600">
-                  {{ emoji }}
-                </button>
-              }
-            </div>
-            <input formControlName="iconEmoji" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-600 focus:outline-none text-xs text-slate-800"
-              placeholder="Atau masukkan emoji khusus" />
-          </div>
-
-          <div class="flex space-x-3 pt-3 border-t border-slate-100">
-            <button type="submit" [disabled]="saving() || (form.get('taskType')?.value === TaskType.SpecificDays && selectedDays().length === 0)" class="flex-1 btn-primary">
-              {{ saving() ? 'Menyimpan...' : 'Simpan Perubahan' }}
-            </button>
-            <button type="button" (click)="showForm.set(false)" class="btn-secondary">
-              Batal
+          <div class="flex justify-end pt-2">
+            <button type="submit" [disabled]="savingWorshipSetting() || worshipForm.invalid"
+              class="btn-primary text-xs py-2 px-5 shadow-xs">
+              {{ savingWorshipSetting() ? 'Menyimpan...' : 'Simpan Pengaturan Poin' }}
             </button>
           </div>
         </form>
       </div>
-    </div>
-  }
 
-  <!-- Assign Anytime Modal -->
-  @if (showAssignModal() && assigningTask()) {
-    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 w-full max-w-md">
-        <h2 class="text-lg font-bold text-slate-900 mb-1">Tugaskan Sekarang</h2>
-        <p class="text-xs text-slate-500 mb-4">Tugaskan '{{ assigningTask()!.title }}' ke anak pada tanggal yang dipilih.</p>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Pilih Anak:</label>
-            <select [value]="assignChildId()" (change)="assignChildId.set($any($event.target).value)"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none text-sm text-slate-800">
-              <option value="">Semua Anak</option>
-              @for (c of children(); track c.id) {
-                <option [value]="c.id">{{ c.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Pelaksanaan:</label>
-            <input type="date" [value]="assignDueDate()" (change)="assignDueDate.set($any($event.target).value)"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none text-sm text-slate-800" />
-          </div>
-
-          <div class="flex space-x-3 pt-3 border-t border-slate-100">
-            <button (click)="submitAssign()" [disabled]="isAssigning()" class="flex-1 btn-primary">
-              {{ isAssigning() ? 'Memproses...' : 'Tugaskan Sekarang' }}
-            </button>
-            <button (click)="showAssignModal.set(false)" class="btn-secondary">
-              Batal
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Tasks List -->
-  @if (loading()) {
-    <div class="text-center py-20">
-      <div class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-      <p class="mt-3 text-slate-500 text-sm font-medium">Memuat master tugas...</p>
-    </div>
-  } @else {
-    <div class="space-y-3">
-      @for (task of tasks(); track task.id) {
-        <div class="card p-4.5 bg-white border border-slate-200/90 shadow-xs rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all" [class.opacity-60]="!task.isActive">
-          <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-2xl shadow-2xs shrink-0">
-              {{ task.iconEmoji || '📋' }}
+      <!-- Section 2: Pantau Ibadah Harian Anak -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+              🕌
             </div>
             <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-sm font-bold text-slate-900">{{ task.title }}</h3>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {{ getScheduleLabel(task) }}
-                </span>
-                @if (!task.isActive) {
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                    Nonaktif
-                  </span>
-                }
-              </div>
-              @if (task.description) {
-                <p class="text-xs text-slate-500 mt-1 line-clamp-1">{{ task.description }}</p>
-              }
-              <div class="flex items-center space-x-3 mt-1.5">
-                <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
-                  +{{ task.points }} poin
-                </span>
-                @if (task.assignedToName) {
-                  <span class="text-xs text-slate-500">
-                    Ditugaskan khusus: <strong class="text-slate-800">{{ task.assignedToName }}</strong>
-                  </span>
-                } @else {
-                  <span class="text-xs text-slate-500">
-                    Ditugaskan ke: <strong class="text-slate-700">Semua anak</strong>
-                  </span>
-                }
-              </div>
+              <h2 class="text-base font-bold text-slate-900">Pantau Ibadah Anak</h2>
+              <p class="text-xs text-slate-500">Laporan sholat 5 waktu & ngaji anak secara real-time</p>
             </div>
           </div>
 
-          <div class="flex items-center space-x-2 self-end md:self-center shrink-0">
-            <button (click)="openAssignModal(task)" title="Tugaskan ke anak sewaktu-waktu"
-              class="btn-secondary text-xs py-1.5 px-3">
-              Tugaskan
+          <!-- Date Selector -->
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="setWorshipDatePreset('today')"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors">
+              Hari Ini
             </button>
-            <button (click)="openEdit(task)" class="btn-secondary text-xs py-1.5 px-3">
-              Edit
+            <button type="button" (click)="setWorshipDatePreset('yesterday')"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors">
+              Kemarin
             </button>
-            <button (click)="toggleActive(task)"
-              [class]="task.isActive ? 'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white'"
-              class="font-semibold py-1.5 px-3 rounded-xl text-xs transition-all shadow-2xs">
-              {{ task.isActive ? 'Nonaktifkan' : 'Aktifkan' }}
-            </button>
+            <input type="date" [value]="worshipDate()" (change)="onWorshipDateChange($event)"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-indigo-600" />
           </div>
         </div>
-      }
+
+        @if (loadingWorship()) {
+          <div class="text-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="mt-3 text-slate-500 text-sm font-medium">Memuat data ibadah anak...</p>
+          </div>
+        } @else if (worshipSummaries().length === 0) {
+          <div class="text-center py-16 bg-white rounded-2xl border border-slate-200">
+            <span class="text-4xl">🕌</span>
+            <p class="text-sm font-bold text-slate-800 mt-2">Belum ada data anak</p>
+            <p class="text-xs text-slate-500 mt-1">Tambahkan data anak terlebih dahulu di menu Data Anak.</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4">
+            @for (summary of worshipSummaries(); track summary.userId) {
+              <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 hover:border-slate-300 transition-all">
+                <!-- Child Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                      {{ summary.userName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <h3 class="text-base font-bold text-slate-900">{{ summary.userName }}</h3>
+                      <p class="text-xs text-slate-500">
+                        Total Poin Akumulasi: <strong class="text-slate-800">{{ summary.totalPoints }}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <!-- Ngaji Badge -->
+                    @if (summary.quranDone) {
+                      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span>📖</span>
+                        <span>Sudah Ngaji</span>
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-400 border border-slate-200">
+                        <span>📖</span>
+                        <span>Belum Ngaji</span>
+                      </span>
+                    }
+
+                    <!-- Total Worship Points Earned -->
+                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span>✨</span>
+                      <span>+{{ summary.pointsEarnedToday }} Poin Ibadah</span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 5 Prayers Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4">
+                  <!-- Subuh -->
+                  <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Subuh</span>
+                      <span>🌅</span>
+                    </div>
+                    <span [class]="getPrayerClass(summary.subuh)" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border w-full justify-center">
+                      <span>{{ getPrayerIcon(summary.subuh) }}</span>
+                      <span class="truncate">{{ getPrayerLabel(summary.subuh) }}</span>
+                    </span>
+                  </div>
+
+                  <!-- Dzuhur -->
+                  <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Dzuhur</span>
+                      <span>☀️</span>
+                    </div>
+                    <span [class]="getPrayerClass(summary.dzuhur)" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border w-full justify-center">
+                      <span>{{ getPrayerIcon(summary.dzuhur) }}</span>
+                      <span class="truncate">{{ getPrayerLabel(summary.dzuhur) }}</span>
+                    </span>
+                  </div>
+
+                  <!-- Ashar -->
+                  <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Ashar</span>
+                      <span>🌤️</span>
+                    </div>
+                    <span [class]="getPrayerClass(summary.ashar)" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border w-full justify-center">
+                      <span>{{ getPrayerIcon(summary.ashar) }}</span>
+                      <span class="truncate">{{ getPrayerLabel(summary.ashar) }}</span>
+                    </span>
+                  </div>
+
+                  <!-- Maghrib -->
+                  <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Maghrib</span>
+                      <span>🌆</span>
+                    </div>
+                    <span [class]="getPrayerClass(summary.maghrib)" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border w-full justify-center">
+                      <span>{{ getPrayerIcon(summary.maghrib) }}</span>
+                      <span class="truncate">{{ getPrayerLabel(summary.maghrib) }}</span>
+                    </span>
+                  </div>
+
+                  <!-- Isya -->
+                  <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 col-span-2 sm:col-span-1">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Isya</span>
+                      <span>🌙</span>
+                    </div>
+                    <span [class]="getPrayerClass(summary.isya)" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border w-full justify-center">
+                      <span>{{ getPrayerIcon(summary.isya) }}</span>
+                      <span class="truncate">{{ getPrayerLabel(summary.isya) }}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   }
 </div>

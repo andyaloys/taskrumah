@@ -59,6 +59,11 @@ import { NotificationService } from '../../../core/services/notification.service
             </svg>
             <span>Tugasku</span>
           </a>
+          <a routerLink="/child/worship" routerLinkActive="text-indigo-600 font-bold"
+            class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
+            <span class="text-base leading-none mb-0.5">🕌</span>
+            <span>Ibadah</span>
+          </a>
           <a routerLink="/child/rewards" routerLinkActive="text-indigo-600 font-bold"
             class="flex-1 flex flex-col items-center py-2.5 text-slate-400 hover:text-indigo-600 transition-all text-[11px]">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<Reward> Rewards => Set<Reward>();
     public DbSet<RewardRedemption> RewardRedemptions => Set<RewardRedemption>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<WorshipSetting> WorshipSettings => Set<WorshipSetting>();
+    public DbSet<DailyWorship> DailyWorships => Set<DailyWorship>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +98,26 @@ public class AppDbContext : DbContext
                   .HasForeignKey(n => n.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<DailyWorship>(entity =>
+        {
+            entity.HasIndex(w => new { w.UserId, w.Date }).IsUnique();
+            entity.HasOne(w => w.User)
+                  .WithMany()
+                  .HasForeignKey(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorshipSetting>().HasData(
+            new WorshipSetting
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                SoloPoints = 3,
+                MosquePoints = 5,
+                QuranPoints = 5,
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
 
         SeedData(modelBuilder);
     }

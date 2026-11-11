@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TaskService } from '../../../core/services/task.service';
 import { UserService } from '../../../core/services/user.service';
 import { DialogService } from '../../../core/services/dialog.service';
+import { WorshipService, WorshipSetting, AdminChildWorshipSummary, PrayerStatus } from '../../../core/services/worship.service';
 import { ChoreTask, TaskType } from '../../../core/models/task.model';
 import { User } from '../../../core/models/user.model';
 
@@ -15,6 +16,10 @@ import { User } from '../../../core/models/user.model';
   templateUrl: './admin-tasks.component.html'
 })
 export class AdminTasksComponent implements OnInit {
+  activeTab = signal<'tasks' | 'worship'>('tasks');
+  PrayerStatus = PrayerStatus;
+
+  // Task state
   tasks = signal<ChoreTask[]>([]);
   children = signal<User[]>([]);
   loading = signal(true);
@@ -43,6 +48,14 @@ export class AdminTasksComponent implements OnInit {
   assignDueDate = signal(new Date().toISOString().substring(0, 10));
   isAssigning = signal(false);
 
+  // Worship Tab state
+  worshipForm: FormGroup;
+  worshipSetting = signal<WorshipSetting | null>(null);
+  savingWorshipSetting = signal(false);
+  worshipDate = signal(new Date().toISOString().substring(0, 10));
+  worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
+  loadingWorship = signal(false);
+
   emojiOptions = [
     // Olahraga & Aktivitas Fisik
     '🏃', '🚴', '⚽', '🏀', '🏸', '🧘', '🏊', '🤸',
@@ -61,6 +74,7 @@ export class AdminTasksComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private userService: UserService,
+    private worshipService: WorshipService,
     private fb: FormBuilder,
     private dialog: DialogService
   ) {
@@ -72,6 +86,12 @@ export class AdminTasksComponent implements OnInit {
       points: [10, [Validators.required, Validators.min(1)]],
       iconEmoji: ['✅', Validators.required],
       dueDate: [new Date().toISOString().substring(0, 10)]
+    });
+
+    this.worshipForm = this.fb.group({
+      soloPoints: [3, [Validators.required, Validators.min(0)]],
+      mosquePoints: [5, [Validators.required, Validators.min(0)]],
+      quranPoints: [5, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -88,9 +108,70 @@ export class AdminTasksComponent implements OnInit {
     this.userService.getChildren().subscribe(c => this.children.set(c));
   }
 
+  switchToWorshipTab() {
+    this.activeTab.set('worship');
+    this.loadWorshipSetting();
+    this.loadWorshipSummary();
+  }
+
+  loadWorshipSetting() {
+    this.worshipService.getSetting().subscribe({
+      next: (s) => {
+        this.worshipSetting.set(s);
+        this.worshipForm.patchValue({
+          soloPoints: s.soloPoints,
+          mosquePoints: s.mosquePoints,
+          quranPoints: s.quranPoints
+        });
+      }
+    });
+  }
+
+  loadWorshipSummary() {
+    this.loadingWorship.set(true);
+    this.worshipService.getAdminSummary(this.worshipDate()).subscribe({
+      next: (data) => {
+        this.worshipSummaries.set(data);
+        this.loadingWorship.set(false);
+      },
+      error: () => this.loadingWorship.set(false)
+    });
+  }
+
+  saveWorshipSetting() {
+    if (this.worshipForm.invalid || this.savingWorshipSetting()) return;
+    this.savingWorshipSetting.set(true);
+    this.worshipService.updateSetting(this.worshipForm.value).subscribe({
+      next: (s) => {
+        this.savingWorshipSetting.set(false);
+        this.worshipSetting.set(s);
+        this.dialog.success('Pengaturan poin ibadah berhasil disimpan!');
+      },
+      error: () => {
+        this.savingWorshipSetting.set(false);
+        this.dialog.error('Gagal menyimpan pengaturan poin ibadah.');
+      }
+    });
+  }
+
+  onWorshipDateChange(ev: Event) {
+    const val = (ev.target as HTMLInputElement).value;
+    if (val) {
+      this.worshipDate.set(val);
+      this.loadWorshipSummary();
+    }
+  }
+
+  setWorshipDatePreset(mode: 'today' | 'yesterday') {
+    const d = new Date();
+    if (mode === 'yesterday') d.setDate(d.getDate() - 1);
+    this.worshipDate.set(d.toISOString().substring(0, 10));
+    this.loadWorshipSummary();
+  }
+
   openCreate() {
     this.editingTask.set(null);
-    this.selectedDays.set(['1', '3', '5']);
+    this.selectedDays.set([]);
     this.form.reset({
       taskType: TaskType.Daily,
       points: 10,
@@ -102,82 +183,95 @@ export class AdminTasksComponent implements OnInit {
 
   openEdit(task: ChoreTask) {
     this.editingTask.set(task);
-    if (task.daysOfWeek) {
-      this.selectedDays.set(task.daysOfWeek.split(',').filter(d => !!d));
-    } else {
-      this.selectedDays.set(['1', '3', '5']);
-    }
-
+    this.selectedDays.set(task.daysOfWeek ? task.daysOfWeek.split(',') : []);
     this.form.patchValue({
       title: task.title,
       description: task.description,
       taskType: task.taskType,
       assignedToId: task.assignedToId || '',
       points: task.points,
-      iconEmoji: task.iconEmoji,
+      iconEmoji: task.iconEmoji || '✅',
       dueDate: new Date().toISOString().substring(0, 10)
     });
     this.showForm.set(true);
   }
 
   toggleDay(dayId: string) {
-    const current = this.selectedDays();
-    if (current.includes(dayId)) {
-      this.selectedDays.set(current.filter(id => id !== dayId));
+    const current = [...this.selectedDays()];
+    const idx = current.indexOf(dayId);
+    if (idx >= 0) {
+      current.splice(idx, 1);
     } else {
-      this.selectedDays.set([...current, dayId].sort());
+      current.push(dayId);
     }
+    this.selectedDays.set(current);
   }
 
   getScheduleLabel(task: ChoreTask): string {
-    if (task.taskType === TaskType.Daily) return '🔁 Rutin Setiap Hari';
-    if (task.taskType === TaskType.OneTime) return '⚡ Sekali Saja';
-    if (task.taskType === TaskType.SpecificDays) {
-      if (!task.daysOfWeek) return '📅 Hari Tertentu';
-      const dayNames = task.daysOfWeek.split(',')
-        .map(id => this.daysList.find(d => d.id === id)?.label)
-        .filter(Boolean);
-      return `📅 ${dayNames.join(', ')}`;
+    if (task.taskType === TaskType.Daily) return 'Rutin Setiap Hari';
+    if (task.taskType === TaskType.OneTime) return 'Sekali Saja';
+    if (task.taskType === TaskType.SpecificDays && task.daysOfWeek) {
+      const dayMap: { [k: string]: string } = {
+        '1': 'Sen', '2': 'Sel', '3': 'Rab', '4': 'Kam', '5': 'Jum', '6': 'Sab', '7': 'Min'
+      };
+      const days = task.daysOfWeek.split(',').map(d => dayMap[d] || d);
+      return days.join(', ');
     }
-    return task.taskType;
+    return 'Hari Tertentu';
   }
 
   save() {
     if (this.saving() || this.form.invalid) return;
-    this.saving.set(true);
-    const formVal = this.form.value;
-    const data: any = {
-      title: formVal.title,
-      description: formVal.description,
-      taskType: formVal.taskType,
-      points: formVal.points,
-      iconEmoji: formVal.iconEmoji,
-      dueDate: formVal.dueDate,
-      assignedToId: formVal.assignedToId ? formVal.assignedToId : null
-    };
 
-    if (formVal.taskType === TaskType.SpecificDays) {
-      data.daysOfWeek = this.selectedDays().join(',');
+    const val = this.form.value;
+    const taskType: TaskType = val.taskType;
+
+    if (taskType === TaskType.SpecificDays && this.selectedDays().length === 0) {
+      this.dialog.error('Pilih minimal 1 hari pelaksanaan untuk jadwal hari tertentu!');
+      return;
     }
 
-    const isEdit = !!this.editingTask();
-    const request = isEdit
-      ? this.taskService.updateTask(this.editingTask()!.id, data)
-      : this.taskService.createTask(data);
+    this.saving.set(true);
 
-    request.subscribe({
-      next: () => {
-        this.showForm.set(false);
-        this.loadData();
-        this.saving.set(false);
-        this.dialog.success(isEdit ? 'Tugas berhasil diperbarui!' : 'Tugas baru berhasil dibuat!');
-      },
-      error: (err) => {
-        this.saving.set(false);
-        const msg = err?.error?.message || 'Gagal menyimpan tugas. Silakan coba lagi.';
-        this.dialog.error(msg);
-      }
-    });
+    const payload = {
+      title: val.title,
+      description: val.description,
+      taskType: taskType,
+      daysOfWeek: taskType === TaskType.SpecificDays ? this.selectedDays().sort().join(',') : undefined,
+      assignedToId: val.assignedToId || null,
+      points: val.points,
+      iconEmoji: val.iconEmoji,
+      dueDate: taskType === TaskType.OneTime ? val.dueDate : undefined
+    };
+
+    const task = this.editingTask();
+    if (task) {
+      this.taskService.updateTask(task.id, payload).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.showForm.set(false);
+          this.loadData();
+          this.dialog.success('Tugas berhasil diperbarui!');
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.dialog.error('Gagal memperbarui: ' + (err.error?.message || 'Error'));
+        }
+      });
+    } else {
+      this.taskService.createTask(payload).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.showForm.set(false);
+          this.loadData();
+          this.dialog.success('Tugas baru berhasil dibuat!');
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.dialog.error('Gagal membuat tugas: ' + (err.error?.message || 'Error'));
+        }
+      });
+    }
   }
 
   openAssignModal(task: ChoreTask) {
@@ -214,5 +308,23 @@ export class AdminTasksComponent implements OnInit {
 
   selectEmoji(emoji: string) {
     this.form.patchValue({ iconEmoji: emoji });
+  }
+
+  getPrayerLabel(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return 'Masjid';
+    if (status === PrayerStatus.Solo) return 'Sendiri / Sekolah';
+    return 'Belum / Tidak';
+  }
+
+  getPrayerClass(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === PrayerStatus.Solo) return 'bg-sky-50 text-sky-700 border-sky-200';
+    return 'bg-slate-100 text-slate-400 border-slate-200';
+  }
+
+  getPrayerIcon(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return '🕌';
+    if (status === PrayerStatus.Solo) return '🏫';
+    return '⚪';
   }
 }

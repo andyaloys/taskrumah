@@ -54,6 +54,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/child/task-submit/task-submit.component').then(m => m.TaskSubmitComponent)
       },
       {
+        path: 'worship',
+        loadComponent: () => import('./features/child/worship/child-worship.component').then(m => m.ChildWorshipComponent)
+      },
+      {
         path: 'rewards',
         loadComponent: () => import('./features/child/rewards/child-rewards.component').then(m => m.ChildRewardsComponent)
       },

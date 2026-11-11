@@ -130,7 +130,48 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"Data migration note: {ex.Message}");
     }
+
+    // Create worship tables if not exists
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS ""WorshipSettings"" (
+                ""Id"" uuid NOT NULL PRIMARY KEY,
+                ""SoloPoints"" integer NOT NULL DEFAULT 3,
+                ""MosquePoints"" integer NOT NULL DEFAULT 5,
+                ""QuranPoints"" integer NOT NULL DEFAULT 5,
+                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            INSERT INTO ""WorshipSettings"" (""Id"", ""SoloPoints"", ""MosquePoints"", ""QuranPoints"", ""UpdatedAt"")
+            VALUES ('99999999-9999-9999-9999-999999999999', 3, 5, 5, CURRENT_TIMESTAMP)
+            ON CONFLICT (""Id"") DO NOTHING;
+
+            CREATE TABLE IF NOT EXISTS ""DailyWorships"" (
+                ""Id"" uuid NOT NULL PRIMARY KEY,
+                ""UserId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE CASCADE,
+                ""Date"" timestamp with time zone NOT NULL,
+                ""Subuh"" integer NOT NULL DEFAULT 0,
+                ""Dzuhur"" integer NOT NULL DEFAULT 0,
+                ""Ashar"" integer NOT NULL DEFAULT 0,
+                ""Maghrib"" integer NOT NULL DEFAULT 0,
+                ""Isya"" integer NOT NULL DEFAULT 0,
+                ""QuranDone"" boolean NOT NULL DEFAULT FALSE,
+                ""QuranNote"" text,
+                ""TotalPointsEarned"" integer NOT NULL DEFAULT 0,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_DailyWorships_UserId_Date"" ON ""DailyWorships"" (""UserId"", ""Date"");
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Worship table migration note: {ex.Message}");
+    }
 }
+
 
 app.Run();
 
