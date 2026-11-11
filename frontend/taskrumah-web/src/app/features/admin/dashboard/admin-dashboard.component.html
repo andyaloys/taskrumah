@@ -183,8 +183,7 @@
                     </span>
                   </div>
                   <p class="text-xs text-slate-500 mt-0.5">
-                    Dikerjakan oleh <span class="font-semibold text-slate-700">{{ assignment.assignedToName }}</span> •
-                    <span>Jatuh Tempo: {{ assignment.dueDate | date:'dd MMM yyyy' }}</span>
+                    Dikerjakan oleh <span class="font-semibold text-slate-700">{{ assignment.assignedToName }}</span>
                     @if (assignment.completedAt) {
                       • <span class="text-indigo-600 font-semibold">Diajukan: {{ assignment.completedAt | date:'dd MMM yyyy, HH:mm' }}</span>
                     }
