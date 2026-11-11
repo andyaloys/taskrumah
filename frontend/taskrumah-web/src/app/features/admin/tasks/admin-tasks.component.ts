@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TaskService } from '../../../core/services/task.service';
 import { UserService } from '../../../core/services/user.service';
 import { DialogService } from '../../../core/services/dialog.service';
-import { WorshipService, WorshipSetting, AdminChildWorshipSummary, PrayerStatus } from '../../../core/services/worship.service';
+import { WorshipService, WorshipSetting } from '../../../core/services/worship.service';
 import { ChoreTask, TaskType } from '../../../core/models/task.model';
 import { User } from '../../../core/models/user.model';
 
@@ -17,7 +17,6 @@ import { User } from '../../../core/models/user.model';
 })
 export class AdminTasksComponent implements OnInit {
   activeTab = signal<'tasks' | 'worship'>('tasks');
-  PrayerStatus = PrayerStatus;
 
   // Task state
   tasks = signal<ChoreTask[]>([]);
@@ -52,9 +51,6 @@ export class AdminTasksComponent implements OnInit {
   worshipForm: FormGroup;
   worshipSetting = signal<WorshipSetting | null>(null);
   savingWorshipSetting = signal(false);
-  worshipDate = signal(new Date().toISOString().substring(0, 10));
-  worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
-  loadingWorship = signal(false);
 
   emojiOptions = [
     // Olahraga & Aktivitas Fisik
@@ -111,7 +107,6 @@ export class AdminTasksComponent implements OnInit {
   switchToWorshipTab() {
     this.activeTab.set('worship');
     this.loadWorshipSetting();
-    this.loadWorshipSummary();
   }
 
   loadWorshipSetting() {
@@ -124,17 +119,6 @@ export class AdminTasksComponent implements OnInit {
           quranPoints: s.quranPoints
         });
       }
-    });
-  }
-
-  loadWorshipSummary() {
-    this.loadingWorship.set(true);
-    this.worshipService.getAdminSummary(this.worshipDate()).subscribe({
-      next: (data) => {
-        this.worshipSummaries.set(data);
-        this.loadingWorship.set(false);
-      },
-      error: () => this.loadingWorship.set(false)
     });
   }
 
@@ -152,21 +136,6 @@ export class AdminTasksComponent implements OnInit {
         this.dialog.error('Gagal menyimpan pengaturan poin ibadah.');
       }
     });
-  }
-
-  onWorshipDateChange(ev: Event) {
-    const val = (ev.target as HTMLInputElement).value;
-    if (val) {
-      this.worshipDate.set(val);
-      this.loadWorshipSummary();
-    }
-  }
-
-  setWorshipDatePreset(mode: 'today' | 'yesterday') {
-    const d = new Date();
-    if (mode === 'yesterday') d.setDate(d.getDate() - 1);
-    this.worshipDate.set(d.toISOString().substring(0, 10));
-    this.loadWorshipSummary();
   }
 
   openCreate() {
@@ -308,23 +277,5 @@ export class AdminTasksComponent implements OnInit {
 
   selectEmoji(emoji: string) {
     this.form.patchValue({ iconEmoji: emoji });
-  }
-
-  getPrayerLabel(status: PrayerStatus | string): string {
-    if (status === PrayerStatus.Mosque) return 'Masjid';
-    if (status === PrayerStatus.Solo) return 'Sendiri / Sekolah';
-    return 'Belum / Tidak';
-  }
-
-  getPrayerClass(status: PrayerStatus | string): string {
-    if (status === PrayerStatus.Mosque) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (status === PrayerStatus.Solo) return 'bg-sky-50 text-sky-700 border-sky-200';
-    return 'bg-slate-100 text-slate-400 border-slate-200';
-  }
-
-  getPrayerIcon(status: PrayerStatus | string): string {
-    if (status === PrayerStatus.Mosque) return '🕌';
-    if (status === PrayerStatus.Solo) return '🏫';
-    return '⚪';
   }
 }

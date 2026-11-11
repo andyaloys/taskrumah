@@ -60,7 +60,7 @@
     <div class="grid grid-cols-2 gap-2.5">
       <div class="bg-white rounded-xl p-3 shadow-xs border border-slate-200/90 text-center">
         <div class="text-xl font-bold text-amber-600">{{ dashboard()!.totalPoints }}</div>
-        <div class="text-[11px] font-medium text-slate-500 mt-0.5">Total Tabungan</div>
+        <div class="text-[11px] font-medium text-slate-500 mt-0.5">Total Tabungan Poin</div>
       </div>
       <div class="bg-white rounded-xl p-3 shadow-xs border border-slate-200/90 text-center">
         <div class="text-xl font-bold text-indigo-600">{{ dashboard()!.weeklyPoints }}</div>
@@ -75,8 +75,111 @@
       <div class="bg-white rounded-xl p-3 shadow-xs border border-slate-200/90 text-center">
         <div class="text-xl font-bold text-emerald-600">{{ dashboard()!.tasksCompleted }}/{{ dashboard()!.tasksToday }}</div>
         <div class="text-[11px] font-medium text-slate-500 mt-0.5">
-          {{ currentWeekOffset() === 0 ? 'Selesai Hari Ini' : 'Selesai Pekan Ini' }}
+          {{ currentWeekOffset() === 0 ? 'Tugas Selesai' : 'Selesai Pekan Ini' }}
         </div>
+      </div>
+    </div>
+
+    <!-- Poin Sumber Hari Ini: Tugas & Ibadah -->
+    <div class="bg-gradient-to-tr from-slate-900 to-indigo-950 text-white rounded-2xl p-4 shadow-sm border border-slate-800">
+      <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-base">✨</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Sumber Poin Hari Ini</span>
+        </div>
+        <div class="text-right">
+          <span class="text-xs font-bold text-amber-400">Total: {{ dashboard()!.totalPoints }} poin</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="bg-slate-800/80 rounded-xl p-2.5 border border-slate-700/60">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+            <span>📋 Tugas Rumah</span>
+            <span class="font-bold text-emerald-400">+{{ getCompletedTaskPoints() }}p</span>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-tight">{{ dashboard()!.tasksCompleted }} tugas selesai hari ini</p>
+        </div>
+        <div class="bg-slate-800/80 rounded-xl p-2.5 border border-slate-700/60">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+            <span>🕌 Ibadah & Sholat</span>
+            <span class="font-bold text-indigo-400">+{{ getWorshipPointsToday() }}p</span>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-tight">{{ todayWorship()?.quranDone ? 'Sholat & Sudah Ngaji' : 'Catatan sholat hari ini' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kartu Status Ibadah Hari Ini -->
+    <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90">
+      <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🕌</span>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Ibadah & Sholat 5 Waktu</h2>
+            <p class="text-[11px] text-slate-500">Poin hari ini: <strong class="text-indigo-600">+{{ getWorshipPointsToday() }} poin</strong></p>
+          </div>
+        </div>
+        <a routerLink="/child/worship"
+          class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100/80 px-2.5 py-1 rounded-lg border border-indigo-100 transition-colors">
+          <span>Isi / Ubah</span>
+          <span>➔</span>
+        </a>
+      </div>
+
+      <!-- 5 Sholat Status Badges -->
+      <div class="grid grid-cols-5 gap-1.5 text-center mb-2.5">
+        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
+          <span class="block text-[10px] font-bold text-slate-500">Subuh</span>
+          <span [class]="getPrayerClass(todayWorship()?.subuh)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+            <span>{{ getPrayerIcon(todayWorship()?.subuh) }}</span>
+            <span class="truncate">{{ getPrayerLabel(todayWorship()?.subuh) }}</span>
+          </span>
+        </div>
+        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
+          <span class="block text-[10px] font-bold text-slate-500">Dzuhur</span>
+          <span [class]="getPrayerClass(todayWorship()?.dzuhur)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+            <span>{{ getPrayerIcon(todayWorship()?.dzuhur) }}</span>
+            <span class="truncate">{{ getPrayerLabel(todayWorship()?.dzuhur) }}</span>
+          </span>
+        </div>
+        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
+          <span class="block text-[10px] font-bold text-slate-500">Ashar</span>
+          <span [class]="getPrayerClass(todayWorship()?.ashar)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+            <span>{{ getPrayerIcon(todayWorship()?.ashar) }}</span>
+            <span class="truncate">{{ getPrayerLabel(todayWorship()?.ashar) }}</span>
+          </span>
+        </div>
+        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
+          <span class="block text-[10px] font-bold text-slate-500">Maghrib</span>
+          <span [class]="getPrayerClass(todayWorship()?.maghrib)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+            <span>{{ getPrayerIcon(todayWorship()?.maghrib) }}</span>
+            <span class="truncate">{{ getPrayerLabel(todayWorship()?.maghrib) }}</span>
+          </span>
+        </div>
+        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
+          <span class="block text-[10px] font-bold text-slate-500">Isya</span>
+          <span [class]="getPrayerClass(todayWorship()?.isya)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+            <span>{{ getPrayerIcon(todayWorship()?.isya) }}</span>
+            <span class="truncate">{{ getPrayerLabel(todayWorship()?.isya) }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Ngaji Status -->
+      <div class="flex items-center justify-between p-2 rounded-xl border border-slate-100 bg-slate-50/60 text-xs">
+        <div class="flex items-center gap-2">
+          <span>📖</span>
+          <span class="font-medium text-slate-700">Ngaji / Tilawah Qur'an</span>
+        </div>
+        @if (todayWorship()?.quranDone) {
+          <span class="font-bold text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg">
+            ✓ Sudah Ngaji
+          </span>
+        } @else {
+          <span class="font-medium text-[11px] text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg">
+            Belum Mengisi
+          </span>
+        }
       </div>
     </div>
 

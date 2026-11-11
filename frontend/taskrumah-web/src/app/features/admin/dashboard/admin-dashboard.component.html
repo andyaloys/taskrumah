@@ -233,6 +233,138 @@
       </div>
     }
 
+    <!-- Monitoring Ibadah Harian Anak -->
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+            🕌
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Pantau Ibadah Harian Anak</h2>
+            <p class="text-xs text-slate-500">Laporan sholat 5 waktu & ngaji anak secara real-time</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="setWorshipDatePreset('today')"
+            [class]="worshipDate() === formatDate(today) ? 'bg-indigo-600 text-white font-bold' : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer">
+            Hari Ini
+          </button>
+          <button type="button" (click)="setWorshipDatePreset('yesterday')"
+            [class]="worshipDate() === formatDate(yesterdayDate) ? 'bg-indigo-600 text-white font-bold' : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'"
+            class="px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer">
+            Kemarin ({{ yesterdayDate | date:'dd MMM' }})
+          </button>
+          <input type="date" [value]="worshipDate()" (change)="onWorshipDateChange($event)"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-indigo-600 cursor-pointer" />
+          <a routerLink="/admin/tasks"
+            title="Ubah pengaturan poin ibadah"
+            class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold hover:underline ml-1">
+            ⚙️ Atur Poin
+          </a>
+        </div>
+      </div>
+
+      @if (loadingWorship()) {
+        <div class="text-center py-12 bg-white rounded-2xl border border-slate-200">
+          <div class="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="mt-2.5 text-slate-500 text-xs font-medium">Memuat data ibadah anak...</p>
+        </div>
+      } @else if (worshipSummaries().length === 0) {
+        <div class="text-center py-10 bg-white rounded-2xl border border-slate-200">
+          <span class="text-3xl">🕌</span>
+          <p class="text-sm font-bold text-slate-800 mt-2">Belum ada data anak</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (summary of worshipSummaries(); track summary.userId) {
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4.5 hover:border-slate-300 transition-all">
+              <!-- Child Header -->
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+                    {{ summary.userName.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-900 leading-tight">{{ summary.userName }}</h3>
+                    <p class="text-[11px] text-slate-400">Total: <strong class="text-slate-700">{{ summary.totalPoints }}</strong> poin</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                  @if (summary.quranDone) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span>📖</span>
+                      <span>Ngaji ✓</span>
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-400 border border-slate-200">
+                      <span>📖</span>
+                      <span>Belum Ngaji</span>
+                    </span>
+                  }
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span>✨</span>
+                    <span>+{{ summary.pointsEarnedToday }}p</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- 5 Prayers Grid -->
+              <div class="grid grid-cols-5 gap-1.5 mt-3">
+                <!-- Subuh -->
+                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
+                  <span class="text-[10px] font-bold text-slate-500 block">Subuh</span>
+                  <span [class]="getPrayerClass(summary.subuh)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                    <span>{{ getPrayerIcon(summary.subuh) }}</span>
+                    <span class="truncate">{{ getPrayerLabel(summary.subuh) }}</span>
+                  </span>
+                </div>
+
+                <!-- Dzuhur -->
+                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
+                  <span class="text-[10px] font-bold text-slate-500 block">Dzuhur</span>
+                  <span [class]="getPrayerClass(summary.dzuhur)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                    <span>{{ getPrayerIcon(summary.dzuhur) }}</span>
+                    <span class="truncate">{{ getPrayerLabel(summary.dzuhur) }}</span>
+                  </span>
+                </div>
+
+                <!-- Ashar -->
+                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
+                  <span class="text-[10px] font-bold text-slate-500 block">Ashar</span>
+                  <span [class]="getPrayerClass(summary.ashar)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                    <span>{{ getPrayerIcon(summary.ashar) }}</span>
+                    <span class="truncate">{{ getPrayerLabel(summary.ashar) }}</span>
+                  </span>
+                </div>
+
+                <!-- Maghrib -->
+                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
+                  <span class="text-[10px] font-bold text-slate-500 block">Maghrib</span>
+                  <span [class]="getPrayerClass(summary.maghrib)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                    <span>{{ getPrayerIcon(summary.maghrib) }}</span>
+                    <span class="truncate">{{ getPrayerLabel(summary.maghrib) }}</span>
+                  </span>
+                </div>
+
+                <!-- Isya -->
+                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
+                  <span class="text-[10px] font-bold text-slate-500 block">Isya</span>
+                  <span [class]="getPrayerClass(summary.isya)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                    <span>{{ getPrayerIcon(summary.isya) }}</span>
+                    <span class="truncate">{{ getPrayerLabel(summary.isya) }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <!-- Children Progress Section -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       @for (child of dashboard()!.children; track child.userId) {

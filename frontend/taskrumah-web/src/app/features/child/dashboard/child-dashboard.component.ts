@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { DashboardService, ChildDashboard } from '../../../core/services/dashboard.service';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { WorshipService, DailyWorship, PrayerStatus } from '../../../core/services/worship.service';
 import { AssignmentStatus, TaskAssignment } from '../../../core/models/task-assignment.model';
 
 export interface WeekDayItem {
@@ -38,9 +39,15 @@ export class ChildDashboardComponent implements OnInit {
   selectedDateTasks = signal<TaskAssignment[]>([]);
   loadingDayTasks = signal<boolean>(false);
 
+  // Worship integration
+  todayWorship = signal<DailyWorship | null>(null);
+  loadingWorship = signal(false);
+  PrayerStatus = PrayerStatus;
+
   constructor(
     private dashboardService: DashboardService,
     private assignmentService: TaskAssignmentService,
+    private worshipService: WorshipService,
     private auth: AuthService
   ) {
     this.selectedDateStr.set(this.formatLocalDate(this.today));
@@ -48,6 +55,47 @@ export class ChildDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadDashboard();
+    this.loadTodayWorship();
+  }
+
+  loadTodayWorship() {
+    this.loadingWorship.set(true);
+    const todayStr = this.formatLocalDate(this.today);
+    this.worshipService.getMyWorship(todayStr).subscribe({
+      next: (w) => {
+        this.todayWorship.set(w);
+        this.loadingWorship.set(false);
+      },
+      error: () => this.loadingWorship.set(false)
+    });
+  }
+
+  getWorshipPointsToday(): number {
+    return this.todayWorship()?.totalPointsEarned || 0;
+  }
+
+  getCompletedTaskPoints(): number {
+    return this.selectedDateTasks()
+      .filter(t => t.status === AssignmentStatus.Approved)
+      .reduce((sum, t) => sum + t.taskPoints, 0);
+  }
+
+  getPrayerLabel(status: PrayerStatus | string | undefined): string {
+    if (status === PrayerStatus.Mosque) return 'Masjid';
+    if (status === PrayerStatus.Solo) return 'Sendiri';
+    return 'Belum';
+  }
+
+  getPrayerClass(status: PrayerStatus | string | undefined): string {
+    if (status === PrayerStatus.Mosque) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === PrayerStatus.Solo) return 'bg-sky-50 text-sky-700 border-sky-200';
+    return 'bg-slate-100 text-slate-400 border-slate-200';
+  }
+
+  getPrayerIcon(status: PrayerStatus | string | undefined): string {
+    if (status === PrayerStatus.Mosque) return '🕌';
+    if (status === PrayerStatus.Solo) return '🏫';
+    return '⏳';
   }
 
   formatLocalDate(d: Date | string): string {

@@ -5,6 +5,7 @@ import { DashboardService, AdminDashboard } from '../../../core/services/dashboa
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { DialogService } from '../../../core/services/dialog.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
+import { WorshipService, AdminChildWorshipSummary, PrayerStatus } from '../../../core/services/worship.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -22,14 +23,23 @@ export class AdminDashboardComponent implements OnInit {
   selectedDate = signal<string>('');
   dateViewMode = signal<'today' | 'tomorrow' | 'dayAfter' | 'custom'>('today');
 
+  // Worship Monitoring State
+  worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
+  loadingWorship = signal(false);
+  worshipDate = signal(new Date().toISOString().substring(0, 10));
+  yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  PrayerStatus = PrayerStatus;
+
   constructor(
     private dashboardService: DashboardService,
     private assignmentService: TaskAssignmentService,
+    private worshipService: WorshipService,
     private dialog: DialogService
   ) {}
 
   ngOnInit() {
     this.loadDashboard();
+    this.loadWorshipSummary();
   }
 
   formatDate(d: Date | string): string {
@@ -165,4 +175,48 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   AssignmentStatus = AssignmentStatus;
+
+  loadWorshipSummary() {
+    this.loadingWorship.set(true);
+    this.worshipService.getAdminSummary(this.worshipDate()).subscribe({
+      next: (data) => {
+        this.worshipSummaries.set(data);
+        this.loadingWorship.set(false);
+      },
+      error: () => this.loadingWorship.set(false)
+    });
+  }
+
+  onWorshipDateChange(ev: Event) {
+    const val = (ev.target as HTMLInputElement).value;
+    if (val) {
+      this.worshipDate.set(val);
+      this.loadWorshipSummary();
+    }
+  }
+
+  setWorshipDatePreset(mode: 'today' | 'yesterday') {
+    const d = new Date();
+    if (mode === 'yesterday') d.setDate(d.getDate() - 1);
+    this.worshipDate.set(d.toISOString().substring(0, 10));
+    this.loadWorshipSummary();
+  }
+
+  getPrayerLabel(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return 'Masjid';
+    if (status === PrayerStatus.Solo) return 'Sendiri / Sekolah';
+    return 'Belum / Tidak';
+  }
+
+  getPrayerClass(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === PrayerStatus.Solo) return 'bg-sky-50 text-sky-700 border-sky-200';
+    return 'bg-slate-100 text-slate-400 border-slate-200';
+  }
+
+  getPrayerIcon(status: PrayerStatus | string): string {
+    if (status === PrayerStatus.Mosque) return '🕌';
+    if (status === PrayerStatus.Solo) return '🏫';
+    return '⚪';
+  }
 }

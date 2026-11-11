@@ -31,6 +31,8 @@ export class ChildWorshipComponent implements OnInit {
 
   selectedDate = signal<string>(this.formatDate(new Date()));
   dateViewMode = signal<'today' | 'yesterday'>('today');
+  today = new Date();
+  yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   loading = signal(true);
   saving = signal(false);
 

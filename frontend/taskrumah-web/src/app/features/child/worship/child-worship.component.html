@@ -18,16 +18,18 @@
   </div>
 
   <!-- Day Selector Buttons (Hari Ini vs Kemarin) -->
-  <div class="bg-white rounded-xl p-1.5 border border-slate-200/80 shadow-2xs flex gap-1">
+  <div class="bg-white rounded-xl p-1.5 border border-slate-200/80 shadow-2xs flex gap-1.5">
     <button (click)="selectDay('today')"
       [class]="dateViewMode() === 'today' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-slate-100 font-medium'"
-      class="flex-1 py-2 rounded-lg text-xs transition-all text-center cursor-pointer">
-      Hari Ini ({{ selectedDate() | date:'dd MMM' }})
+      class="flex-1 py-2 px-3 rounded-lg text-xs transition-all text-center cursor-pointer flex items-center justify-center gap-1.5">
+      <span>Hari Ini</span>
+      <span [class]="dateViewMode() === 'today' ? 'text-indigo-200' : 'text-slate-400'" class="text-[11px] font-normal">({{ today | date:'dd MMM yyyy' }})</span>
     </button>
     <button (click)="selectDay('yesterday')"
       [class]="dateViewMode() === 'yesterday' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-slate-100 font-medium'"
-      class="flex-1 py-2 rounded-lg text-xs transition-all text-center cursor-pointer">
-      Kemarin (H-1)
+      class="flex-1 py-2 px-3 rounded-lg text-xs transition-all text-center cursor-pointer flex items-center justify-center gap-1.5">
+      <span>Kemarin</span>
+      <span [class]="dateViewMode() === 'yesterday' ? 'text-indigo-200' : 'text-slate-400'" class="text-[11px] font-normal">({{ yesterday | date:'dd MMM yyyy' }})</span>
     </button>
   </div>
 
