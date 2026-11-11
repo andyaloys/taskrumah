@@ -51,9 +51,11 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
       - uploads:/var/uploads:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - api
       - frontend
