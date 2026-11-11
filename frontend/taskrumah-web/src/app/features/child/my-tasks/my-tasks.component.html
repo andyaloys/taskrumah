@@ -167,7 +167,7 @@
                 </span>
               } @else if (task.status === AssignmentStatus.Pending || task.status === AssignmentStatus.Rejected || task.status === AssignmentStatus.Late) {
                 @if (canModify(task.dueDate)) {
-                  <a [routerLink]="['/child/tasks', (task.id || task.taskId), 'submit']" [queryParams]="{ from: 'tasks' }"
+                  <a [routerLink]="['/child/tasks', getSubmitTaskId(task), 'submit']" [queryParams]="{ from: 'tasks' }"
                     [class]="task.status === AssignmentStatus.Rejected ? 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-1.5 px-3 rounded-xl shadow-xs transition-colors' : 'btn-primary text-xs py-1.5 px-3'">
                     {{ task.status === AssignmentStatus.Rejected ? 'Perbaiki & Kirim Ulang' : (activeView() === 'yesterday' || isPastDate(task.dueDate) ? 'Kerjakan Susulan' : 'Kerjakan') }}
                   </a>

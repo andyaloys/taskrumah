@@ -95,7 +95,53 @@ public class TaskAssignmentsController : ControllerBase
             .Include(a => a.Comments)
             .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (assignment == null) return NotFound();
+        if (assignment == null)
+        {
+            // Fallback: Check if 'id' is a ChoreTaskId for a child accessing today's task
+            if (CurrentRole == "Child")
+            {
+                var choreTask = await _db.ChoreTasks.FirstOrDefaultAsync(t => t.Id == id);
+                if (choreTask != null)
+                {
+                    var today = JakartaTime.Today;
+                    var startOfDay = JakartaTime.StartOfDayUtc(today);
+                    var endOfDay = JakartaTime.EndOfDayUtc(today);
+
+                    assignment = await _db.TaskAssignments
+                        .Include(a => a.Task)
+                        .Include(a => a.AssignedTo)
+                        .Include(a => a.ReviewedBy)
+                        .Include(a => a.Comments)
+                        .FirstOrDefaultAsync(a => a.TaskId == choreTask.Id && a.AssignedToId == CurrentUserId && a.DueDate >= startOfDay && a.DueDate <= endOfDay);
+
+                    if (assignment == null)
+                    {
+                        var newAssignment = new TaskAssignment
+                        {
+                            Id = Guid.NewGuid(),
+                            TaskId = choreTask.Id,
+                            AssignedToId = CurrentUserId,
+                            DueDate = endOfDay,
+                            Status = AssignmentStatus.Pending,
+                            CreatedAt = JakartaTime.UtcNow
+                        };
+                        _db.TaskAssignments.Add(newAssignment);
+                        await _db.SaveChangesAsync();
+
+                        assignment = await _db.TaskAssignments
+                            .Include(a => a.Task)
+                            .Include(a => a.AssignedTo)
+                            .Include(a => a.ReviewedBy)
+                            .Include(a => a.Comments)
+                            .FirstAsync(a => a.Id == newAssignment.Id);
+                    }
+
+                    return Ok(MapToDto(assignment));
+                }
+            }
+
+            return NotFound();
+        }
 
         if (CurrentRole == "Child" && assignment.AssignedToId != CurrentUserId)
             return Forbid();
@@ -110,6 +156,46 @@ public class TaskAssignmentsController : ControllerBase
             .Include(a => a.Task)
             .Include(a => a.AssignedTo)
             .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (assignment == null)
+        {
+            // Fallback: Check if 'id' is a ChoreTaskId
+            if (CurrentRole == "Child")
+            {
+                var choreTask = await _db.ChoreTasks.FirstOrDefaultAsync(t => t.Id == id);
+                if (choreTask != null)
+                {
+                    var todayDate = JakartaTime.Today;
+                    var startOfDay = JakartaTime.StartOfDayUtc(todayDate);
+                    var endOfDay = JakartaTime.EndOfDayUtc(todayDate);
+
+                    assignment = await _db.TaskAssignments
+                        .Include(a => a.Task)
+                        .Include(a => a.AssignedTo)
+                        .FirstOrDefaultAsync(a => a.TaskId == choreTask.Id && a.AssignedToId == CurrentUserId && a.DueDate >= startOfDay && a.DueDate <= endOfDay);
+
+                    if (assignment == null)
+                    {
+                        var newAssignment = new TaskAssignment
+                        {
+                            Id = Guid.NewGuid(),
+                            TaskId = choreTask.Id,
+                            AssignedToId = CurrentUserId,
+                            DueDate = endOfDay,
+                            Status = AssignmentStatus.Pending,
+                            CreatedAt = JakartaTime.UtcNow
+                        };
+                        _db.TaskAssignments.Add(newAssignment);
+                        await _db.SaveChangesAsync();
+
+                        assignment = await _db.TaskAssignments
+                            .Include(a => a.Task)
+                            .Include(a => a.AssignedTo)
+                            .FirstAsync(a => a.Id == newAssignment.Id);
+                    }
+                }
+            }
+        }
 
         if (assignment == null) return NotFound();
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskAssignmentService } from '../../../core/services/task.service';
+import { DialogService } from '../../../core/services/dialog.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { environment } from '../../../../environments/environment';
 
@@ -27,14 +28,29 @@ export class TaskSubmitComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private assignmentService: TaskAssignmentService
+    private assignmentService: TaskAssignmentService,
+    private dialog: DialogService
   ) {}
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
-    this.assignmentService.getAssignment(id).subscribe(a => {
-      this.assignment.set(a);
+    if (!id || id === '00000000-0000-0000-0000-000000000000') {
       this.loading.set(false);
+      this.dialog.error('ID tugas tidak valid. Silakan buka kembali dari daftar tugas.');
+      this.router.navigate([this.backUrl()]);
+      return;
+    }
+
+    this.assignmentService.getAssignment(id).subscribe({
+      next: (a) => {
+        this.assignment.set(a);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.dialog.error('Gagal memuat tugas atau tugas belum tersedia.');
+        this.router.navigate([this.backUrl()]);
+      }
     });
   }
 

@@ -63,6 +63,7 @@ public class TaskScheduleService
             var children = await childrenQuery.ToListAsync();
 
             var dueDate = endOfDay;
+            var newAssignmentsToSave = new List<TaskAssignment>();
 
             foreach (var task in tasksForDay)
             {
@@ -75,28 +76,71 @@ public class TaskScheduleService
                     // Check if already in result for this task and this child
                     if (!result.Any(r => r.TaskId == task.Id && r.AssignedToId == child.Id))
                     {
-                        result.Add(new TaskAssignmentDto(
-                            Guid.Empty,
-                            task.Id,
-                            task.Title,
-                            task.IconEmoji ?? "📋",
-                            task.Points,
-                            child.Id,
-                            child.Name,
-                            child.AvatarUrl,
-                            dueDate,
-                            AssignmentStatus.Pending,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            startOfDay,
-                            0
-                        ));
+                        if (targetDate.Date == today)
+                        {
+                            var newAssignment = new TaskAssignment
+                            {
+                                Id = Guid.NewGuid(),
+                                TaskId = task.Id,
+                                AssignedToId = child.Id,
+                                DueDate = dueDate,
+                                Status = AssignmentStatus.Pending,
+                                CreatedAt = startOfDay
+                            };
+                            newAssignmentsToSave.Add(newAssignment);
+
+                            result.Add(new TaskAssignmentDto(
+                                newAssignment.Id,
+                                task.Id,
+                                task.Title,
+                                task.IconEmoji ?? "📋",
+                                task.Points,
+                                child.Id,
+                                child.Name,
+                                child.AvatarUrl,
+                                dueDate,
+                                AssignmentStatus.Pending,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                startOfDay,
+                                0
+                            ));
+                        }
+                        else
+                        {
+                            result.Add(new TaskAssignmentDto(
+                                Guid.Empty,
+                                task.Id,
+                                task.Title,
+                                task.IconEmoji ?? "📋",
+                                task.Points,
+                                child.Id,
+                                child.Name,
+                                child.AvatarUrl,
+                                dueDate,
+                                AssignmentStatus.Pending,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                startOfDay,
+                                0
+                            ));
+                        }
                     }
                 }
+            }
+
+            if (newAssignmentsToSave.Count > 0)
+            {
+                _db.TaskAssignments.AddRange(newAssignmentsToSave);
+                await _db.SaveChangesAsync();
             }
         }
 

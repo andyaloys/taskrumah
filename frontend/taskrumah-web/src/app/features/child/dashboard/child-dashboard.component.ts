@@ -80,6 +80,13 @@ export class ChildDashboardComponent implements OnInit {
       .reduce((sum, t) => sum + t.taskPoints, 0);
   }
 
+  getSubmitTaskId(task: TaskAssignment): string {
+    if (task.id && task.id !== '00000000-0000-0000-0000-000000000000') {
+      return task.id;
+    }
+    return task.taskId;
+  }
+
   getPrayerLabel(status: PrayerStatus | string | undefined): string {
     if (status === PrayerStatus.Mosque) return 'Masjid';
     if (status === PrayerStatus.Solo) return 'Sendiri';

@@ -198,4 +198,11 @@ export class MyTasksComponent implements OnInit {
     };
     return labels[status] || status;
   }
+
+  getSubmitTaskId(task: TaskAssignment): string {
+    if (task.id && task.id !== '00000000-0000-0000-0000-000000000000') {
+      return task.id;
+    }
+    return task.taskId;
+  }
 }
