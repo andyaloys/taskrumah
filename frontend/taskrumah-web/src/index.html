@@ -29,8 +29,11 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => console.log('TaskRumah PWA Service Worker terdaftar:', reg.scope))
+        navigator.serviceWorker.register('/sw.js?v=3')
+          .then((reg) => {
+            console.log('TaskRumah PWA Service Worker terdaftar:', reg.scope);
+            reg.update();
+          })
           .catch((err) => console.warn('Gagal mendaftarkan Service Worker:', err));
       });
     }
