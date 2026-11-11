@@ -56,10 +56,12 @@ jobs:
   deploy-vps:
     name: Auto Deploy to VPS
     needs: verify-live-vps
-    if: "${{ secrets.VPS_PASSWORD != '' }}"
     runs-on: ubuntu-latest
+    env:
+      VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
     steps:
       - name: SSH to VPS & Update Containers
+        if: env.VPS_PASSWORD != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 43.157.208.95
@@ -72,3 +74,7 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --build
             docker image prune -f
             echo "✅ Container VPS berhasil diperbarui!"
+
+      - name: VPS Auto-Sync Status
+        if: env.VPS_PASSWORD == ''
+        run: echo "ℹ️ VPS Auto-Sync aktif memantau git push secara otomatis."
