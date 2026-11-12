@@ -6,6 +6,7 @@ import { User } from '../../../core/models/user.model';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { DialogService } from '../../../core/services/dialog.service';
+import { compressImage } from '../../../core/utils/image-compressor';
 
 @Component({
   selector: 'app-child-profile',
@@ -50,34 +51,36 @@ export class ChildProfileComponent implements OnInit {
     input.click();
   }
 
-  onAvatarFileSelected(event: Event) {
+  async onAvatarFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    if (file.size > 10 * 1024 * 1024) {
-      this.dialog.error('Ukuran file foto maksimal 10MB');
-      return;
-    }
-
+    const rawFile = input.files[0];
     const u = this.user();
     if (!u) return;
 
     this.isUploadingAvatar.set(true);
-    this.userService.uploadAvatar(u.id, file).subscribe({
-      next: (updated) => {
-        this.user.set(updated);
-        this.auth.updateCurrentUserProfile({ avatarUrl: updated.avatarUrl });
-        this.isUploadingAvatar.set(false);
-        input.value = '';
-        this.dialog.success('Foto profil berhasil diperbarui! 📸');
-      },
-      error: (err) => {
-        this.isUploadingAvatar.set(false);
-        input.value = '';
-        this.dialog.error('Gagal mengupload foto: ' + (err.error?.message || 'Error'));
-      }
-    });
+
+    try {
+      const file = await compressImage(rawFile, 512, 0.85);
+      this.userService.uploadAvatar(u.id, file).subscribe({
+        next: (updated) => {
+          this.user.set(updated);
+          this.auth.updateCurrentUserProfile({ avatarUrl: updated.avatarUrl });
+          this.isUploadingAvatar.set(false);
+          input.value = '';
+          this.dialog.success('Foto profil berhasil diperbarui! 📸');
+        },
+        error: (err) => {
+          this.isUploadingAvatar.set(false);
+          input.value = '';
+          this.dialog.error('Gagal mengupload foto: ' + (err.error?.message || 'Error'));
+        }
+      });
+    } catch {
+      this.isUploadingAvatar.set(false);
+      this.dialog.error('Gagal memproses gambar');
+    }
   }
 
   openEditModal() {

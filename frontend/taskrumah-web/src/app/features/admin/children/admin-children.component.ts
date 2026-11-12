@@ -7,6 +7,7 @@ import { User, UserRole } from '../../../core/models/user.model';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { DialogService } from '../../../core/services/dialog.service';
+import { compressImage } from '../../../core/utils/image-compressor';
 
 @Component({
   selector: 'app-admin-children',
@@ -159,38 +160,45 @@ export class AdminChildrenComponent implements OnInit {
     inputElement.click();
   }
 
-  onAvatarFileSelected(event: Event, userId: string) {
+  async onAvatarFileSelected(event: Event, userId: string) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    if (file.size > 10 * 1024 * 1024) {
-      this.dialog.error('Ukuran file foto maksimal 10MB');
+    const rawFile = input.files[0];
+    if (rawFile.size > 20 * 1024 * 1024) {
+      this.dialog.error('Ukuran file foto maksimal 20MB');
       return;
     }
 
     this.uploadingUserId.set(userId);
-    this.userService.uploadAvatar(userId, file).subscribe({
-      next: (updatedUser) => {
-        this.uploadingUserId.set(null);
-        input.value = ''; // reset file input
 
-        // Update list in place
-        this.updateUserInLists(updatedUser);
+    try {
+      // Compress and crop to square 512x512 client-side before upload
+      const file = await compressImage(rawFile, 512, 0.85);
 
-        // If updated user is current logged in admin, update header profile
-        if (this.auth.currentUser()?.userId === updatedUser.id) {
-          this.auth.updateCurrentUserProfile({ avatarUrl: updatedUser.avatarUrl });
+      this.userService.uploadAvatar(userId, file).subscribe({
+        next: (updatedUser) => {
+          this.uploadingUserId.set(null);
+          input.value = '';
+
+          this.updateUserInLists(updatedUser);
+
+          if (this.auth.currentUser()?.userId === updatedUser.id) {
+            this.auth.updateCurrentUserProfile({ avatarUrl: updatedUser.avatarUrl });
+          }
+
+          this.dialog.success(`Foto profil untuk ${updatedUser.name} berhasil diperbarui! 📸`);
+        },
+        error: (err) => {
+          this.uploadingUserId.set(null);
+          input.value = '';
+          this.dialog.error('Gagal mengupload foto: ' + (err.error?.message || 'Terjadi kesalahan'));
         }
-
-        this.dialog.success(`Foto profil untuk ${updatedUser.name} berhasil diperbarui! 📸`);
-      },
-      error: (err) => {
-        this.uploadingUserId.set(null);
-        input.value = '';
-        this.dialog.error('Gagal mengupload foto: ' + (err.error?.message || 'Terjadi kesalahan'));
-      }
-    });
+      });
+    } catch {
+      this.uploadingUserId.set(null);
+      this.dialog.error('Gagal memproses gambar');
+    }
   }
 
   private updateUserInLists(updated: User) {

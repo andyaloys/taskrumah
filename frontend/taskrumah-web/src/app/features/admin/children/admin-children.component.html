@@ -64,10 +64,10 @@
               class="card p-4 cursor-pointer transition-all border rounded-xl relative group">
               <div class="flex items-center space-x-3.5">
                 <!-- Avatar with Upload Button -->
-                <div class="relative shrink-0">
-                  <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 border border-slate-200 flex items-center justify-center text-lg font-bold text-white shadow-xs overflow-hidden">
+                <div class="relative shrink-0 w-14 h-14" style="width: 56px; height: 56px;">
+                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 border border-slate-200 flex items-center justify-center text-lg font-bold text-white shadow-xs overflow-hidden" style="width: 56px; height: 56px;">
                     @if (child.avatarUrl) {
-                      <img [src]="child.avatarUrl" alt="{{ child.name }}" class="w-full h-full object-cover" />
+                      <img [src]="child.avatarUrl" alt="{{ child.name }}" class="w-full h-full object-cover block rounded-2xl" style="width: 100%; height: 100%; object-fit: cover;" />
                     } @else {
                       {{ child.name.charAt(0) }}
                     }
@@ -130,9 +130,9 @@
           <div class="card p-5 bg-white border border-slate-200/90 shadow-xs rounded-xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2 pb-3 border-b border-slate-100">
               <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 overflow-hidden shrink-0">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 overflow-hidden shrink-0" style="width: 48px; height: 48px;">
                   @if (selectedChild()!.avatarUrl) {
-                    <img [src]="selectedChild()!.avatarUrl" alt="{{ selectedChild()!.name }}" class="w-full h-full object-cover" />
+                    <img [src]="selectedChild()!.avatarUrl" alt="{{ selectedChild()!.name }}" class="w-full h-full object-cover block rounded-xl" style="width: 100%; height: 100%; object-fit: cover;" />
                   } @else {
                     {{ selectedChild()!.name.charAt(0) }}
                   }
@@ -282,10 +282,10 @@
           <div class="card p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:border-slate-300 transition-all">
             <div class="flex items-start space-x-4">
               <!-- Avatar with Upload Button -->
-              <div class="relative shrink-0">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-200 flex items-center justify-center text-xl font-bold text-white shadow-xs overflow-hidden">
+              <div class="relative shrink-0 w-14 h-14" style="width: 56px; height: 56px;">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-200 flex items-center justify-center text-xl font-bold text-white shadow-xs overflow-hidden" style="width: 56px; height: 56px;">
                   @if (parent.avatarUrl) {
-                    <img [src]="parent.avatarUrl" alt="{{ parent.name }}" class="w-full h-full object-cover" />
+                    <img [src]="parent.avatarUrl" alt="{{ parent.name }}" class="w-full h-full object-cover block rounded-2xl" style="width: 100%; height: 100%; object-fit: cover;" />
                   } @else {
                     {{ parent.name.charAt(0) }}
                   }
@@ -356,10 +356,10 @@
         <div class="space-y-4">
           <!-- Avatar Preview & Change Button in Modal -->
           <div class="flex items-center space-x-4 p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-            <div class="relative">
-              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 border border-slate-200 flex items-center justify-center text-xl font-bold text-white shadow-xs overflow-hidden">
+            <div class="relative shrink-0 w-14 h-14" style="width: 56px; height: 56px;">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 border border-slate-200 flex items-center justify-center text-xl font-bold text-white shadow-xs overflow-hidden" style="width: 56px; height: 56px;">
                 @if (editingUser()!.avatarUrl) {
-                  <img [src]="editingUser()!.avatarUrl" alt="Avatar" class="w-full h-full object-cover" />
+                  <img [src]="editingUser()!.avatarUrl" alt="Avatar" class="w-full h-full object-cover block rounded-2xl" style="width: 100%; height: 100%; object-fit: cover;" />
                 } @else {
                   {{ editingUser()!.name.charAt(0) }}
                 }
