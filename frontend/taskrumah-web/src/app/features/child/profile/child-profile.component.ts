@@ -19,6 +19,7 @@ export class ChildProfileComponent implements OnInit {
 
   isEditing = signal(false);
   isSaving = signal(false);
+  isUploadingAvatar = signal(false);
   editName = signal('');
 
   constructor(
@@ -42,6 +43,40 @@ export class ChildProfileComponent implements OnInit {
         late: assignments.filter(a => a.status === AssignmentStatus.Late).length,
         total: assignments.length
       });
+    });
+  }
+
+  triggerAvatarUpload(input: HTMLInputElement) {
+    input.click();
+  }
+
+  onAvatarFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (file.size > 10 * 1024 * 1024) {
+      this.dialog.error('Ukuran file foto maksimal 10MB');
+      return;
+    }
+
+    const u = this.user();
+    if (!u) return;
+
+    this.isUploadingAvatar.set(true);
+    this.userService.uploadAvatar(u.id, file).subscribe({
+      next: (updated) => {
+        this.user.set(updated);
+        this.auth.updateCurrentUserProfile({ avatarUrl: updated.avatarUrl });
+        this.isUploadingAvatar.set(false);
+        input.value = '';
+        this.dialog.success('Foto profil berhasil diperbarui! 📸');
+      },
+      error: (err) => {
+        this.isUploadingAvatar.set(false);
+        input.value = '';
+        this.dialog.error('Gagal mengupload foto: ' + (err.error?.message || 'Error'));
+      }
     });
   }
 
@@ -71,13 +106,7 @@ export class ChildProfileComponent implements OnInit {
     this.userService.updateUser(u.id, { name: newName }).subscribe({
       next: (updated) => {
         this.user.set(updated);
-        // update stored user in auth service so navbar reflects it
-        const current = this.auth.currentUser();
-        if (current) {
-          const updatedAuth = { ...current, name: updated.name };
-          localStorage.setItem('taskrumah_user', JSON.stringify(updatedAuth));
-          this.auth.currentUser.set(updatedAuth);
-        }
+        this.auth.updateCurrentUserProfile({ name: updated.name });
         this.isSaving.set(false);
         this.closeEditModal();
         this.dialog.success(`Nama berhasil diubah menjadi '${updated.name}'`);

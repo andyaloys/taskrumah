@@ -29,7 +29,15 @@ public record UserDto(
 
 public record UpdateUserRequest(
     string? Name,
-    string? AvatarUrl
+    string? AvatarUrl,
+    string? Password = null
+);
+
+public record CreateUserRequest(
+    string Name,
+    string Email,
+    string Password,
+    UserRole Role = UserRole.Child
 );
 
 public record CreateTaskRequest(

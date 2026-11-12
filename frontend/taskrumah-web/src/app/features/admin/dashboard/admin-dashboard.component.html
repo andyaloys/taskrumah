@@ -291,8 +291,12 @@
               <!-- Child Header -->
               <div class="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
                 <div class="flex items-center gap-2.5">
-                  <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-                    {{ summary.userName.charAt(0).toUpperCase() }}
+                  <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-xs overflow-hidden shrink-0">
+                    @if (summary.avatarUrl) {
+                      <img [src]="summary.avatarUrl" alt="{{ summary.userName }}" class="w-full h-full object-cover" />
+                    } @else {
+                      {{ summary.userName.charAt(0).toUpperCase() }}
+                    }
                   </div>
                   <div>
                     <h3 class="text-sm font-bold text-slate-900 leading-tight">{{ summary.userName }}</h3>
@@ -379,8 +383,12 @@
           <!-- Child Header -->
           <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
-                {{ child.name.charAt(0) }}
+              <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700 overflow-hidden shrink-0">
+                @if (child.avatarUrl) {
+                  <img [src]="child.avatarUrl" alt="{{ child.name }}" class="w-full h-full object-cover" />
+                } @else {
+                  {{ child.name.charAt(0) }}
+                }
               </div>
               <div>
                 <h3 class="text-base font-bold text-slate-900">{{ child.name }}</h3>

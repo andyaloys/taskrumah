@@ -31,6 +31,14 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  updateCurrentUserProfile(partial: Partial<LoginResponse>) {
+    const current = this.currentUser();
+    if (!current) return;
+    const updated = { ...current, ...partial };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+    this.currentUser.set(updated);
+  }
+
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
   }

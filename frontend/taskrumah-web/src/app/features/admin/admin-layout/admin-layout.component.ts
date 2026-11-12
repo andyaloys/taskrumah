@@ -56,7 +56,7 @@ import { NotificationService } from '../../../core/services/notification.service
               <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
               </svg>
-              <span>Data Anak</span>
+              <span>Kelola Pengguna</span>
             </a>
           </nav>
         </div>
@@ -64,8 +64,12 @@ import { NotificationService } from '../../../core/services/notification.service
         <!-- User profile & Logout footer -->
         <div class="p-4 border-t border-slate-800 bg-slate-900/60">
           <div class="flex items-center space-x-3 mb-3">
-            <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-indigo-400">
-              {{ currentUser()?.name?.charAt(0) }}
+            <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-indigo-400 overflow-hidden">
+              @if (currentUser()?.avatarUrl) {
+                <img [src]="currentUser()?.avatarUrl" class="w-full h-full object-cover" alt="Avatar" />
+              } @else {
+                {{ currentUser()?.name?.charAt(0) }}
+              }
             </div>
             <div class="overflow-hidden">
               <p class="font-semibold text-sm text-white truncate">{{ currentUser()?.name }}</p>
@@ -141,7 +145,7 @@ import { NotificationService } from '../../../core/services/notification.service
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <span>Anak</span>
+            <span>Pengguna</span>
           </a>
         </div>
       </nav>
