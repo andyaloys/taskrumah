@@ -68,10 +68,16 @@ public class DashboardController : ControllerBase
             .Where(a => a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
             .ToListAsync();
 
+        var weeklyWorships = await _db.DailyWorships
+            .Where(w => w.Date >= startOfWeekUtc && w.Date <= endOfWeekUtc)
+            .ToListAsync();
+
         var childProgressList = children.Select(child =>
         {
             var childTasks = displayAssignmentDtos.Where(a => a.AssignedToId == child.Id).ToList();
-            var weeklyPoints = weeklyAssignments.Where(a => a.AssignedToId == child.Id).Sum(a => a.Task?.Points ?? 0);
+            var taskPoints = weeklyAssignments.Where(a => a.AssignedToId == child.Id).Sum(a => a.Task?.Points ?? 0);
+            var worshipPoints = weeklyWorships.Where(w => w.UserId == child.Id).Sum(w => w.TotalPointsEarned);
+            var weeklyPoints = taskPoints + worshipPoints;
             return new ChildProgressDto(
                 child.Id,
                 child.Name,
@@ -146,10 +152,17 @@ public class DashboardController : ControllerBase
         var tomorrow = today.AddDays(1);
         var tomorrowTasks = await _scheduleService.GetAssignmentsForDateAsync(tomorrow, userId);
 
-        var weeklyPoints = await _db.TaskAssignments
+        var weeklyTaskPoints = await _db.TaskAssignments
             .Where(a => a.AssignedToId == userId && a.Status == AssignmentStatus.Approved && a.DueDate >= startOfWeekUtc && a.DueDate <= endOfWeekUtc)
             .Select(a => (int?)a.Task.Points)
             .SumAsync() ?? 0;
+
+        var weeklyWorshipPoints = await _db.DailyWorships
+            .Where(w => w.UserId == userId && w.Date >= startOfWeekUtc && w.Date <= endOfWeekUtc)
+            .Select(w => (int?)w.TotalPointsEarned)
+            .SumAsync() ?? 0;
+
+        var weeklyPoints = weeklyTaskPoints + weeklyWorshipPoints;
 
         var recentNotifications = await _db.Notifications
             .Where(n => n.UserId == userId && !n.IsRead)
