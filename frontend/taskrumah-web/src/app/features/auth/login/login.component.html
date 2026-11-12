@@ -114,65 +114,26 @@
           ⚡ Akun Cepat (Testing):
         </p>
         <div class="grid grid-cols-2 gap-2.5">
-          <!-- Papah -->
-          <button
-            type="button"
-            (click)="quickLogin('ayah@taskrumah.com', 'Ayah@123')"
-            class="group flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 transition-all text-left cursor-pointer"
-          >
-            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-base shrink-0 group-hover:scale-110 transition-transform">
-              👨
-            </div>
-            <div class="overflow-hidden">
-              <p class="text-xs font-bold text-white leading-tight">Papah</p>
-              <p class="text-[10px] text-indigo-400 font-medium leading-none mt-0.5">Admin</p>
-            </div>
-          </button>
-
-          <!-- Mamah -->
-          <button
-            type="button"
-            (click)="quickLogin('ibu@taskrumah.com', 'Ibu@123')"
-            class="group flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-pink-500/50 transition-all text-left cursor-pointer"
-          >
-            <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-base shrink-0 group-hover:scale-110 transition-transform">
-              👩
-            </div>
-            <div class="overflow-hidden">
-              <p class="text-xs font-bold text-white leading-tight">Mamah</p>
-              <p class="text-[10px] text-pink-400 font-medium leading-none mt-0.5">Admin</p>
-            </div>
-          </button>
-
-          <!-- Kakak -->
-          <button
-            type="button"
-            (click)="quickLogin('anak1@taskrumah.com', 'Anak1@123')"
-            class="group flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-emerald-500/50 transition-all text-left cursor-pointer"
-          >
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-base shrink-0 group-hover:scale-110 transition-transform">
-              🧑
-            </div>
-            <div class="overflow-hidden">
-              <p class="text-xs font-bold text-white leading-tight">Kakak</p>
-              <p class="text-[10px] text-emerald-400 font-medium leading-none mt-0.5">Anak</p>
-            </div>
-          </button>
-
-          <!-- Dedee -->
-          <button
-            type="button"
-            (click)="quickLogin('anak2@taskrumah.com', 'Anak2@123')"
-            class="group flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-amber-500/50 transition-all text-left cursor-pointer"
-          >
-            <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-base shrink-0 group-hover:scale-110 transition-transform">
-              👧
-            </div>
-            <div class="overflow-hidden">
-              <p class="text-xs font-bold text-white leading-tight">Dedee</p>
-              <p class="text-[10px] text-amber-400 font-medium leading-none mt-0.5">Anak</p>
-            </div>
-          </button>
+          @for (u of quickUsers(); track u.id) {
+            <button
+              type="button"
+              (click)="quickLogin(u.email, quickPasswords[u.email] || '123456')"
+              class="group flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 {{ getRoleBadge(u.role).borderClass }} transition-all text-left cursor-pointer"
+            >
+              <!-- Avatar or Emoji -->
+              <div class="w-8 h-8 rounded-lg {{ getRoleBadge(u.role).bgClass }} border border-slate-700/60 flex items-center justify-center text-base shrink-0 group-hover:scale-105 transition-transform overflow-hidden" style="width: 32px; height: 32px; min-width: 32px;">
+                @if (u.avatarUrl) {
+                  <img [src]="u.avatarUrl" [alt]="u.name" class="w-full h-full object-cover rounded-lg block" style="width: 100%; height: 100%; object-fit: cover;" />
+                } @else {
+                  <span>{{ getDefaultEmoji(u.name, u.role) }}</span>
+                }
+              </div>
+              <div class="overflow-hidden">
+                <p class="text-xs font-bold text-white leading-tight truncate">{{ u.name }}</p>
+                <p class="text-[10px] {{ getRoleBadge(u.role).textClass }} font-medium leading-none mt-0.5">{{ getRoleBadge(u.role).label }}</p>
+              </div>
+            </button>
+          }
         </div>
       </div>
     </div>

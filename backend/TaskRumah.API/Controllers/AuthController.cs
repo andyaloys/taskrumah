@@ -32,4 +32,23 @@ public class AuthController : ControllerBase
             user.TotalPoints, user.CurrentStreak
         ));
     }
+
+    [HttpGet("quick-users")]
+    public async Task<IActionResult> GetQuickUsers()
+    {
+        var users = await _db.Users
+            .Where(u => u.IsActive)
+            .OrderBy(u => u.Role)
+            .ThenBy(u => u.Name)
+            .Select(u => new
+            {
+                u.Id,
+                u.Name,
+                u.Email,
+                u.Role,
+                u.AvatarUrl
+            })
+            .ToListAsync();
+        return Ok(users);
+    }
 }
