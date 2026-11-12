@@ -7,6 +7,8 @@ using System.Text.Json.Serialization;
 using TaskRumah.API.Data;
 using TaskRumah.API.Services;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -105,30 +107,47 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Timezone config note: {ex.Message}");
     }
 
-    // Update existing records to align with Jakarta Time (WIB)
+    // Ensure clean Jakarta local timestamps without time zone (+07) offsets
     try
     {
         db.Database.ExecuteSqlRaw(@"
-            UPDATE ""TaskAssignments""
-            SET ""DueDate"" = ""DueDate"" - INTERVAL '7 hours'
-            WHERE EXTRACT(HOUR FROM ""DueDate"" AT TIME ZONE 'UTC') = 23;
-        ");
+            DO $$
+            BEGIN
+                ALTER TABLE ""TaskAssignments"" ALTER COLUMN ""DueDate"" TYPE timestamp without time zone;
+                ALTER TABLE ""TaskAssignments"" ALTER COLUMN ""CreatedAt"" TYPE timestamp without time zone;
+                ALTER TABLE ""TaskAssignments"" ALTER COLUMN ""CompletedAt"" TYPE timestamp without time zone;
+                ALTER TABLE ""TaskAssignments"" ALTER COLUMN ""ReviewedAt"" TYPE timestamp without time zone;
+                ALTER TABLE ""Users"" ALTER COLUMN ""LastStreakDate"" TYPE timestamp without time zone;
+                ALTER TABLE ""Users"" ALTER COLUMN ""CreatedAt"" TYPE timestamp without time zone;
+            EXCEPTION WHEN OTHERS THEN
+                NULL;
+            END $$;
 
-        db.Database.ExecuteSqlRaw(@"
             UPDATE ""TaskAssignments""
-            SET ""DueDate"" = ""DueDate"" + INTERVAL '16 hours 59 minutes 59 seconds'
-            WHERE EXTRACT(HOUR FROM ""DueDate"" AT TIME ZONE 'UTC') = 0 AND EXTRACT(MINUTE FROM ""DueDate"" AT TIME ZONE 'UTC') = 0;
-        ");
+            SET ""DueDate"" = '2026-11-12 23:59:59'
+            WHERE ""CreatedAt"" >= '2026-11-11 20:00:00';
 
-        db.Database.ExecuteSqlRaw(@"
-            UPDATE ""Users""
-            SET ""LastStreakDate"" = ""LastStreakDate"" - INTERVAL '7 hours'
-            WHERE EXTRACT(HOUR FROM ""LastStreakDate"" AT TIME ZONE 'UTC') = 0;
+            UPDATE ""TaskAssignments""
+            SET ""Status"" = 0
+            WHERE ""DueDate"" >= '2026-11-12 00:00:00' AND ""Status"" = 4;
+
+            DELETE FROM ""TaskAssignments"" a
+            WHERE a.""DueDate"" >= '2026-11-12 00:00:00'
+              AND a.""DueDate"" <= '2026-11-12 23:59:59'
+              AND a.""Status"" = 0
+              AND EXISTS (
+                  SELECT 1 FROM ""TaskAssignments"" b
+                  WHERE b.""TaskId"" = a.""TaskId""
+                    AND b.""AssignedToId"" = a.""AssignedToId""
+                    AND b.""DueDate"" >= '2026-11-12 00:00:00'
+                    AND b.""DueDate"" <= '2026-11-12 23:59:59'
+                    AND (b.""Status"" = 2 OR b.""Id"" < a.""Id"")
+              );
         ");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Data migration note: {ex.Message}");
+        Console.WriteLine($"DB Schema migration note: {ex.Message}");
     }
 
     // Create worship tables if not exists
@@ -140,7 +159,7 @@ using (var scope = app.Services.CreateScope())
                 ""SoloPoints"" integer NOT NULL DEFAULT 3,
                 ""MosquePoints"" integer NOT NULL DEFAULT 5,
                 ""QuranPoints"" integer NOT NULL DEFAULT 5,
-                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+                ""UpdatedAt"" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
 
             INSERT INTO ""WorshipSettings"" (""Id"", ""SoloPoints"", ""MosquePoints"", ""QuranPoints"", ""UpdatedAt"")
@@ -150,7 +169,7 @@ using (var scope = app.Services.CreateScope())
             CREATE TABLE IF NOT EXISTS ""DailyWorships"" (
                 ""Id"" uuid NOT NULL PRIMARY KEY,
                 ""UserId"" uuid NOT NULL REFERENCES ""Users""(""Id"") ON DELETE CASCADE,
-                ""Date"" timestamp with time zone NOT NULL,
+                ""Date"" timestamp without time zone NOT NULL,
                 ""Subuh"" integer NOT NULL DEFAULT 0,
                 ""Dzuhur"" integer NOT NULL DEFAULT 0,
                 ""Ashar"" integer NOT NULL DEFAULT 0,
@@ -159,9 +178,13 @@ using (var scope = app.Services.CreateScope())
                 ""QuranDone"" boolean NOT NULL DEFAULT FALSE,
                 ""QuranNote"" text,
                 ""TotalPointsEarned"" integer NOT NULL DEFAULT 0,
-                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+                ""CreatedAt"" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ""UpdatedAt"" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            ALTER TABLE ""DailyWorships"" ALTER COLUMN ""Date"" TYPE timestamp without time zone;
+            ALTER TABLE ""DailyWorships"" ALTER COLUMN ""CreatedAt"" TYPE timestamp without time zone;
+            ALTER TABLE ""DailyWorships"" ALTER COLUMN ""UpdatedAt"" TYPE timestamp without time zone;
 
             CREATE UNIQUE INDEX IF NOT EXISTS ""IX_DailyWorships_UserId_Date"" ON ""DailyWorships"" (""UserId"", ""Date"");
         ");
@@ -172,6 +195,4 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
 app.Run();
-

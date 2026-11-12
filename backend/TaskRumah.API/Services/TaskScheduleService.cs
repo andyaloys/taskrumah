@@ -85,7 +85,7 @@ public class TaskScheduleService
                                 AssignedToId = child.Id,
                                 DueDate = dueDate,
                                 Status = AssignmentStatus.Pending,
-                                CreatedAt = startOfDay
+                                CreatedAt = JakartaTime.Now
                             };
                             newAssignmentsToSave.Add(newAssignment);
 

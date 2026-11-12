@@ -26,9 +26,16 @@ public static class JakartaTime
     }
 
     /// <summary>
-    /// Current DateTime in Jakarta (WIB, UTC+7).
+    /// Current DateTime in Jakarta (WIB, UTC+7) as Unspecified kind (local time).
     /// </summary>
-    public static DateTime Now => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Zone);
+    public static DateTime Now
+    {
+        get
+        {
+            var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Zone);
+            return DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+        }
+    }
 
     /// <summary>
     /// Current calendar date in Jakarta (WIB) with time 00:00:00.
@@ -36,45 +43,25 @@ public static class JakartaTime
     public static DateTime Today => Now.Date;
 
     /// <summary>
-    /// Current UTC instant with DateTimeKind.Utc explicitly set.
+    /// Start of day (00:00:00) for given Jakarta calendar date.
     /// </summary>
-    public static DateTime UtcNow => DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+    public static DateTime StartOfDay(DateTime date) =>
+        new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Unspecified);
 
     /// <summary>
-    /// Converts a Jakarta calendar date to the start of day in UTC (00:00:00 WIB -> 17:00:00 UTC previous day).
+    /// End of day (23:59:59) for given Jakarta calendar date.
     /// </summary>
-    public static DateTime StartOfDayUtc(DateTime jakartaDate)
-    {
-        var local = new DateTime(jakartaDate.Year, jakartaDate.Month, jakartaDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
-        var utc = TimeZoneInfo.ConvertTimeToUtc(local, Zone);
-        return DateTime.SpecifyKind(utc, DateTimeKind.Utc);
-    }
+    public static DateTime EndOfDay(DateTime date) =>
+        new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, DateTimeKind.Unspecified);
 
-    /// <summary>
-    /// Converts a Jakarta calendar date to the end of day in UTC (23:59:59 WIB -> 16:59:59 UTC same day).
-    /// </summary>
-    public static DateTime EndOfDayUtc(DateTime jakartaDate)
-    {
-        var local = new DateTime(jakartaDate.Year, jakartaDate.Month, jakartaDate.Day, 23, 59, 59, DateTimeKind.Unspecified);
-        var utc = TimeZoneInfo.ConvertTimeToUtc(local, Zone);
-        return DateTime.SpecifyKind(utc, DateTimeKind.Utc);
-    }
+    // Aliases to guarantee all existing calls return clean Jakarta local time
+    public static DateTime UtcNow => Now;
+    public static DateTime StartOfDayUtc(DateTime jakartaDate) => StartOfDay(jakartaDate);
+    public static DateTime EndOfDayUtc(DateTime jakartaDate) => EndOfDay(jakartaDate);
 
-    /// <summary>
-    /// Converts any UTC DateTime to Jakarta time (WIB).
-    /// </summary>
-    public static DateTime ToJakarta(DateTime utcDateTime)
-    {
-        var utc = DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
-        return TimeZoneInfo.ConvertTimeFromUtc(utc, Zone);
-    }
-
-    /// <summary>
-    /// Formats DateTime in WIB format: "dd MMM yyyy, HH:mm WIB".
-    /// </summary>
     public static string FormatWib(DateTime? dt = null)
     {
-        var target = dt.HasValue ? ToJakarta(dt.Value) : Now;
+        var target = dt ?? Now;
         return target.ToString("dd MMM yyyy, HH:mm") + " WIB";
     }
 }

@@ -21,7 +21,7 @@ export class AdminDashboardComponent implements OnInit {
   tomorrow = new Date(Date.now() + 86400000);
   dayAfter = new Date(Date.now() + 2 * 86400000);
   selectedDate = signal<string>('');
-  dateViewMode = signal<'today' | 'tomorrow' | 'dayAfter' | 'custom'>('today');
+  dateViewMode = signal<'today' | 'yesterday' | 'tomorrow' | 'dayAfter' | 'custom'>('today');
 
   // Worship Monitoring State
   worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
@@ -47,10 +47,13 @@ export class AdminDashboardComponent implements OnInit {
     return date.toISOString().slice(0, 10);
   }
 
-  selectDateMode(mode: 'today' | 'tomorrow' | 'dayAfter' | 'custom', customDate?: string) {
+  selectDateMode(mode: 'today' | 'yesterday' | 'tomorrow' | 'dayAfter' | 'custom', customDate?: string) {
     this.dateViewMode.set(mode);
     if (mode === 'today') {
       this.selectedDate.set('');
+      this.currentWeekOffset.set(0);
+    } else if (mode === 'yesterday') {
+      this.selectedDate.set(this.formatDate(this.yesterdayDate));
       this.currentWeekOffset.set(0);
     } else if (mode === 'tomorrow') {
       this.selectedDate.set(this.formatDate(this.tomorrow));

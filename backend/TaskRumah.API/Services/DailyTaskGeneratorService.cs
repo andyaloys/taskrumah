@@ -29,7 +29,7 @@ public class DailyTaskGeneratorService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var now = DateTime.UtcNow;
+            var now = JakartaTime.Now;
             var nextMidnight = now.Date.AddDays(1);
             var delay = nextMidnight - now;
 
@@ -44,17 +44,17 @@ public class DailyTaskGeneratorService : BackgroundService
 
     private async Task RunDailyJobAsync()
     {
-        _logger.LogInformation("Running daily task generator at {Time}", DateTime.UtcNow);
+        _logger.LogInformation("Running daily task generator at {Time}", JakartaTime.Now);
 
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var today = DateTime.UtcNow.Date;
+        var today = JakartaTime.Today;
         var yesterday = today.AddDays(-1);
 
         // Mark yesterday's uncompleted tasks as Late
         var overdueAssignments = await db.TaskAssignments
-            .Where(a => a.DueDate.Date == yesterday && a.Status == AssignmentStatus.Pending)
+            .Where(a => a.DueDate < today && a.Status == AssignmentStatus.Pending)
             .Include(a => a.AssignedTo)
             .ToListAsync();
 
@@ -114,7 +114,7 @@ public class DailyTaskGeneratorService : BackgroundService
                         AssignedToId = assigneeId,
                         DueDate = today.AddDays(1).AddSeconds(-1), // end of today
                         Status = AssignmentStatus.Pending,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = JakartaTime.Now
                     });
                 }
             }
