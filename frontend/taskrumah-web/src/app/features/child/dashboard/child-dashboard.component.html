@@ -116,7 +116,9 @@
           <span class="text-xl">🕌</span>
           <div>
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Ibadah & Sholat 5 Waktu</h2>
-            <p class="text-[11px] text-slate-500">Poin hari ini: <strong class="text-indigo-600">+{{ getWorshipPointsToday() }} poin</strong></p>
+            <p class="text-[11px] text-slate-500">
+              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah</span> (🕌 +5p • 🏫 +3p) • Hari ini: <strong class="text-indigo-600">+{{ getWorshipPointsToday() }}p</strong>
+            </p>
           </div>
         </div>
         <a routerLink="/child/worship"
@@ -128,39 +130,39 @@
 
       <!-- 5 Sholat Status Badges -->
       <div class="grid grid-cols-5 gap-1.5 text-center mb-2.5">
-        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
-          <span class="block text-[10px] font-bold text-slate-500">Subuh</span>
-          <span [class]="getPrayerClass(todayWorship()?.subuh)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+        <div [class]="getPrayerCardClass(todayWorship()?.subuh)" class="p-1.5 rounded-xl border transition-all">
+          <span class="block text-[10px] font-bold text-slate-500 mb-1">Subuh</span>
+          <span [class]="getPrayerClass(todayWorship()?.subuh)" class="inline-flex items-center justify-center gap-0.5 text-[11px] py-1 px-1 rounded-lg border w-full">
             <span>{{ getPrayerIcon(todayWorship()?.subuh) }}</span>
-            <span class="truncate">{{ getPrayerLabel(todayWorship()?.subuh) }}</span>
+            <span>{{ getPrayerLabel(todayWorship()?.subuh) }}</span>
           </span>
         </div>
-        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
-          <span class="block text-[10px] font-bold text-slate-500">Dzuhur</span>
-          <span [class]="getPrayerClass(todayWorship()?.dzuhur)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+        <div [class]="getPrayerCardClass(todayWorship()?.dzuhur)" class="p-1.5 rounded-xl border transition-all">
+          <span class="block text-[10px] font-bold text-slate-500 mb-1">Dzuhur</span>
+          <span [class]="getPrayerClass(todayWorship()?.dzuhur)" class="inline-flex items-center justify-center gap-0.5 text-[11px] py-1 px-1 rounded-lg border w-full">
             <span>{{ getPrayerIcon(todayWorship()?.dzuhur) }}</span>
-            <span class="truncate">{{ getPrayerLabel(todayWorship()?.dzuhur) }}</span>
+            <span>{{ getPrayerLabel(todayWorship()?.dzuhur) }}</span>
           </span>
         </div>
-        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
-          <span class="block text-[10px] font-bold text-slate-500">Ashar</span>
-          <span [class]="getPrayerClass(todayWorship()?.ashar)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+        <div [class]="getPrayerCardClass(todayWorship()?.ashar)" class="p-1.5 rounded-xl border transition-all">
+          <span class="block text-[10px] font-bold text-slate-500 mb-1">Ashar</span>
+          <span [class]="getPrayerClass(todayWorship()?.ashar)" class="inline-flex items-center justify-center gap-0.5 text-[11px] py-1 px-1 rounded-lg border w-full">
             <span>{{ getPrayerIcon(todayWorship()?.ashar) }}</span>
-            <span class="truncate">{{ getPrayerLabel(todayWorship()?.ashar) }}</span>
+            <span>{{ getPrayerLabel(todayWorship()?.ashar) }}</span>
           </span>
         </div>
-        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
-          <span class="block text-[10px] font-bold text-slate-500">Maghrib</span>
-          <span [class]="getPrayerClass(todayWorship()?.maghrib)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+        <div [class]="getPrayerCardClass(todayWorship()?.maghrib)" class="p-1.5 rounded-xl border transition-all">
+          <span class="block text-[10px] font-bold text-slate-500 mb-1">Maghrib</span>
+          <span [class]="getPrayerClass(todayWorship()?.maghrib)" class="inline-flex items-center justify-center gap-0.5 text-[11px] py-1 px-1 rounded-lg border w-full">
             <span>{{ getPrayerIcon(todayWorship()?.maghrib) }}</span>
-            <span class="truncate">{{ getPrayerLabel(todayWorship()?.maghrib) }}</span>
+            <span>{{ getPrayerLabel(todayWorship()?.maghrib) }}</span>
           </span>
         </div>
-        <div class="p-1.5 rounded-xl border border-slate-100 bg-slate-50/70">
-          <span class="block text-[10px] font-bold text-slate-500">Isya</span>
-          <span [class]="getPrayerClass(todayWorship()?.isya)" class="inline-flex items-center justify-center gap-0.5 text-[10px] font-bold px-1 py-0.5 rounded border mt-1 w-full truncate">
+        <div [class]="getPrayerCardClass(todayWorship()?.isya)" class="p-1.5 rounded-xl border transition-all">
+          <span class="block text-[10px] font-bold text-slate-500 mb-1">Isya</span>
+          <span [class]="getPrayerClass(todayWorship()?.isya)" class="inline-flex items-center justify-center gap-0.5 text-[11px] py-1 px-1 rounded-lg border w-full">
             <span>{{ getPrayerIcon(todayWorship()?.isya) }}</span>
-            <span class="truncate">{{ getPrayerLabel(todayWorship()?.isya) }}</span>
+            <span>{{ getPrayerLabel(todayWorship()?.isya) }}</span>
           </span>
         </div>
       </div>

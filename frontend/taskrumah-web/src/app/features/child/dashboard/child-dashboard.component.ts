@@ -88,21 +88,32 @@ export class ChildDashboardComponent implements OnInit {
   }
 
   getPrayerLabel(status: PrayerStatus | string | undefined): string {
-    if (status === PrayerStatus.Mosque) return 'Masjid';
-    if (status === PrayerStatus.Solo) return 'Sendiri';
+    if (status === PrayerStatus.Mosque) return '+5p';
+    if (status === PrayerStatus.Solo) return '+3p';
     return 'Belum';
   }
 
   getPrayerClass(status: PrayerStatus | string | undefined): string {
-    if (status === PrayerStatus.Mosque) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (status === PrayerStatus.Solo) return 'bg-sky-50 text-sky-700 border-sky-200';
-    return 'bg-slate-100 text-slate-400 border-slate-200';
+    if (status === PrayerStatus.Mosque) {
+      return 'bg-emerald-600 text-white border-emerald-700 shadow-2xs font-extrabold';
+    }
+    if (status === PrayerStatus.Solo) {
+      return 'bg-emerald-500 text-white border-emerald-600 shadow-2xs font-extrabold';
+    }
+    return 'bg-slate-100 text-slate-400 border-slate-200 font-medium';
   }
 
   getPrayerIcon(status: PrayerStatus | string | undefined): string {
     if (status === PrayerStatus.Mosque) return '🕌';
     if (status === PrayerStatus.Solo) return '🏫';
     return '⏳';
+  }
+
+  getPrayerCardClass(status: PrayerStatus | string | undefined): string {
+    if (status === PrayerStatus.Mosque || status === PrayerStatus.Solo) {
+      return 'border-emerald-300 bg-emerald-50/50 shadow-2xs';
+    }
+    return 'border-slate-100 bg-slate-50/70';
   }
 
   formatLocalDate(d: Date | string): string {

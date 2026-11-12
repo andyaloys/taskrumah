@@ -242,7 +242,9 @@
           </div>
           <div>
             <h2 class="text-base font-bold text-slate-900">Pantau Ibadah Harian Anak</h2>
-            <p class="text-xs text-slate-500">Laporan sholat 5 waktu & ngaji anak secara real-time</p>
+            <p class="text-xs text-slate-500">
+              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah Sholat</span> (🕌 +5p Masjid • 🏫 +3p Sendiri)
+            </p>
           </div>
         </div>
 
@@ -315,47 +317,47 @@
               <!-- 5 Prayers Grid -->
               <div class="grid grid-cols-5 gap-1.5 mt-3">
                 <!-- Subuh -->
-                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
-                  <span class="text-[10px] font-bold text-slate-500 block">Subuh</span>
-                  <span [class]="getPrayerClass(summary.subuh)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                <div [class]="getPrayerCardClass(summary.subuh)" class="p-1.5 sm:p-2 rounded-xl border text-center transition-all">
+                  <span class="text-[10px] sm:text-xs font-bold text-slate-500 block mb-1">Subuh</span>
+                  <span [class]="getPrayerClass(summary.subuh)" class="inline-flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg text-[11px] border w-full">
                     <span>{{ getPrayerIcon(summary.subuh) }}</span>
-                    <span class="truncate">{{ getPrayerLabel(summary.subuh) }}</span>
+                    <span>{{ getPrayerLabel(summary.subuh) }}</span>
                   </span>
                 </div>
 
                 <!-- Dzuhur -->
-                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
-                  <span class="text-[10px] font-bold text-slate-500 block">Dzuhur</span>
-                  <span [class]="getPrayerClass(summary.dzuhur)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                <div [class]="getPrayerCardClass(summary.dzuhur)" class="p-1.5 sm:p-2 rounded-xl border text-center transition-all">
+                  <span class="text-[10px] sm:text-xs font-bold text-slate-500 block mb-1">Dzuhur</span>
+                  <span [class]="getPrayerClass(summary.dzuhur)" class="inline-flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg text-[11px] border w-full">
                     <span>{{ getPrayerIcon(summary.dzuhur) }}</span>
-                    <span class="truncate">{{ getPrayerLabel(summary.dzuhur) }}</span>
+                    <span>{{ getPrayerLabel(summary.dzuhur) }}</span>
                   </span>
                 </div>
 
                 <!-- Ashar -->
-                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
-                  <span class="text-[10px] font-bold text-slate-500 block">Ashar</span>
-                  <span [class]="getPrayerClass(summary.ashar)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                <div [class]="getPrayerCardClass(summary.ashar)" class="p-1.5 sm:p-2 rounded-xl border text-center transition-all">
+                  <span class="text-[10px] sm:text-xs font-bold text-slate-500 block mb-1">Ashar</span>
+                  <span [class]="getPrayerClass(summary.ashar)" class="inline-flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg text-[11px] border w-full">
                     <span>{{ getPrayerIcon(summary.ashar) }}</span>
-                    <span class="truncate">{{ getPrayerLabel(summary.ashar) }}</span>
+                    <span>{{ getPrayerLabel(summary.ashar) }}</span>
                   </span>
                 </div>
 
                 <!-- Maghrib -->
-                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
-                  <span class="text-[10px] font-bold text-slate-500 block">Maghrib</span>
-                  <span [class]="getPrayerClass(summary.maghrib)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                <div [class]="getPrayerCardClass(summary.maghrib)" class="p-1.5 sm:p-2 rounded-xl border text-center transition-all">
+                  <span class="text-[10px] sm:text-xs font-bold text-slate-500 block mb-1">Maghrib</span>
+                  <span [class]="getPrayerClass(summary.maghrib)" class="inline-flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg text-[11px] border w-full">
                     <span>{{ getPrayerIcon(summary.maghrib) }}</span>
-                    <span class="truncate">{{ getPrayerLabel(summary.maghrib) }}</span>
+                    <span>{{ getPrayerLabel(summary.maghrib) }}</span>
                   </span>
                 </div>
 
                 <!-- Isya -->
-                <div class="p-2 rounded-xl border border-slate-100 bg-slate-50/70 text-center">
-                  <span class="text-[10px] font-bold text-slate-500 block">Isya</span>
-                  <span [class]="getPrayerClass(summary.isya)" class="inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-bold border w-full mt-1 truncate">
+                <div [class]="getPrayerCardClass(summary.isya)" class="p-1.5 sm:p-2 rounded-xl border text-center transition-all">
+                  <span class="text-[10px] sm:text-xs font-bold text-slate-500 block mb-1">Isya</span>
+                  <span [class]="getPrayerClass(summary.isya)" class="inline-flex items-center justify-center gap-0.5 px-1 py-1 rounded-lg text-[11px] border w-full">
                     <span>{{ getPrayerIcon(summary.isya) }}</span>
-                    <span class="truncate">{{ getPrayerLabel(summary.isya) }}</span>
+                    <span>{{ getPrayerLabel(summary.isya) }}</span>
                   </span>
                 </div>
               </div>
