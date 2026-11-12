@@ -77,10 +77,8 @@ export class AdminDashboardComponent implements OnInit {
 
   isFutureDate(): boolean {
     if (!this.selectedDate()) return false;
-    const today = new Date();
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const sel = new Date(this.selectedDate());
-    return sel > todayDate;
+    const todayStr = this.formatDate(new Date());
+    return this.selectedDate() > todayStr;
   }
 
   loadDashboard() {

@@ -128,10 +128,11 @@ export class AdminChildrenComponent implements OnInit {
   }
 
   isFuture(): boolean {
-    if (this.activeDateFilter() === 'all') return false;
-    const sel = new Date(this.selectedDate() || this.today);
-    const todayDate = new Date(this.today.getFullYear(), this.today.getMonth(), this.today.getDate());
-    return sel > todayDate;
+    if (this.activeDateFilter() === 'all' || this.activeDateFilter() === 'today') return false;
+    const todayStr = this.formatDate(this.today);
+    const selStr = this.selectedDate();
+    if (!selStr) return false;
+    return selStr > todayStr;
   }
 
   loadChildAssignments() {
@@ -148,11 +149,9 @@ export class AdminChildrenComponent implements OnInit {
 
   canModify(dueDate: string | Date): boolean {
     if (!dueDate) return false;
-    const due = new Date(dueDate);
-    const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-    const today = new Date();
-    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-    return dueDateOnly >= yesterday;
+    const dueStr = this.formatDate(dueDate);
+    const yesterdayStr = this.formatDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    return dueStr >= yesterdayStr;
   }
 
   // --- Avatar Upload Feature ---
