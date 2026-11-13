@@ -123,25 +123,22 @@ using (var scope = app.Services.CreateScope())
                 NULL;
             END $$;
 
+            -- Restore tasks completed today (13 Nov) that were accidentally shifted
             UPDATE ""TaskAssignments""
-            SET ""DueDate"" = '2026-11-12 23:59:59'
-            WHERE ""CreatedAt"" >= '2026-11-11 20:00:00';
-
-            UPDATE ""TaskAssignments""
-            SET ""Status"" = 0
-            WHERE ""DueDate"" >= '2026-11-12 00:00:00' AND ""Status"" = 4;
+            SET ""DueDate"" = '2026-11-13 23:59:59'
+            WHERE (""CompletedAt"" >= '2026-11-13 00:00:00' OR ""ReviewedAt"" >= '2026-11-13 00:00:00' OR (""CreatedAt"" >= '2026-11-13 00:00:00' AND ""Status"" > 0));
 
             DELETE FROM ""TaskAssignments"" a
-            WHERE a.""DueDate"" >= '2026-11-12 00:00:00'
-              AND a.""DueDate"" <= '2026-11-12 23:59:59'
+            WHERE a.""DueDate"" >= '2026-11-13 00:00:00'
+              AND a.""DueDate"" <= '2026-11-13 23:59:59'
               AND a.""Status"" = 0
               AND EXISTS (
                   SELECT 1 FROM ""TaskAssignments"" b
                   WHERE b.""TaskId"" = a.""TaskId""
                     AND b.""AssignedToId"" = a.""AssignedToId""
-                    AND b.""DueDate"" >= '2026-11-12 00:00:00'
-                    AND b.""DueDate"" <= '2026-11-12 23:59:59'
-                    AND (b.""Status"" = 2 OR b.""Id"" < a.""Id"")
+                    AND b.""DueDate"" >= '2026-11-13 00:00:00'
+                    AND b.""DueDate"" <= '2026-11-13 23:59:59'
+                    AND b.""Status"" > 0
               );
         ");
     }
