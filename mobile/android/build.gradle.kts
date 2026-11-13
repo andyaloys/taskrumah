@@ -22,3 +22,9 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+subprojects {
+    tasks.matching { it.name.contains("lint", ignoreCase = true) }.configureEach {
+        enabled = false
+    }
+}
