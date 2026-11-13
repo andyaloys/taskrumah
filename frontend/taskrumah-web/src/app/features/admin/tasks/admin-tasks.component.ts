@@ -8,6 +8,7 @@ import { DialogService } from '../../../core/services/dialog.service';
 import { WorshipService, WorshipSetting } from '../../../core/services/worship.service';
 import { ChoreTask, TaskType } from '../../../core/models/task.model';
 import { User } from '../../../core/models/user.model';
+import { getTodayDateString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-admin-tasks',
@@ -44,7 +45,7 @@ export class AdminTasksComponent implements OnInit {
   showAssignModal = signal(false);
   assigningTask = signal<ChoreTask | null>(null);
   assignChildId = signal('');
-  assignDueDate = signal(new Date().toISOString().substring(0, 10));
+  assignDueDate = signal(getTodayDateString());
   isAssigning = signal(false);
 
   // Worship Tab state
@@ -81,7 +82,7 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: [''],
       points: [10, [Validators.required, Validators.min(1)]],
       iconEmoji: ['✅', Validators.required],
-      dueDate: [new Date().toISOString().substring(0, 10)]
+      dueDate: [getTodayDateString()]
     });
 
     this.worshipForm = this.fb.group({
@@ -145,7 +146,7 @@ export class AdminTasksComponent implements OnInit {
       taskType: TaskType.Daily,
       points: 10,
       iconEmoji: '✅',
-      dueDate: new Date().toISOString().substring(0, 10)
+      dueDate: getTodayDateString()
     });
     this.showForm.set(true);
   }
@@ -160,7 +161,7 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: task.assignedToId || '',
       points: task.points,
       iconEmoji: task.iconEmoji || '✅',
-      dueDate: new Date().toISOString().substring(0, 10)
+      dueDate: getTodayDateString()
     });
     this.showForm.set(true);
   }
@@ -246,7 +247,7 @@ export class AdminTasksComponent implements OnInit {
   openAssignModal(task: ChoreTask) {
     this.assigningTask.set(task);
     this.assignChildId.set(task.assignedToId || '');
-    this.assignDueDate.set(new Date().toISOString().substring(0, 10));
+    this.assignDueDate.set(getTodayDateString());
     this.showAssignModal.set(true);
   }
 

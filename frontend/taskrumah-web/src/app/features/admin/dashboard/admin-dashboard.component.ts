@@ -6,6 +6,7 @@ import { TaskAssignmentService } from '../../../core/services/task.service';
 import { DialogService } from '../../../core/services/dialog.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { WorshipService, AdminChildWorshipSummary, PrayerStatus } from '../../../core/services/worship.service';
+import { formatLocalDate, getTodayDateString, getYesterdayDateString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -26,7 +27,7 @@ export class AdminDashboardComponent implements OnInit {
   // Worship Monitoring State
   worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
   loadingWorship = signal(false);
-  worshipDate = signal(new Date().toISOString().substring(0, 10));
+  worshipDate = signal(getTodayDateString());
   yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
   PrayerStatus = PrayerStatus;
 
@@ -43,8 +44,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   formatDate(d: Date | string): string {
-    const date = new Date(d);
-    return date.toISOString().slice(0, 10);
+    return formatLocalDate(d);
   }
 
   selectDateMode(mode: 'today' | 'yesterday' | 'tomorrow' | 'dayAfter' | 'custom', customDate?: string) {
@@ -197,9 +197,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   setWorshipDatePreset(mode: 'today' | 'yesterday') {
-    const d = new Date();
-    if (mode === 'yesterday') d.setDate(d.getDate() - 1);
-    this.worshipDate.set(d.toISOString().substring(0, 10));
+    this.worshipDate.set(mode === 'yesterday' ? getYesterdayDateString() : getTodayDateString());
     this.loadWorshipSummary();
   }
 

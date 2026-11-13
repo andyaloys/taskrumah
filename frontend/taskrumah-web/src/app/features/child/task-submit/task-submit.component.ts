@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { DialogService } from '../../../core/services/dialog.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
+import { formatLocalDate } from '../../../core/utils/date-utils';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -67,10 +68,7 @@ export class TaskSubmitComponent implements OnInit {
   canModify(): boolean {
     const a = this.assignment();
     if (!a || !a.dueDate) return false;
-    const raw = typeof (a.dueDate as any) === 'string'
-      ? (a.dueDate as any)
-      : ((a.dueDate as any).toISOString ? (a.dueDate as any).toISOString() : String(a.dueDate));
-    const dateStr = raw.substring(0, 10);
+    const dateStr = formatLocalDate(a.dueDate);
     const [y, m, d] = dateStr.split('-').map(Number);
     const dueDateOnly = new Date(y, m - 1, d);
     const today = new Date();

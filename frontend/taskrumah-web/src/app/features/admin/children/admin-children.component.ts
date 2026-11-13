@@ -8,6 +8,7 @@ import { TaskAssignmentService } from '../../../core/services/task.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { DialogService } from '../../../core/services/dialog.service';
 import { compressImage } from '../../../core/utils/image-compressor';
+import { formatLocalDate } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-admin-children',
@@ -65,8 +66,7 @@ export class AdminChildrenComponent implements OnInit {
   }
 
   formatDate(d: Date | string): string {
-    const date = new Date(d);
-    return date.toISOString().slice(0, 10);
+    return formatLocalDate(d);
   }
 
   loadUsers() {

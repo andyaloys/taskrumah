@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { AuthService } from '../../../core/auth/auth.service';
+import { formatLocalDate } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-my-tasks',
@@ -148,7 +149,7 @@ export class MyTasksComponent implements OnInit {
 
   private getDueDateOnly(dueDate: string | Date): Date {
     if (!dueDate) return new Date();
-    const dateStr = typeof dueDate === 'string' ? dueDate.substring(0, 10) : new Date(dueDate).toISOString().substring(0, 10);
+    const dateStr = formatLocalDate(dueDate);
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
