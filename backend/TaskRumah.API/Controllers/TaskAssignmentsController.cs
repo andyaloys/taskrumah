@@ -149,6 +149,59 @@ public class TaskAssignmentsController : ControllerBase
         return Ok(MapToDto(assignment));
     }
 
+    [HttpPost("submit-extra")]
+    [Authorize(Roles = "Child,Admin")]
+    public async Task<IActionResult> SubmitExtra([FromForm] Guid taskId, [FromForm] string? submissionNote, IFormFile? photo)
+    {
+        var choreTask = await _db.ChoreTasks.FirstOrDefaultAsync(t => t.Id == taskId && t.IsActive);
+        if (choreTask == null)
+            return NotFound(new { message = "Tugas tidak ditemukan atau sudah tidak aktif." });
+
+        if (choreTask.TaskType != TaskType.OneTime)
+            return BadRequest(new { message = "Hanya tugas dengan tipe Tugas Tambahan yang dapat dilaporkan melalui menu ini." });
+
+        if (CurrentRole == "Child" && choreTask.AssignedToId.HasValue && choreTask.AssignedToId.Value != CurrentUserId)
+            return Forbid();
+
+        var today = JakartaTime.Today;
+        var endOfDay = JakartaTime.EndOfDayUtc(today);
+
+        string? photoUrl = null;
+        if (photo != null)
+        {
+            photoUrl = await _fileStorage.SaveFileAsync(photo, "uploads/proofs");
+        }
+
+        var assignment = new TaskAssignment
+        {
+            Id = Guid.NewGuid(),
+            TaskId = choreTask.Id,
+            AssignedToId = CurrentUserId,
+            DueDate = endOfDay,
+            Status = AssignmentStatus.Submitted,
+            CompletedAt = JakartaTime.UtcNow,
+            ProofPhotoUrl = photoUrl,
+            SubmissionNote = submissionNote,
+            CreatedAt = JakartaTime.UtcNow
+        };
+
+        _db.TaskAssignments.Add(assignment);
+        await _db.SaveChangesAsync();
+
+        await _db.Entry(assignment).Reference(a => a.Task).LoadAsync();
+        await _db.Entry(assignment).Reference(a => a.AssignedTo).LoadAsync();
+
+        var timeStr = JakartaTime.FormatWib();
+        await _notificationService.CreateForAdminsAsync(
+            $"Tugas Tambahan Dikerjakan! 🌟",
+            $"{assignment.AssignedTo.Name} telah melaporkan tugas tambahan '{choreTask.Title}' (+{choreTask.Points} poin) pada {timeStr}",
+            NotificationType.TaskSubmitted,
+            assignment.Id
+        );
+
+        return Ok(MapToDto(assignment));
+    }
+
     [HttpPost("{id}/submit")]
     public async Task<IActionResult> Submit(Guid id, [FromForm] SubmitTaskRequest req, IFormFile? photo)
     {

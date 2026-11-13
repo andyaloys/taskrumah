@@ -1,8 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TaskAssignmentService } from '../../../core/services/task.service';
+import { TaskService, TaskAssignmentService } from '../../../core/services/task.service';
+import { DialogService } from '../../../core/services/dialog.service';
+import { ChoreTask } from '../../../core/models/task.model';
 import { TaskAssignment, AssignmentStatus } from '../../../core/models/task-assignment.model';
 import { AuthService } from '../../../core/auth/auth.service';
 import { formatLocalDate } from '../../../core/utils/date-utils';
@@ -32,7 +34,25 @@ export class MyTasksComponent implements OnInit {
   tomorrow: Date;
   selectedDate = signal<string>('');
 
-  constructor(private assignmentService: TaskAssignmentService, private auth: AuthService) {
+  // Extra Task Modal State
+  showExtraModal = signal(false);
+  extraTasks = signal<ChoreTask[]>([]);
+  loadingExtra = signal(false);
+  selectedExtraTaskId = signal('');
+  extraNote = signal('');
+  extraPhoto: File | null = null;
+  extraPhotoPreview: string | null = null;
+  extraCompressionInfo = signal('');
+  extraCompressing = signal(false);
+  submittingExtra = signal(false);
+
+  constructor(
+    private taskService: TaskService,
+    private assignmentService: TaskAssignmentService,
+    private auth: AuthService,
+    private dialog: DialogService,
+    private route: ActivatedRoute
+  ) {
     const now = new Date();
     this.today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     this.yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
@@ -42,6 +62,13 @@ export class MyTasksComponent implements OnInit {
 
   ngOnInit() {
     this.loadAll();
+
+    // Check if queryParam ?extra=true is passed
+    this.route.queryParamMap.subscribe(params => {
+      if (params.get('extra') === 'true') {
+        this.openExtraTaskModal();
+      }
+    });
   }
 
   formatLocalDate(d: Date | string): string {
@@ -205,5 +232,165 @@ export class MyTasksComponent implements OnInit {
       return task.id;
     }
     return task.taskId;
+  }
+
+  // --- Extra Task (Tugas Tambahan) Methods ---
+
+  openExtraTaskModal() {
+    this.selectedExtraTaskId.set('');
+    this.extraNote.set('');
+    this.extraPhoto = null;
+    this.extraPhotoPreview = null;
+    this.extraCompressionInfo.set('');
+    this.showExtraModal.set(true);
+    this.loadExtraTasks();
+  }
+
+  closeExtraModal() {
+    this.showExtraModal.set(false);
+  }
+
+  loadExtraTasks() {
+    this.loadingExtra.set(true);
+    this.taskService.getExtraTasks().subscribe({
+      next: (tasks) => {
+        this.extraTasks.set(tasks);
+        this.loadingExtra.set(false);
+        if (tasks.length > 0 && !this.selectedExtraTaskId()) {
+          this.selectedExtraTaskId.set(tasks[0].id);
+        }
+      },
+      error: () => {
+        this.loadingExtra.set(false);
+        this.dialog.error('Gagal memuat daftar tugas tambahan.');
+      }
+    });
+  }
+
+  getSelectedExtraTask(): ChoreTask | undefined {
+    return this.extraTasks().find(t => t.id === this.selectedExtraTaskId());
+  }
+
+  async onExtraPhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.[0]) {
+      const rawFile = input.files[0];
+      const origSize = (rawFile.size / 1024).toFixed(0);
+
+      this.extraCompressing.set(true);
+      try {
+        const compressed = await this.compressImage(rawFile, 1280, 1280, 0.75);
+        this.extraPhoto = compressed;
+        const newSize = (compressed.size / 1024).toFixed(0);
+        if (compressed.size < rawFile.size) {
+          const savedPct = Math.round((1 - (compressed.size / rawFile.size)) * 100);
+          this.extraCompressionInfo.set(`${origSize} KB ➔ ${newSize} KB (-${savedPct}%)`);
+        } else {
+          this.extraCompressionInfo.set(`${newSize} KB`);
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => this.extraPhotoPreview = e.target?.result as string;
+        reader.readAsDataURL(compressed);
+      } catch {
+        this.extraPhoto = rawFile;
+        this.extraCompressionInfo.set(`${origSize} KB`);
+        const reader = new FileReader();
+        reader.onload = (e) => this.extraPhotoPreview = e.target?.result as string;
+        reader.readAsDataURL(rawFile);
+      } finally {
+        this.extraCompressing.set(false);
+      }
+    }
+  }
+
+  removeExtraPhoto() {
+    this.extraPhoto = null;
+    this.extraPhotoPreview = null;
+    this.extraCompressionInfo.set('');
+  }
+
+  submitExtraTask() {
+    const taskId = this.selectedExtraTaskId();
+    if (!taskId) {
+      this.dialog.error('Silakan pilih tugas tambahan terlebih dahulu!');
+      return;
+    }
+
+    this.submittingExtra.set(true);
+    this.assignmentService.submitExtraTask(
+      taskId,
+      this.extraNote() || undefined,
+      this.extraPhoto || undefined
+    ).subscribe({
+      next: () => {
+        this.submittingExtra.set(false);
+        this.showExtraModal.set(false);
+        this.dialog.success('Tugas tambahan berhasil dilaporkan! Menunggu persetujuan orang tua.');
+        this.loadAll();
+      },
+      error: (err) => {
+        this.submittingExtra.set(false);
+        this.dialog.error('Gagal melaporkan tugas: ' + (err.error?.message || 'Terjadi kesalahan'));
+      }
+    });
+  }
+
+  private compressImage(file: File, maxWidth: number, maxHeight: number, quality: number): Promise<File> {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob || blob.size >= file.size) {
+                resolve(file);
+              } else {
+                const cleanName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+                const compressedFile = new File([blob], cleanName, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
   }
 }

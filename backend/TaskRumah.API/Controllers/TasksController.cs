@@ -43,7 +43,35 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("extra")]
+    public async Task<IActionResult> GetExtra()
+    {
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid? userId = !string.IsNullOrEmpty(userIdStr) ? Guid.Parse(userIdStr) : null;
+
+        var query = _db.ChoreTasks
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
+            .Where(t => t.IsActive && t.TaskType == TaskType.OneTime);
+
+        if (role == "Child" && userId.HasValue)
+        {
+            query = query.Where(t => t.AssignedToId == null || t.AssignedToId == userId.Value);
+        }
+
+        var tasks = await query
+            .OrderBy(t => t.Title)
+            .Select(t => new ChoreTaskDto(
+                t.Id, t.Title, t.Description, t.TaskType, t.DaysOfWeek,
+                t.AssignedToId, t.AssignedTo != null ? t.AssignedTo.Name : null,
+                t.CreatedById, t.CreatedBy.Name, t.Points, t.IconEmoji, t.IsActive, t.CreatedAt))
+            .ToListAsync();
+
+        return Ok(tasks);
+    }
+
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var task = await _db.ChoreTasks
@@ -286,6 +314,10 @@ public class TasksController : ControllerBase
 
     private async Task CreateTodayAssignmentsAsync(ChoreTask task, DateTime? targetDate = null)
     {
+        // OneTime tasks (Tugas Tambahan) are on-demand; children submit them when completed
+        if (task.TaskType == TaskType.OneTime)
+            return;
+
         var today = JakartaTime.Today;
         var dayNum = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 

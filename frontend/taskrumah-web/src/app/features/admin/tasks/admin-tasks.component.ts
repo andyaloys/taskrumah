@@ -179,7 +179,7 @@ export class AdminTasksComponent implements OnInit {
 
   getScheduleLabel(task: ChoreTask): string {
     if (task.taskType === TaskType.Daily) return 'Rutin Setiap Hari';
-    if (task.taskType === TaskType.OneTime) return 'Sekali Saja';
+    if (task.taskType === TaskType.OneTime) return 'Tugas Tambahan';
     if (task.taskType === TaskType.SpecificDays && task.daysOfWeek) {
       const dayMap: { [k: string]: string } = {
         '1': 'Sen', '2': 'Sel', '3': 'Rab', '4': 'Kam', '5': 'Jum', '6': 'Sab', '7': 'Min'
@@ -211,7 +211,7 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: val.assignedToId || null,
       points: val.points,
       iconEmoji: val.iconEmoji,
-      dueDate: taskType === TaskType.OneTime ? val.dueDate : undefined
+      dueDate: undefined
     };
 
     const task = this.editingTask();

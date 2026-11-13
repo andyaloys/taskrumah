@@ -254,9 +254,16 @@
             }
           </p>
         </div>
-        <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
-          {{ selectedDateTasks().length }} tugas
-        </span>
+        <div class="flex items-center space-x-1.5 shrink-0">
+          <a routerLink="/child/tasks" [queryParams]="{ extra: 'true' }"
+            class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-2.5 py-1 rounded-xl text-[11px] flex items-center space-x-1 shadow-2xs transition-colors">
+            <span>🌟</span>
+            <span>+ Lapor Tugas</span>
+          </a>
+          <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+            {{ selectedDateTasks().length }} tugas
+          </span>
+        </div>
       </div>
 
       <!-- Notice Banners -->

@@ -73,7 +73,7 @@
                 <select formControlName="taskType" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none text-sm text-slate-800">
                   <option [value]="TaskType.Daily">Rutin Setiap Hari</option>
                   <option [value]="TaskType.SpecificDays">Hari Tertentu</option>
-                  <option [value]="TaskType.OneTime">Sekali Saja</option>
+                  <option [value]="TaskType.OneTime">Tugas Tambahan (Kapan Saja)</option>
                 </select>
               </div>
               <div>
@@ -104,10 +104,11 @@
 
             <!-- OneTime Due Date Selector -->
             @if (form.get('taskType')?.value === TaskType.OneTime) {
-              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Target Pelaksanaan:</label>
-                <input formControlName="dueDate" type="date"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none text-xs bg-white text-slate-800" />
+              <div class="p-3.5 bg-purple-50/70 rounded-xl border border-purple-200/80 text-xs text-purple-800">
+                <div class="font-bold flex items-center gap-1.5 mb-1 text-purple-900">
+                  <span>🌟</span> Sifat: Tugas Tambahan (Kapan Saja)
+                </div>
+                <p class="leading-relaxed">Tugas ini tidak muncul otomatis di daftar tugas harian anak. Anak dapat melaporkan tugas ini secara mandiri kapan saja setelah selesai mengerjakannya.</p>
               </div>
             }
 
@@ -204,7 +205,8 @@
               <div>
                 <div class="flex flex-wrap items-center gap-2">
                   <h3 class="text-sm font-bold text-slate-900">{{ task.title }}</h3>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border"
+                    [class]="task.taskType === TaskType.OneTime ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200'">
                     {{ getScheduleLabel(task) }}
                   </span>
                   @if (!task.isActive) {

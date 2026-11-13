@@ -15,6 +15,10 @@ export class TaskService {
     return this.http.get<ChoreTask[]>(`${this.apiUrl}?activeOnly=${activeOnly}`);
   }
 
+  getExtraTasks() {
+    return this.http.get<ChoreTask[]>(`${this.apiUrl}/extra`);
+  }
+
   getTask(id: string) {
     return this.http.get<ChoreTask>(`${this.apiUrl}/${id}`);
   }
@@ -65,6 +69,14 @@ export class TaskAssignmentService {
     if (note) formData.append('submissionNote', note);
     if (photo) formData.append('photo', photo);
     return this.http.post<TaskAssignment>(`${this.apiUrl}/${id}/submit`, formData);
+  }
+
+  submitExtraTask(taskId: string, note?: string, photo?: File) {
+    const formData = new FormData();
+    formData.append('taskId', taskId);
+    if (note) formData.append('submissionNote', note);
+    if (photo) formData.append('photo', photo);
+    return this.http.post<TaskAssignment>(`${this.apiUrl}/submit-extra`, formData);
   }
 
   approveTask(id: string) {
