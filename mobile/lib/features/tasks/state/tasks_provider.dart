@@ -73,8 +73,24 @@ class TasksNotifier extends AsyncNotifier<List<TaskAssignmentModel>> {
     await repo.submitTask(assignmentId, note: note, photo: photo);
     await refresh();
   }
+
+  Future<void> submitExtraTask(String taskId, {String? note, File? photo}) async {
+    final repo = ref.read(taskRepositoryProvider);
+    await repo.submitExtraTask(taskId, note: note, photo: photo);
+    await refresh();
+  }
+
+  Future<List<ChoreTaskModel>> getExtraTasks() async {
+    final repo = ref.read(taskRepositoryProvider);
+    return await repo.getExtraTasks();
+  }
 }
 
 final tasksNotifierProvider = AsyncNotifierProvider<TasksNotifier, List<TaskAssignmentModel>>(() {
   return TasksNotifier();
+});
+
+final extraTasksFutureProvider = FutureProvider.autoDispose<List<ChoreTaskModel>>((ref) async {
+  final repo = ref.watch(taskRepositoryProvider);
+  return await repo.getExtraTasks();
 });

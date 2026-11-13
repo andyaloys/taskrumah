@@ -8,8 +8,11 @@ class ApiConstants {
   static const String quickUsers = '/auth/quick-users';
 
   // Tasks
+  static const String tasks = '/tasks';
+  static const String extraTasks = '/tasks/extra';
   static const String taskAssignments = '/task-assignments';
   static const String taskSchedule = '/task-assignments/schedule';
+  static const String submitExtraTask = '/task-assignments/submit-extra';
   static String submitTask(String id) => '/task-assignments/$id/submit';
   static String approveTask(String id) => '/task-assignments/$id/approve';
   static String rejectTask(String id) => '/task-assignments/$id/reject';

@@ -22,6 +22,16 @@ class TaskRepository {
     }
   }
 
+  Future<List<ChoreTaskModel>> getExtraTasks() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.extraTasks);
+      final list = response.data as List<dynamic>;
+      return list.map((e) => ChoreTaskModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat daftar tugas tambahan.');
+    }
+  }
+
   Future<TaskAssignmentModel> submitTask(String id, {String? note, File? photo}) async {
     try {
       final formData = FormData();
@@ -46,6 +56,34 @@ class TaskRepository {
       return TaskAssignmentModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Gagal mengirim bukti tugas.');
+    }
+  }
+
+  Future<TaskAssignmentModel> submitExtraTask(String taskId, {String? note, File? photo}) async {
+    try {
+      final formData = FormData();
+      formData.fields.add(MapEntry('taskId', taskId));
+      if (note != null && note.isNotEmpty) {
+        formData.fields.add(MapEntry('submissionNote', note));
+      }
+      if (photo != null) {
+        final filename = photo.path.split('/').last.split('\\').last;
+        formData.files.add(
+          MapEntry(
+            'photo',
+            await MultipartFile.fromFile(photo.path, filename: filename),
+          ),
+        );
+      }
+
+      final response = await _client.dio.post(
+        ApiConstants.submitExtraTask,
+        data: formData,
+      );
+
+      return TaskAssignmentModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal melaporkan tugas tambahan.');
     }
   }
 }
