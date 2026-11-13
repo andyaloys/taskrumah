@@ -123,11 +123,26 @@ using (var scope = app.Services.CreateScope())
                 NULL;
             END $$;
 
-            -- Restore tasks completed today (13 Nov) that were accidentally shifted
+            -- Fix duplicates on 12 Nov by moving the newest duplicate to 13 Nov (Hari Ini)
+            WITH duplicates AS (
+                SELECT ""Id"",
+                       ROW_NUMBER() OVER (
+                           PARTITION BY ""TaskId"", ""AssignedToId"" 
+                           ORDER BY ""CompletedAt"" DESC NULLS LAST, ""CreatedAt"" DESC, ""Id"" DESC
+                       ) as rn,
+                       COUNT(*) OVER (
+                           PARTITION BY ""TaskId"", ""AssignedToId""
+                       ) as total_count
+                FROM ""TaskAssignments""
+                WHERE ""DueDate"" >= '2026-11-12 00:00:00' AND ""DueDate"" <= '2026-11-12 23:59:59'
+            )
             UPDATE ""TaskAssignments""
             SET ""DueDate"" = '2026-11-13 23:59:59'
-            WHERE (""CompletedAt"" >= '2026-11-13 00:00:00' OR ""ReviewedAt"" >= '2026-11-13 00:00:00' OR (""CreatedAt"" >= '2026-11-13 00:00:00' AND ""Status"" > 0));
+            WHERE ""Id"" IN (
+                SELECT ""Id"" FROM duplicates WHERE total_count > 1 AND rn = 1
+            );
 
+            -- Delete placeholder Pending tasks on 13 Nov if an Approved/Submitted one now exists
             DELETE FROM ""TaskAssignments"" a
             WHERE a.""DueDate"" >= '2026-11-13 00:00:00'
               AND a.""DueDate"" <= '2026-11-13 23:59:59'
