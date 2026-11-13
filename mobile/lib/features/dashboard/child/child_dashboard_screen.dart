@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/state/auth_provider.dart';
+import '../../tasks/screens/task_list_screen.dart';
+import '../../worship/screens/worship_screen.dart';
+import '../../rewards/screens/reward_shop_screen.dart';
 
 class ChildDashboardScreen extends ConsumerWidget {
   const ChildDashboardScreen({super.key});
@@ -210,7 +213,12 @@ class ChildDashboardScreen extends ConsumerWidget {
                   subtitle: 'Misi & Poin',
                   icon: Icons.checklist_rtl_rounded,
                   color: const Color(0xFF6366F1),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TaskListScreen()),
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _buildQuickCard(
@@ -218,7 +226,12 @@ class ChildDashboardScreen extends ConsumerWidget {
                   subtitle: '5 Waktu & Doa',
                   icon: Icons.mosque_rounded,
                   color: const Color(0xFF10B981),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WorshipScreen()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -230,12 +243,17 @@ class ChildDashboardScreen extends ConsumerWidget {
                   subtitle: 'Tukar Poinmu',
                   icon: Icons.card_giftcard_rounded,
                   color: const Color(0xFFF59E0B),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RewardShopScreen()),
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _buildQuickCard(
                   title: 'Profil Saya',
-                  subtitle: 'Foto & Password',
+                  subtitle: 'Foto & Akun',
                   icon: Icons.person_rounded,
                   color: const Color(0xFFEC4899),
                   onTap: () {},

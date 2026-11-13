@@ -45,6 +45,7 @@ dependencies:
   cached_network_image: ^4.0.7
   flutter_spinkit: ^5.2.2
   lucide_icons: ^0.257.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
