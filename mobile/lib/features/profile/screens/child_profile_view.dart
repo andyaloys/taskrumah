@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/avatar_upload_helper.dart';
+import '../../../core/widgets/user_avatar_widget.dart';
 import '../../auth/state/auth_provider.dart';
 
 class ChildProfileView extends ConsumerWidget {
@@ -40,12 +42,32 @@ class ChildProfileView extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: const Color(0xFF10B981),
-                    child: Text(
-                      (user?.name.isNotEmpty == true) ? user!.name[0] : 'A',
-                      style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
+                  UserAvatarWidget(
+                    avatarUrl: user?.fullAvatarUrl,
+                    name: user?.name,
+                    userId: user?.id,
+                    size: 80,
+                    borderRadius: 22,
+                    canEdit: true,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      AvatarUploadHelper.pickAndUpload(
+                        context,
+                        ref,
+                        targetUserId: user?.id,
+                        targetUserName: user?.name,
+                      );
+                    },
+                    icon: const Icon(Icons.camera_alt, size: 16, color: Color(0xFF6366F1)),
+                    label: Text(
+                      'Ubah Foto Profil',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF6366F1),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),

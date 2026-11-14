@@ -83,6 +83,28 @@ class AuthNotifier extends Notifier<AuthState> {
     await repo.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
+
+  Future<void> updateAvatar(String newAvatarUrl) async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(avatarUrl: newAvatarUrl);
+      final storage = ref.read(storageServiceProvider);
+      await storage.saveUser(updatedUser.toJson());
+      state = state.copyWith(user: updatedUser);
+    }
+  }
+
+  Future<void> refreshProfile() async {
+    if (state.user != null) {
+      try {
+        final client = ref.read(apiClientProvider);
+        final res = await client.dio.get('/users/${state.user!.id}');
+        final updatedUser = UserModel.fromJson(res.data as Map<String, dynamic>);
+        final storage = ref.read(storageServiceProvider);
+        await storage.saveUser(updatedUser.toJson());
+        state = state.copyWith(user: updatedUser);
+      } catch (_) {}
+    }
+  }
 }
 
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/widgets/user_avatar_widget.dart';
 import '../../auth/state/auth_provider.dart';
 import '../../tasks/models/task_assignment_model.dart';
 import '../../tasks/screens/submit_extra_task_dialog.dart';
@@ -29,6 +30,9 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authNotifierProvider);
+    final user = authState.user;
+
     final List<Widget> pages = [
       _ChildHomeTab(onSwitchTab: _switchTab),
       const WorshipScreen(),
@@ -37,6 +41,107 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
     ];
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            UserAvatarWidget(
+              avatarUrl: user?.fullAvatarUrl,
+              name: user?.name,
+              userId: user?.id,
+              size: 34,
+              borderRadius: 10,
+              canEdit: true,
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: const Color(0xFF0F172A),
+                    ),
+                    children: const [
+                      TextSpan(text: 'Family'),
+                      TextSpan(text: 'Task', style: TextStyle(color: Color(0xFF6366F1))),
+                    ],
+                  ),
+                ),
+                Text(
+                  'Hai, ${user?.name ?? 'Anak Hebat'}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('★ ', style: TextStyle(color: Color(0xFFD97706), fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  '${user?.totalPoints ?? 0}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  'poin',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFB45309),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFF94A3B8), size: 20),
+            tooltip: 'Keluar Akun',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Keluar Akun?'),
+                  content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Keluar', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref.read(authNotifierProvider.notifier).logout();
+              }
+            },
+          ),
+        ],
+      ),
       body: pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -192,8 +297,16 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
                     border: Border.all(color: const Color(0xFF1E293B)),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      UserAvatarWidget(
+                        avatarUrl: user?.fullAvatarUrl,
+                        name: user?.name,
+                        userId: user?.id,
+                        size: 46,
+                        borderRadius: 14,
+                        canEdit: true,
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

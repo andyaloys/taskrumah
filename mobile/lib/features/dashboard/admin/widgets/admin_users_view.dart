@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/avatar_upload_helper.dart';
+import '../../../../core/widgets/user_avatar_widget.dart';
 import '../../../auth/state/auth_provider.dart';
 import '../state/admin_provider.dart';
 
@@ -240,42 +241,13 @@ class _UserListTab extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    // Avatar with upload photo button
-                    GestureDetector(
-                      onTap: () => _pickAndUploadAvatar(context, ref, id),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 26,
-                            backgroundColor: isChild ? const Color(0xFF8B5CF6) : const Color(0xFF6366F1),
-                            backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                                ? NetworkImage(
-                                    avatarUrl.startsWith('http')
-                                        ? avatarUrl
-                                        : '${ApiConstants.baseHost}$avatarUrl',
-                                  )
-                                : null,
-                            child: avatarUrl == null || avatarUrl.isEmpty
-                                ? Text(
-                                    name.isNotEmpty ? name[0] : '?',
-                                    style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
-                                  )
-                                : null,
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.camera_alt, size: 14, color: Color(0xFF6366F1)),
-                            ),
-                          ),
-                        ],
-                      ),
+                    UserAvatarWidget(
+                      avatarUrl: avatarUrl,
+                      name: name,
+                      userId: id,
+                      size: 52,
+                      isCircle: true,
+                      canEdit: true,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -380,47 +352,7 @@ class _UserListTab extends ConsumerWidget {
   }
 
   Future<void> _pickAndUploadAvatar(BuildContext context, WidgetRef ref, String userId) async {
-    final picker = ImagePicker();
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Ambil dari Kamera'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Pilih dari Galeri'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (source == null) return;
-    final image = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
-    if (image == null) return;
-
-    final repo = ref.read(adminRepositoryProvider);
-    try {
-      await repo.uploadAvatar(userId, image.path);
-      ref.invalidate(adminUsersListProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto profil berhasil diperbarui!')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal upload foto: $e')),
-        );
-      }
-    }
+    await AvatarUploadHelper.pickAndUpload(context, ref, targetUserId: userId);
   }
 
   void _showEditUserDialog(BuildContext context, WidgetRef ref, String id, String currentName) {

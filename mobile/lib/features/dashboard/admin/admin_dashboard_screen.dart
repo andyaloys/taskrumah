@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_date_utils.dart';
+import '../../../core/widgets/user_avatar_widget.dart';
 import '../../auth/state/auth_provider.dart';
 import '../../tasks/models/task_assignment_model.dart';
 import 'data/admin_repository.dart';
@@ -132,16 +133,13 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
         titleSpacing: 16,
         title: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
-              ),
-              alignment: Alignment.center,
-              child: const Text('🏠', style: TextStyle(fontSize: 18)),
+            UserAvatarWidget(
+              avatarUrl: user?.fullAvatarUrl,
+              name: user?.name,
+              userId: user?.id,
+              size: 34,
+              borderRadius: 10,
+              canEdit: true,
             ),
             const SizedBox(width: 10),
             Column(
@@ -624,13 +622,12 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: const Color(0xFF6366F1),
-                    child: Text(
-                      w.userName.isNotEmpty ? w.userName[0] : 'A',
-                      style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
+                  UserAvatarWidget(
+                    avatarUrl: w.avatarUrl,
+                    name: w.userName,
+                    userId: w.userId,
+                    size: 28,
+                    isCircle: true,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -761,13 +758,12 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
           // Child Profile Header
           Row(
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: const Color(0xFF8B5CF6),
-                child: Text(
-                  c.name.isNotEmpty ? c.name[0] : 'A',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
-                ),
+              UserAvatarWidget(
+                avatarUrl: c.avatarUrl,
+                name: c.name,
+                userId: c.userId,
+                size: 44,
+                isCircle: true,
               ),
               const SizedBox(width: 12),
               Expanded(
