@@ -258,6 +258,9 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
     final user = authState.user;
     final tasksAsync = ref.watch(tasksNotifierProvider);
     final worshipAsync = ref.watch(worshipNotifierProvider);
+    final worshipSettingAsync = ref.watch(worshipSettingProvider);
+    final soloPts = (worshipSettingAsync.value?['soloPoints'] as num?)?.toInt() ?? 3;
+    final mosquePts = (worshipSettingAsync.value?['mosquePoints'] as num?)?.toInt() ?? 5;
 
     final now = DateTime.now();
     final todayMidnight = DateTime(now.year, now.month, now.day);
@@ -442,7 +445,7 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
                                         ),
                                       ),
                                       Text(
-                                        '🟢 Hijau = Sudah • Hari ini: +${totalWorshipPts}p',
+                                        '🟢 Hijau = Sudah (🕌 +${mosquePts}p • 🏫 +${soloPts}p) • Hari ini: +${totalWorshipPts}p',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 10,
                                           color: const Color(0xFF059669),

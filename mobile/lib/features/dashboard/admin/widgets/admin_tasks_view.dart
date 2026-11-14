@@ -264,8 +264,28 @@ class _AdminTaskListTab extends ConsumerWidget {
                                   ),
                                 );
                                 if (confirm == true) {
-                                  await repo.deleteTask(id);
-                                  ref.invalidate(adminTasksListProvider);
+                                  try {
+                                    await repo.deleteTask(id);
+                                    ref.invalidate(adminTasksListProvider);
+                                    ref.invalidate(adminDashboardNotifierProvider);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Tugas "$title" berhasil dihapus'),
+                                          backgroundColor: const Color(0xFFEF4444),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Gagal menghapus tugas: $e'),
+                                          backgroundColor: const Color(0xFFEF4444),
+                                        ),
+                                      );
+                                    }
+                                  }
                                 }
                               }
                             },

@@ -221,10 +221,43 @@ public class TasksController : ControllerBase
         var task = await _db.ChoreTasks.FindAsync(id);
         if (task == null) return NotFound();
 
-        task.IsActive = false;
+        // Find all assignments linked to this task
+        var assignmentIds = await _db.TaskAssignments
+            .Where(a => a.TaskId == id)
+            .Select(a => a.Id)
+            .ToListAsync();
+
+        if (assignmentIds.Count > 0)
+        {
+            // 1. Delete associated comments
+            var comments = await _db.TaskComments
+                .Where(c => assignmentIds.Contains(c.TaskAssignmentId))
+                .ToListAsync();
+            if (comments.Count > 0)
+            {
+                _db.TaskComments.RemoveRange(comments);
+            }
+
+            // 2. Delete associated notifications
+            var notifications = await _db.Notifications
+                .Where(n => assignmentIds.Cast<Guid?>().Contains(n.RelatedEntityId))
+                .ToListAsync();
+            if (notifications.Count > 0)
+            {
+                _db.Notifications.RemoveRange(notifications);
+            }
+
+            // 3. Delete assignments
+            var assignments = await _db.TaskAssignments
+                .Where(a => a.TaskId == id)
+                .ToListAsync();
+            _db.TaskAssignments.RemoveRange(assignments);
+        }
+
+        // 4. Delete the chore task itself
+        _db.ChoreTasks.Remove(task);
         await _db.SaveChangesAsync();
 
-        await SyncTodayAssignmentsForTaskAsync(task);
         return NoContent();
     }
 

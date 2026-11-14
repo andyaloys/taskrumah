@@ -30,4 +30,13 @@ class WorshipRepository {
       throw Exception(e.response?.data?['message'] ?? 'Gagal menyimpan catatan ibadah.');
     }
   }
+
+  Future<Map<String, dynamic>> getWorshipSetting() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.worshipSetting);
+      return response.data as Map<String, dynamic>;
+    } on DioException {
+      return {'soloPoints': 3, 'mosquePoints': 5, 'quranPoints': 5};
+    }
+  }
 }

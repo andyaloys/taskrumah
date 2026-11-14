@@ -284,6 +284,20 @@ export class AdminTasksComponent implements OnInit {
     this.taskService.updateTask(task.id, { isActive: !task.isActive }).subscribe(() => this.loadData());
   }
 
+  deleteTask(task: ChoreTask) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus tugas "${task.title}" secara permanen? Semua riwayat penugasan tugas ini juga akan dihapus.`)) {
+      return;
+    }
+    this.taskService.deleteTask(task.id).subscribe({
+      next: () => {
+        this.loadData();
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Gagal menghapus tugas');
+      }
+    });
+  }
+
   selectEmoji(emoji: string) {
     this.form.patchValue({ iconEmoji: emoji });
   }

@@ -117,7 +117,7 @@
           <div>
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Ibadah & Sholat 5 Waktu</h2>
             <p class="text-[11px] text-slate-500">
-              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah</span> (🕌 +5p • 🏫 +3p) • Hari ini: <strong class="text-indigo-600">+{{ getWorshipPointsToday() }}p</strong>
+              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah</span> (🕌 +{{ worshipSetting()?.mosquePoints ?? 5 }}p • 🏫 +{{ worshipSetting()?.soloPoints ?? 3 }}p) • Hari ini: <strong class="text-indigo-600">+{{ getWorshipPointsToday() }}p</strong>
             </p>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { DashboardService, AdminDashboard } from '../../../core/services/dashboa
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { DialogService } from '../../../core/services/dialog.service';
 import { AssignmentStatus } from '../../../core/models/task-assignment.model';
-import { WorshipService, AdminChildWorshipSummary, PrayerStatus } from '../../../core/services/worship.service';
+import { WorshipService, AdminChildWorshipSummary, PrayerStatus, WorshipSetting } from '../../../core/services/worship.service';
 import { formatLocalDate, getTodayDateString, getYesterdayDateString } from '../../../core/utils/date-utils';
 
 @Component({
@@ -26,6 +26,7 @@ export class AdminDashboardComponent implements OnInit {
 
   // Worship Monitoring State
   worshipSummaries = signal<AdminChildWorshipSummary[]>([]);
+  worshipSetting = signal<WorshipSetting | null>(null);
   loadingWorship = signal(false);
   worshipDate = signal(getTodayDateString());
   yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -41,6 +42,7 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit() {
     this.loadDashboard();
     this.loadWorshipSummary();
+    this.worshipService.getSetting().subscribe(s => this.worshipSetting.set(s));
   }
 
   formatDate(d: Date | string): string {

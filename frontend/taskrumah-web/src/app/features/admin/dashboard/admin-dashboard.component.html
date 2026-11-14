@@ -248,7 +248,7 @@
           <div>
             <h2 class="text-base font-bold text-slate-900">Pantau Ibadah Harian Anak</h2>
             <p class="text-xs text-slate-500">
-              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah Sholat</span> (🕌 +5p Masjid • 🏫 +3p Sendiri)
+              🟢 <span class="font-semibold text-emerald-700">Hijau = Sudah Sholat</span> (🕌 +{{ worshipSetting()?.mosquePoints ?? 5 }}p Masjid • 🏫 +{{ worshipSetting()?.soloPoints ?? 3 }}p Sendiri)
             </p>
           </div>
         </div>

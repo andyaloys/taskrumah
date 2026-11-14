@@ -11,6 +11,12 @@ class WorshipScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final worshipAsync = ref.watch(worshipNotifierProvider);
     final notifier = ref.read(worshipNotifierProvider.notifier);
+    final settingAsync = ref.watch(worshipSettingProvider);
+    final setting = settingAsync.value;
+
+    final int soloPts = (setting?['soloPoints'] as num?)?.toInt() ?? 3;
+    final int mosquePts = (setting?['mosquePoints'] as num?)?.toInt() ?? 5;
+    final int quranPts = (setting?['quranPoints'] as num?)?.toInt() ?? 5;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -80,7 +86,7 @@ class WorshipScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Sholat di masjid dapat poin lebih tinggi! 🕌',
+                              'Masjid: +${mosquePts}p • Sendiri: +${soloPts}p • Ngaji: +${quranPts}p',
                               style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.white70),
                             ),
                           ],
@@ -103,15 +109,15 @@ class WorshipScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
 
-                _buildPrayerTile('Subuh', record.subuh, (val) => notifier.updatePrayer('subuh', val)),
+                _buildPrayerTile('Subuh', record.subuh, soloPts, mosquePts, (val) => notifier.updatePrayer('subuh', val)),
                 const SizedBox(height: 10),
-                _buildPrayerTile('Dzuhur', record.dzuhur, (val) => notifier.updatePrayer('dzuhur', val)),
+                _buildPrayerTile('Dzuhur', record.dzuhur, soloPts, mosquePts, (val) => notifier.updatePrayer('dzuhur', val)),
                 const SizedBox(height: 10),
-                _buildPrayerTile('Ashar', record.ashar, (val) => notifier.updatePrayer('ashar', val)),
+                _buildPrayerTile('Ashar', record.ashar, soloPts, mosquePts, (val) => notifier.updatePrayer('ashar', val)),
                 const SizedBox(height: 10),
-                _buildPrayerTile('Maghrib', record.maghrib, (val) => notifier.updatePrayer('maghrib', val)),
+                _buildPrayerTile('Maghrib', record.maghrib, soloPts, mosquePts, (val) => notifier.updatePrayer('maghrib', val)),
                 const SizedBox(height: 10),
-                _buildPrayerTile('Isya', record.isya, (val) => notifier.updatePrayer('isya', val)),
+                _buildPrayerTile('Isya', record.isya, soloPts, mosquePts, (val) => notifier.updatePrayer('isya', val)),
 
                 const SizedBox(height: 24),
 
@@ -160,7 +166,7 @@ class WorshipScreen extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Minimal 1 lembar / surat pendek',
+                              'Minimal 1 lembar / surat pendek (+${quranPts} poin)',
                               style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
                             ),
                           ],
@@ -183,7 +189,7 @@ class WorshipScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPrayerTile(String name, int status, Function(int) onSelect) {
+  Widget _buildPrayerTile(String name, int status, int soloPts, int mosquePts, Function(int) onSelect) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -213,14 +219,14 @@ class WorshipScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               _buildChoice(
-                label: 'Sendiri (10p)',
+                label: 'Sendiri (+${soloPts}p)',
                 selected: status == 1,
                 color: const Color(0xFF0284C7),
                 onTap: () => onSelect(1),
               ),
               const SizedBox(width: 8),
               _buildChoice(
-                label: 'Masjid (20p)',
+                label: 'Masjid (+${mosquePts}p)',
                 selected: status == 2,
                 color: const Color(0xFF059669),
                 onTap: () => onSelect(2),

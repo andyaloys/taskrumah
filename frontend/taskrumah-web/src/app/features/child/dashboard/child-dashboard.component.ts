@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { DashboardService, ChildDashboard } from '../../../core/services/dashboard.service';
 import { TaskAssignmentService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { WorshipService, DailyWorship, PrayerStatus } from '../../../core/services/worship.service';
+import { WorshipService, DailyWorship, PrayerStatus, WorshipSetting } from '../../../core/services/worship.service';
 import { AssignmentStatus, TaskAssignment } from '../../../core/models/task-assignment.model';
 
 export interface WeekDayItem {
@@ -41,6 +41,7 @@ export class ChildDashboardComponent implements OnInit {
 
   // Worship integration
   todayWorship = signal<DailyWorship | null>(null);
+  worshipSetting = signal<WorshipSetting | null>(null);
   loadingWorship = signal(false);
   PrayerStatus = PrayerStatus;
 
@@ -67,6 +68,10 @@ export class ChildDashboardComponent implements OnInit {
         this.loadingWorship.set(false);
       },
       error: () => this.loadingWorship.set(false)
+    });
+    this.worshipService.getSetting().subscribe({
+      next: (s) => this.worshipSetting.set(s),
+      error: () => {}
     });
   }
 

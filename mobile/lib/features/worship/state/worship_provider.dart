@@ -64,6 +64,7 @@ class WorshipNotifier extends AsyncNotifier<DailyWorshipModel?> {
     try {
       final repo = ref.read(worshipRepositoryProvider);
       await repo.saveWorship(updated);
+      ref.read(authNotifierProvider.notifier).refreshProfile();
     } catch (e) {
       // Revert if error
       state = AsyncValue.data(current);
@@ -80,12 +81,18 @@ class WorshipNotifier extends AsyncNotifier<DailyWorshipModel?> {
     try {
       final repo = ref.read(worshipRepositoryProvider);
       await repo.saveWorship(updated);
+      ref.read(authNotifierProvider.notifier).refreshProfile();
     } catch (e) {
       state = AsyncValue.data(current);
       rethrow;
     }
   }
 }
+
+final worshipSettingProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final repo = ref.watch(worshipRepositoryProvider);
+  return await repo.getWorshipSetting();
+});
 
 final worshipNotifierProvider = AsyncNotifierProvider<WorshipNotifier, DailyWorshipModel?>(() {
   return WorshipNotifier();
