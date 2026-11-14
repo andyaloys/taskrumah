@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_version.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/avatar_upload_helper.dart';
 import '../../../core/widgets/user_avatar_widget.dart';
@@ -139,13 +140,13 @@ class ChildProfileView extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  _ProfileRow(label: 'Aplikasi', value: 'FamilyTask Mobile'),
-                  Divider(height: 16),
-                  _ProfileRow(label: 'Versi', value: 'v1.1.0'),
-                  Divider(height: 16),
-                  _ProfileRow(label: 'Peran', value: 'Anak Hebat 🧒'),
+                  const _ProfileRow(label: 'Aplikasi', value: 'FamilyTask Mobile'),
+                  const Divider(height: 16),
+                  const _ProfileRow(label: 'Versi', value: AppVersion.fullVersion),
+                  const Divider(height: 16),
+                  const _ProfileRow(label: 'Peran', value: 'Anak Hebat 🧒'),
                 ],
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/constants/app_version.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/avatar_upload_helper.dart';
 import '../../../../core/widgets/user_avatar_widget.dart';
@@ -219,11 +220,43 @@ class _UserListTab extends ConsumerWidget {
             );
           }
 
+          final totalCount = isChild ? users.length : users.length + 1;
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-            itemCount: users.length,
+            itemCount: totalCount,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
+              if (!isChild && index == users.length) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Versi Aplikasi',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      Text(
+                        AppVersion.fullVersion,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               final user = users[index];
               final id = user['id']?.toString() ?? '';
               final name = user['name'] as String? ?? 'User';
