@@ -134,6 +134,20 @@ class AdminRepository {
     }
   }
 
+  Future<void> assignTask(String id, {String? assignedToId, required String dueDate}) async {
+    try {
+      await _client.dio.post(
+        ApiConstants.assignTask(id),
+        data: {
+          'assignedToId': (assignedToId != null && assignedToId.isNotEmpty) ? assignedToId : null,
+          'dueDate': dueDate,
+        },
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menugaskan tugas.');
+    }
+  }
+
   Future<Map<String, dynamic>> getTaskUsage(String id) async {
     try {
       final response = await _client.dio.get('${ApiConstants.tasks}/$id/usage');

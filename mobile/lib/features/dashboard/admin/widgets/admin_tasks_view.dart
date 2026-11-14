@@ -132,7 +132,21 @@ class _AdminTaskListTab extends ConsumerWidget {
                 final points = (task['points'] as num?)?.toInt() ?? 0;
                 final targetTime = task['targetTime'] as String?;
                 final isActive = task['isActive'] == true;
+                final taskType = (task['taskType'] as num?)?.toInt() ?? 0;
+                final daysOfWeek = task['daysOfWeek'] as String?;
                 final assignedToName = task['assignedTo'] != null ? task['assignedTo']['name'] as String? : null;
+
+                String scheduleLabel = 'Rutin Setiap Hari';
+                if (taskType == 1) {
+                  scheduleLabel = 'Hari Tertentu';
+                  if (daysOfWeek != null && daysOfWeek.isNotEmpty) {
+                    final dayMap = {'1': 'Sen', '2': 'Sel', '3': 'Rab', '4': 'Kam', '5': 'Jum', '6': 'Sab', '7': 'Min'};
+                    final dayNames = daysOfWeek.split(',').map((d) => dayMap[d.trim()] ?? d).join(', ');
+                    scheduleLabel = 'Hari: $dayNames';
+                  }
+                } else if (taskType == 2) {
+                  scheduleLabel = '🌟 Tugas Tambahan';
+                }
 
                 return Container(
                   padding: const EdgeInsets.all(14),
@@ -181,6 +195,24 @@ class _AdminTaskListTab extends ConsumerWidget {
                               spacing: 6,
                               runSpacing: 4,
                               children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: taskType == 2 ? const Color(0xFFFAF5FF) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: taskType == 2 ? const Color(0xFFE9D5FF) : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    scheduleLabel,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: taskType == 2 ? const Color(0xFF7E22CE) : const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
@@ -246,7 +278,9 @@ class _AdminTaskListTab extends ConsumerWidget {
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF94A3B8)),
                             onSelected: (val) async {
-                              if (val == 'edit') {
+                              if (val == 'assign') {
+                                _showAssignDialog(context, ref, task);
+                              } else if (val == 'edit') {
                                 _showTaskDialog(context, ref, task: task);
                               } else if (val == 'delete') {
                                 final usage = await repo.getTaskUsage(id);
@@ -377,6 +411,7 @@ class _AdminTaskListTab extends ConsumerWidget {
                               }
                             },
                             itemBuilder: (ctx) => [
+                              const PopupMenuItem(value: 'assign', child: Text('Tugaskan Sekarang 📅')),
                               const PopupMenuItem(value: 'edit', child: Text('Edit Tugas')),
                               const PopupMenuItem(value: 'delete', child: Text('Hapus Tugas', style: TextStyle(color: Colors.red))),
                             ],
@@ -394,22 +429,208 @@ class _AdminTaskListTab extends ConsumerWidget {
     );
   }
 
-  void _showTaskDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? task}) {
-    final isEdit = task != null;
-    final titleController = TextEditingController(text: task?['title'] as String? ?? '');
-    final descController = TextEditingController(text: task?['description'] as String? ?? '');
-    final pointsController = TextEditingController(text: (task?['points'] as num?)?.toString() ?? '10');
-    final targetTimeController = TextEditingController(text: task?['targetTime'] as String? ?? '07:00');
-    String selectedEmoji = task?['iconEmoji'] as String? ?? '🧹';
-    final repo = ref.read(adminRepositoryProvider);
+  void _showAssignDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> task) {
+    final usersAsync = ref.read(adminUsersListProvider).value ?? [];
+    final children = usersAsync.where((u) {
+      final role = u['role']?.toString().toLowerCase();
+      return role == 'child' || role == '1';
+    }).toList();
 
-    final emojiList = ['🧹', '🌱', '📚', '🍽️', '🛏️', '🗑️', '🧺', '🧼', '🍳', '🏃', '🚴', '⏰', '📖', '🐕', '🎒'];
+    String? selectedChildId = task['assignedToId']?.toString();
+    DateTime selectedDate = DateTime.now();
+    bool isAssigning = false;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            title: Row(
+              children: [
+                const Text('📅 ', style: TextStyle(fontSize: 20)),
+                Expanded(
+                  child: Text(
+                    'Tugaskan Sekarang',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tugaskan "${task['title']}" ke anak pada tanggal yang dipilih:',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF475569)),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Pilih Anak:', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        value: selectedChildId,
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('Semua Anak (Umum)'),
+                          ),
+                          ...children.map((c) => DropdownMenuItem<String?>(
+                            value: c['id']?.toString(),
+                            child: Text(c['name']?.toString() ?? 'Anak'),
+                          )),
+                        ],
+                        onChanged: (val) => setDialogState(() => selectedChildId = val),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text('Tanggal Pelaksanaan:', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2025),
+                        lastDate: DateTime(2030),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => selectedDate = picked);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 16, color: Color(0xFF6366F1)),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: isAssigning
+                    ? null
+                    : () async {
+                        setDialogState(() => isAssigning = true);
+                        try {
+                          final repo = ref.read(adminRepositoryProvider);
+                          final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+                          await repo.assignTask(
+                            task['id'].toString(),
+                            assignedToId: selectedChildId,
+                            dueDate: dateStr,
+                          );
+                          ref.invalidate(adminDashboardNotifierProvider);
+                          if (context.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Tugas "${task['title']}" berhasil ditugaskan! 🎉'),
+                                backgroundColor: const Color(0xFF10B981),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          setDialogState(() => isAssigning = false);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                child: isAssigning
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Tugaskan Sekarang'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showTaskDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? task}) {
+    final isEdit = task != null;
+    final titleController = TextEditingController(text: task?['title'] as String? ?? '');
+    final descController = TextEditingController(text: task?['description'] as String? ?? '');
+    final pointsController = TextEditingController(text: (task?['points'] as num?)?.toString() ?? '10');
+    final targetTimeController = TextEditingController(text: task?['targetTime'] as String? ?? '07:00');
+    final customEmojiController = TextEditingController();
+    String selectedEmoji = task?['iconEmoji'] as String? ?? '🧹';
+    int taskType = (task?['taskType'] as num?)?.toInt() ?? 0; // 0: Daily, 1: SpecificDays, 2: OneTime
+    String? assignedToId = task?['assignedToId']?.toString();
+
+    final Set<String> selectedDays = {};
+    if (task?['daysOfWeek'] != null && (task!['daysOfWeek'] as String).isNotEmpty) {
+      selectedDays.addAll((task['daysOfWeek'] as String).split(',').map((s) => s.trim()));
+    } else {
+      selectedDays.addAll(['1', '2', '3', '4', '5']); // Default Mon-Fri
+    }
+
+    final daysList = [
+      {'id': '1', 'label': 'Senin'},
+      {'id': '2', 'label': 'Selasa'},
+      {'id': '3', 'label': 'Rabu'},
+      {'id': '4', 'label': 'Kamis'},
+      {'id': '5', 'label': 'Jumat'},
+      {'id': '6', 'label': 'Sabtu'},
+      {'id': '7', 'label': 'Minggu'},
+    ];
+
+    final emojiList = [
+      '🧹', '🌱', '📚', '🍽️', '🛏️', '🗑️', '🧺', '🧼', '🍳', '🧴',
+      '🏃', '🚴', '⚽', '🏀', '🏸', '🧘', '🏊', '⏰', '🌅', '🛌',
+      '🚪', '🔐', '🔑', '🕌', '📖', '🤲', '🎒', '✏️', '💻', '✅',
+    ];
+
+    final usersAsync = ref.read(adminUsersListProvider).value ?? [];
+    final children = usersAsync.where((u) {
+      final role = u['role']?.toString().toLowerCase();
+      return role == 'child' || role == '1';
+    }).toList();
+
+    final repo = ref.read(adminRepositoryProvider);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             title: Text(
               isEdit ? 'Edit Tugas' : 'Tambah Tugas Baru',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16),
@@ -422,11 +643,15 @@ class _AdminTaskListTab extends ConsumerWidget {
                   Text('Pilih Ikon Emoji:', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Wrap(
-                    spacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: emojiList.map((e) {
                       final isSelected = selectedEmoji == e;
                       return GestureDetector(
-                        onTap: () => setDialogState(() => selectedEmoji = e),
+                        onTap: () => setDialogState(() {
+                          selectedEmoji = e;
+                          customEmojiController.clear();
+                        }),
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
@@ -439,7 +664,22 @@ class _AdminTaskListTab extends ConsumerWidget {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: customEmojiController,
+                    decoration: InputDecoration(
+                      hintText: 'Atau ketik emoji khusus di sini...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    ),
+                    onChanged: (val) {
+                      if (val.trim().isNotEmpty) {
+                        setDialogState(() => selectedEmoji = val.trim());
+                      }
+                    },
+                  ),
                   const SizedBox(height: 14),
+
                   TextField(
                     controller: titleController,
                     decoration: InputDecoration(
@@ -448,7 +688,140 @@ class _AdminTaskListTab extends ConsumerWidget {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
+                  const SizedBox(height: 12),
+
+                  // Jadwal Tugas (taskType)
+                  Text('Jadwal Tugas:', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: taskType,
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(value: 0, child: Text('Rutin Setiap Hari')),
+                          DropdownMenuItem(value: 1, child: Text('Hari Tertentu')),
+                          DropdownMenuItem(value: 2, child: Text('🌟 Tugas Tambahan (Kapan Saja)')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setDialogState(() => taskType = val);
+                        },
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
+
+                  // Specific Days selector
+                  if (taskType == 1) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Pilih Hari Pelaksanaan:', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: daysList.map((d) {
+                              final dayId = d['id']!;
+                              final isChecked = selectedDays.contains(dayId);
+                              return InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    if (isChecked) {
+                                      selectedDays.remove(dayId);
+                                    } else {
+                                      selectedDays.add(dayId);
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: isChecked ? const Color(0xFF6366F1) : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: isChecked ? const Color(0xFF6366F1) : const Color(0xFFCBD5E1)),
+                                  ),
+                                  child: Text(
+                                    '${d['label']} ${isChecked ? '✓' : ''}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: isChecked ? FontWeight.bold : FontWeight.w500,
+                                      color: isChecked ? Colors.white : const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          if (selectedDays.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text('Pilih minimal 1 hari pelaksanaan!', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.red)),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  if (taskType == 2) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF5FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE9D5FF)),
+                      ),
+                      child: Text(
+                        '🌟 Tugas Tambahan: Tidak muncul otomatis setiap hari. Anak dapat melaporkan tugas ini secara mandiri kapan saja.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF6B21A8)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  // Penugasan Anak
+                  Text('Penugasan:', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        value: assignedToId,
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('Semua Anak (Umum)'),
+                          ),
+                          ...children.map((c) => DropdownMenuItem<String?>(
+                            value: c['id']?.toString(),
+                            child: Text(c['name']?.toString() ?? 'Anak'),
+                          )),
+                        ],
+                        onChanged: (val) => setDialogState(() => assignedToId = val),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   Row(
                     children: [
                       Expanded(
@@ -477,11 +850,12 @@ class _AdminTaskListTab extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
+
                   TextField(
                     controller: descController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      labelText: 'Deskripsi / Catatan (Opsional)',
+                      labelText: 'Deskripsi / Petunjuk (Opsional)',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
@@ -495,6 +869,8 @@ class _AdminTaskListTab extends ConsumerWidget {
                 onPressed: () async {
                   final title = titleController.text.trim();
                   if (title.isEmpty) return;
+                  if (taskType == 1 && selectedDays.isEmpty) return;
+
                   final points = int.tryParse(pointsController.text) ?? 10;
                   final payload = {
                     'title': title,
@@ -502,7 +878,9 @@ class _AdminTaskListTab extends ConsumerWidget {
                     'points': points,
                     'iconEmoji': selectedEmoji,
                     'targetTime': targetTimeController.text.trim(),
-                    'taskType': 0, // Daily
+                    'taskType': taskType,
+                    'daysOfWeek': taskType == 1 ? (selectedDays.toList()..sort()).join(',') : null,
+                    'assignedToId': (assignedToId != null && assignedToId!.isNotEmpty) ? assignedToId : null,
                   };
 
                   if (isEdit) {
@@ -511,6 +889,7 @@ class _AdminTaskListTab extends ConsumerWidget {
                     await repo.createTask(payload);
                   }
                   ref.invalidate(adminTasksListProvider);
+                  ref.invalidate(adminDashboardNotifierProvider);
                   if (context.mounted) Navigator.pop(ctx);
                 },
                 style: ElevatedButton.styleFrom(

@@ -22,6 +22,16 @@ class TaskRepository {
     }
   }
 
+  Future<List<TaskAssignmentModel>> getAssignments() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.taskAssignments);
+      final list = response.data as List<dynamic>;
+      return list.map((e) => TaskAssignmentModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat semua riwayat tugas.');
+    }
+  }
+
   Future<List<ChoreTaskModel>> getExtraTasks() async {
     try {
       final response = await _client.dio.get(ApiConstants.extraTasks);

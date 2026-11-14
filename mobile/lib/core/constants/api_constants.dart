@@ -17,6 +17,7 @@ class ApiConstants {
   static const String taskAssignments = '/task-assignments';
   static const String taskSchedule = '/task-assignments/schedule';
   static const String submitExtraTask = '/task-assignments/submit-extra';
+  static String assignTask(String id) => '/tasks/$id/assign';
   static String submitTask(String id) => '/task-assignments/$id/submit';
   static String approveTask(String id) => '/task-assignments/$id/approve';
   static String rejectTask(String id) => '/task-assignments/$id/reject';

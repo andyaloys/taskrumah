@@ -28,9 +28,16 @@ class RewardsNotifier extends AsyncNotifier<List<RewardModel>> {
     final repo = ref.read(rewardRepositoryProvider);
     await repo.claimReward(rewardId);
     await refresh();
+    ref.invalidate(childRedemptionsListProvider);
+    ref.invalidate(authNotifierProvider);
   }
 }
 
 final rewardsNotifierProvider = AsyncNotifierProvider<RewardsNotifier, List<RewardModel>>(() {
   return RewardsNotifier();
+});
+
+final childRedemptionsListProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final repo = ref.watch(rewardRepositoryProvider);
+  return await repo.getRedemptions();
 });

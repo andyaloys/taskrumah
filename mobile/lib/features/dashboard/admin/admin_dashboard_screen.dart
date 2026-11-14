@@ -28,7 +28,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      const _AdminHomeTab(),
+      _AdminHomeTab(onSwitchTab: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      }),
       const AdminTasksView(),
       const AdminRewardsView(),
       const AdminUsersView(),
@@ -74,7 +78,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 }
 
 class _AdminHomeTab extends ConsumerStatefulWidget {
-  const _AdminHomeTab();
+  final ValueChanged<int>? onSwitchTab;
+  const _AdminHomeTab({this.onSwitchTab});
 
   @override
   ConsumerState<_AdminHomeTab> createState() => _AdminHomeTabState();
@@ -138,6 +143,9 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
     final dashboardAsync = ref.watch(adminDashboardNotifierProvider);
     final activeDateYmd = _getActiveDateYmd();
     final worshipAsync = ref.watch(adminWorshipSummaryProvider(activeDateYmd));
+    final worshipSettingAsync = ref.watch(adminWorshipSettingProvider);
+    final soloPts = (worshipSettingAsync.value?['soloPoints'] as num?)?.toInt() ?? 3;
+    final mosquePts = (worshipSettingAsync.value?['mosquePoints'] as num?)?.toInt() ?? 5;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -513,21 +521,67 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('🕌', style: TextStyle(fontSize: 16)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Pantau Ibadah Harian Anak',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                Row(
+                                  children: [
+                                    const Text('🕌', style: TextStyle(fontSize: 16)),
+                                    const SizedBox(width: 6),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Pantau Ibadah Harian Anak',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          '🟢 Hijau = Sudah Sholat (🕌 +${mosquePts}p • 🏫 +${soloPts}p)',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 10,
+                                            color: const Color(0xFF059669),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
+                                if (widget.onSwitchTab != null)
+                                  InkWell(
+                                    onTap: () => widget.onSwitchTab!(1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEEF2FF),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.settings_outlined, size: 12, color: Color(0xFF4338CA)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Atur Poin',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color(0xFF4338CA),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            ...worshipList.map((w) => _buildWorshipSummaryCard(w)),
+                            ...worshipList.map((w) => _buildWorshipSummaryCard(w, soloPts, mosquePts)),
                             const SizedBox(height: 18),
                           ],
                         );
@@ -620,7 +674,7 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
     );
   }
 
-  Widget _buildWorshipSummaryCard(AdminChildWorshipModel w) {
+  Widget _buildWorshipSummaryCard(AdminChildWorshipModel w, int soloPts, int mosquePts) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -690,15 +744,15 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
           const SizedBox(height: 10),
           Row(
             children: [
-              _buildPrayerPillCell('Subuh', w.subuh),
+              _buildPrayerPillCell('Subuh', w.subuh, soloPts, mosquePts),
               const SizedBox(width: 4),
-              _buildPrayerPillCell('Dzuhur', w.dzuhur),
+              _buildPrayerPillCell('Dzuhur', w.dzuhur, soloPts, mosquePts),
               const SizedBox(width: 4),
-              _buildPrayerPillCell('Ashar', w.ashar),
+              _buildPrayerPillCell('Ashar', w.ashar, soloPts, mosquePts),
               const SizedBox(width: 4),
-              _buildPrayerPillCell('Maghrib', w.maghrib),
+              _buildPrayerPillCell('Maghrib', w.maghrib, soloPts, mosquePts),
               const SizedBox(width: 4),
-              _buildPrayerPillCell('Isya', w.isya),
+              _buildPrayerPillCell('Isya', w.isya, soloPts, mosquePts),
             ],
           ),
         ],
@@ -706,7 +760,7 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
     );
   }
 
-  Widget _buildPrayerPillCell(String prayerName, int status) {
+  Widget _buildPrayerPillCell(String prayerName, int status, int soloPts, int mosquePts) {
     final isMosque = status == 2;
     final isSolo = status == 1;
     final isDone = isMosque || isSolo;
@@ -733,7 +787,7 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
             ),
             const SizedBox(height: 2),
             Text(
-              isMosque ? '🕌 +5p' : (isSolo ? '🏫 +3p' : '○ Belum'),
+              isMosque ? '🕌 +${mosquePts}p' : (isSolo ? '🏫 +${soloPts}p' : '○ Belum'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 8.5,
                 fontWeight: FontWeight.w700,

@@ -32,9 +32,11 @@ class TaskFilterState {
 class TasksNotifier extends AsyncNotifier<List<TaskAssignmentModel>> {
   DatePreset _preset = DatePreset.today;
   String _dateYmd = AppDateUtils.todayYmd();
+  bool _isAllHistory = false;
 
   DatePreset get currentPreset => _preset;
   String get currentDateYmd => _dateYmd;
+  bool get isAllHistory => _isAllHistory;
 
   @override
   Future<List<TaskAssignmentModel>> build() async {
@@ -43,11 +45,15 @@ class TasksNotifier extends AsyncNotifier<List<TaskAssignmentModel>> {
 
   Future<List<TaskAssignmentModel>> _fetch() async {
     final repo = ref.read(taskRepositoryProvider);
+    if (_isAllHistory) {
+      return await repo.getAssignments();
+    }
     return await repo.getSchedule(_dateYmd);
   }
 
   Future<void> changeDatePreset(DatePreset preset) async {
     _preset = preset;
+    _isAllHistory = false;
     switch (preset) {
       case DatePreset.today:
         _dateYmd = AppDateUtils.todayYmd();
@@ -65,6 +71,13 @@ class TasksNotifier extends AsyncNotifier<List<TaskAssignmentModel>> {
 
   Future<void> changeDate(String ymd) async {
     _dateYmd = ymd;
+    _isAllHistory = false;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _fetch());
+  }
+
+  Future<void> showAll() async {
+    _isAllHistory = true;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetch());
   }

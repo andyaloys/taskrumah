@@ -24,4 +24,13 @@ class AppDateUtils {
   static String formatReadable(DateTime date) {
     return _readableFormat.format(date);
   }
+
+  static String formatDisplay(String dateYmd) {
+    try {
+      final dt = DateTime.parse(dateYmd);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateYmd;
+    }
+  }
 }

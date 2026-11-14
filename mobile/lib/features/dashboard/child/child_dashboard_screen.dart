@@ -6,6 +6,7 @@ import '../../auth/state/auth_provider.dart';
 import '../../tasks/models/task_assignment_model.dart';
 import '../../tasks/screens/submit_extra_task_dialog.dart';
 import '../../tasks/screens/submit_task_dialog.dart';
+import '../../tasks/screens/task_list_screen.dart';
 import '../../tasks/state/tasks_provider.dart';
 import '../../worship/screens/worship_screen.dart';
 import '../../worship/state/worship_provider.dart';
@@ -35,6 +36,7 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
 
     final List<Widget> pages = [
       _ChildHomeTab(onSwitchTab: _switchTab),
+      const TaskListScreen(),
       const WorshipScreen(),
       const RewardShopScreen(),
       const ChildProfileView(),
@@ -154,6 +156,11 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded, color: Color(0xFF6366F1)),
             label: 'Beranda',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment_rounded, color: Color(0xFF6366F1)),
+            label: 'Tugasku',
           ),
           NavigationDestination(
             icon: Icon(Icons.mosque_outlined),
@@ -457,7 +464,7 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
                                 ],
                               ),
                               InkWell(
-                                onTap: () => widget.onSwitchTab(1), // Switch to Ibadah tab
+                                onTap: () => widget.onSwitchTab(2), // Switch to Ibadah tab (index 2)
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -490,15 +497,15 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
                           // 5 Sholat Columns (Web style)
                           Row(
                             children: [
-                              _buildWebPrayerPill('Subuh', subuh),
+                              _buildWebPrayerPill('Subuh', subuh, soloPts, mosquePts),
                               const SizedBox(width: 6),
-                              _buildWebPrayerPill('Dzuhur', dzuhur),
+                              _buildWebPrayerPill('Dzuhur', dzuhur, soloPts, mosquePts),
                               const SizedBox(width: 6),
-                              _buildWebPrayerPill('Ashar', ashar),
+                              _buildWebPrayerPill('Ashar', ashar, soloPts, mosquePts),
                               const SizedBox(width: 6),
-                              _buildWebPrayerPill('Maghrib', maghrib),
+                              _buildWebPrayerPill('Maghrib', maghrib, soloPts, mosquePts),
                               const SizedBox(width: 6),
-                              _buildWebPrayerPill('Isya', isya),
+                              _buildWebPrayerPill('Isya', isya, soloPts, mosquePts),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -854,7 +861,7 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
     );
   }
 
-  Widget _buildWebPrayerPill(String name, int status) {
+  Widget _buildWebPrayerPill(String name, int status, int soloPts, int mosquePts) {
     final bool done = status > 0;
     final bool mosque = status == 2;
 
@@ -903,7 +910,7 @@ class _ChildHomeTabState extends ConsumerState<_ChildHomeTab> {
                   if (done) ...[
                     const SizedBox(width: 2),
                     Text(
-                      mosque ? '+5p' : '+3p',
+                      mosque ? '+$mosquePts p' : '+$soloPts p',
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,

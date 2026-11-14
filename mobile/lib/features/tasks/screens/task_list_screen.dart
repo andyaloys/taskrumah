@@ -1,17 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/app_date_utils.dart';
 import '../models/task_assignment_model.dart';
 import '../state/tasks_provider.dart';
 import 'submit_task_dialog.dart';
 import 'submit_extra_task_dialog.dart';
 
-class TaskListScreen extends ConsumerWidget {
+class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends ConsumerState<TaskListScreen> {
+  String _selectedMode = 'today'; // 'today', 'yesterday', 'tomorrow', 'custom', 'all'
+  String _statusFilter = 'All'; // 'All', 'Pending', 'Submitted', 'Approved', 'Rejected'
+  DateTime? _customDate;
+
+  final DateTime _today = DateTime.now();
+
+  bool _canModify(String? dueDateStr) {
+    if (dueDateStr == null || dueDateStr.isEmpty) return false;
+    try {
+      final dueDate = DateTime.parse(dueDateStr);
+      final now = DateTime.now();
+      final yesterdayMidnight = DateTime(now.year, now.month, now.day - 1);
+      final dueMidnight = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      return !dueMidnight.isBefore(yesterdayMidnight);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _isFuture(String? dueDateStr) {
+    if (dueDateStr == null || dueDateStr.isEmpty) return false;
+    try {
+      final dueDate = DateTime.parse(dueDateStr);
+      final now = DateTime.now();
+      final todayMidnight = DateTime(now.year, now.month, now.day);
+      final dueMidnight = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      return dueMidnight.isAfter(todayMidnight);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _selectMode(String mode, {DateTime? custom}) {
+    setState(() {
+      _selectedMode = mode;
+      _customDate = custom;
+    });
+
+    final notifier = ref.read(tasksNotifierProvider.notifier);
+    if (mode == 'today') {
+      notifier.changeDatePreset(DatePreset.today);
+    } else if (mode == 'yesterday') {
+      notifier.changeDatePreset(DatePreset.yesterday);
+    } else if (mode == 'tomorrow') {
+      notifier.changeDatePreset(DatePreset.tomorrow);
+    } else if (mode == 'custom' && custom != null) {
+      notifier.changeDate(AppDateUtils.formatYmd(custom));
+    } else if (mode == 'all') {
+      notifier.showAll();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tasksAsync = ref.watch(tasksNotifierProvider);
     final notifier = ref.read(tasksNotifierProvider.notifier);
 
@@ -19,9 +79,9 @@ class TaskListScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
         title: Text(
-          'Daftar Tugas Harian',
+          'Daftar Tugas Saya',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -31,48 +91,126 @@ class TaskListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+            tooltip: 'Segarkan',
             onPressed: () => notifier.refresh(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Filter Tabs (Kemarin, Hari Ini, Besok)
+          // 1. DATE SELECTOR STRIP (Hari Ini, Kemarin, Besok, Pilih Tanggal, Semua Riwayat)
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                _buildDateTab(
-                  label: 'Kemarin',
-                  selected: notifier.currentPreset == DatePreset.yesterday,
-                  onTap: () => notifier.changeDatePreset(DatePreset.yesterday),
-                ),
-                const SizedBox(width: 8),
-                _buildDateTab(
-                  label: 'Hari Ini',
-                  selected: notifier.currentPreset == DatePreset.today,
-                  onTap: () => notifier.changeDatePreset(DatePreset.today),
-                ),
-                const SizedBox(width: 8),
-                _buildDateTab(
-                  label: 'Besok',
-                  selected: notifier.currentPreset == DatePreset.tomorrow,
-                  onTap: () => notifier.changeDatePreset(DatePreset.tomorrow),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildDatePill(
+                    label: 'Hari Ini',
+                    isSelected: _selectedMode == 'today',
+                    onTap: () => _selectMode('today'),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildDatePill(
+                    label: 'Kemarin',
+                    isSelected: _selectedMode == 'yesterday',
+                    onTap: () => _selectMode('yesterday'),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildDatePill(
+                    label: 'Besok',
+                    isSelected: _selectedMode == 'tomorrow',
+                    onTap: () => _selectMode('tomorrow'),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _customDate ?? _today,
+                        firstDate: DateTime(2025),
+                        lastDate: DateTime(2030),
+                      );
+                      if (picked != null) {
+                        _selectMode('custom', custom: picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: _selectedMode == 'custom' ? const Color(0xFF6366F1) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _selectedMode == 'custom' ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_month,
+                            size: 13,
+                            color: _selectedMode == 'custom' ? Colors.white : const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _selectedMode == 'custom' && _customDate != null
+                                ? DateFormat('dd MMM').format(_customDate!)
+                                : 'Pilih Tanggal',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedMode == 'custom' ? Colors.white : const Color(0xFF475569),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildDatePill(
+                    label: 'Semua Riwayat',
+                    isSelected: _selectedMode == 'all',
+                    onTap: () => _selectMode('all'),
+                  ),
+                ],
+              ),
             ),
           ),
+
+          // 2. STATUS FILTER CHIPS (Only when 'all' or always visible for filtering)
+          if (_selectedMode == 'all')
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildStatusChip('All', 'Semua Status'),
+                    const SizedBox(width: 6),
+                    _buildStatusChip('Pending', 'Menunggu'),
+                    const SizedBox(width: 6),
+                    _buildStatusChip('Submitted', 'Terkirim'),
+                    const SizedBox(width: 6),
+                    _buildStatusChip('Approved', 'Disetujui'),
+                    const SizedBox(width: 6),
+                    _buildStatusChip('Rejected', 'Ditolak'),
+                  ],
+                ),
+              ),
+            ),
+
           const Divider(height: 1, color: AppColors.divider),
 
-          // Lapor Tugas Tambahan Banner
+          // 3. LAPOR TUGAS TAMBAHAN BANNER
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
             child: InkWell(
               onTap: () => SubmitExtraTaskDialog.show(context),
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF9333EA), Color(0xFF7E22CE)],
@@ -80,9 +218,9 @@ class TaskListScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF9333EA).withOpacity(0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: const Color(0xFF9333EA).withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -92,11 +230,11 @@ class TaskListScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('🌟', style: TextStyle(fontSize: 18)),
+                      child: const Text('🌟', style: TextStyle(fontSize: 16)),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,33 +242,33 @@ class TaskListScreen extends ConsumerWidget {
                           Text(
                             '+ Lapor Tugas Tambahan',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
                           Text(
-                            'Cuci motor, bantu orang tua, dll',
+                            'Tugas tambahan di luar jadwal rutin (kapan saja)',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 10.5,
+                              color: Colors.white.withOpacity(0.9),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 13),
                   ],
                 ),
               ),
             ),
           ),
 
-          // Task List Body
+          // 4. TASK LIST BODY
           Expanded(
             child: tasksAsync.when(
               loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CircularProgressIndicator(color: Color(0xFF6366F1)),
               ),
               error: (err, _) => Center(
                 child: Padding(
@@ -138,8 +276,8 @@ class TaskListScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
-                      const SizedBox(height: 12),
+                      const Icon(Icons.wifi_off_rounded, size: 44, color: AppColors.textMuted),
+                      const SizedBox(height: 10),
                       Text(
                         'Gagal memuat tugas',
                         style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
@@ -150,16 +288,30 @@ class TaskListScreen extends ConsumerWidget {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       ElevatedButton(
                         onPressed: () => notifier.refresh(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6366F1),
+                          foregroundColor: Colors.white,
+                        ),
                         child: const Text('Coba Lagi'),
                       ),
                     ],
                   ),
                 ),
               ),
-              data: (tasks) {
+              data: (allTasks) {
+                // Apply status filter if set
+                final tasks = allTasks.where((t) {
+                  if (_statusFilter == 'All') return true;
+                  if (_statusFilter == 'Pending') return t.isPending;
+                  if (_statusFilter == 'Submitted') return t.isSubmitted;
+                  if (_statusFilter == 'Approved') return t.isApproved;
+                  if (_statusFilter == 'Rejected') return t.isRejected;
+                  return true;
+                }).toList();
+
                 if (tasks.isEmpty) {
                   return Center(
                     child: Padding(
@@ -167,22 +319,24 @@ class TaskListScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.celebration_rounded, size: 56, color: Color(0xFFF59E0B)),
+                          const Text('📋', style: TextStyle(fontSize: 44)),
                           const SizedBox(height: 12),
                           Text(
-                            'Tidak Ada Tugas!',
+                            'Tidak Ada Tugas',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Belum ada tugas yang dijadwalkan untuk hari ini.',
+                            _selectedMode == 'all'
+                                ? 'Tidak ada tugas yang sesuai dengan filter.'
+                                : 'Tidak ada tugas yang dijadwalkan pada hari ini.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -193,12 +347,12 @@ class TaskListScreen extends ConsumerWidget {
                 }
 
                 return RefreshIndicator(
-                  color: AppColors.primary,
+                  color: const Color(0xFF6366F1),
                   onRefresh: () => notifier.refresh(),
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 80),
                     itemCount: tasks.length,
-                    separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+                    separatorBuilder: (ctx, i) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final item = tasks[index];
                       return _buildTaskCard(context, item);
@@ -213,30 +367,53 @@ class TaskListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDateTab({
+  Widget _buildDatePill({
     required String label,
-    required bool selected,
+    required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.bold : FontWeight.w600,
-                color: selected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : const Color(0xFF475569),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String key, String label) {
+    final isSelected = _statusFilter == key;
+    return GestureDetector(
+      onTap: () => setState(() => _statusFilter = key),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFCBD5E1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10.5,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF475569),
           ),
         ),
       ),
@@ -244,23 +421,35 @@ class TaskListScreen extends ConsumerWidget {
   }
 
   Widget _buildTaskCard(BuildContext context, TaskAssignmentModel item) {
+    final bool canModify = _canModify(item.dueDate);
+    final bool isFuture = _isFuture(item.dueDate);
+
+    String? fullPhotoUrl;
+    if (item.proofPhotoUrl != null && item.proofPhotoUrl!.isNotEmpty) {
+      if (item.proofPhotoUrl!.startsWith('http')) {
+        fullPhotoUrl = item.proofPhotoUrl;
+      } else {
+        fullPhotoUrl = '${ApiConstants.baseHost}/${item.proofPhotoUrl!.replaceAll('\\', '/')}';
+      }
+    }
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: item.isApproved
-              ? const Color(0xFFD1FAE5)
+              ? const Color(0xFFA7F3D0)
               : item.isRejected
-                  ? const Color(0xFFFEE2E2)
+                  ? const Color(0xFFFECDD3)
                   : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -271,11 +460,14 @@ class TaskListScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
+                alignment: Alignment.center,
                 child: Text(item.iconEmoji, style: const TextStyle(fontSize: 22)),
               ),
               const SizedBox(width: 12),
@@ -286,7 +478,7 @@ class TaskListScreen extends ConsumerWidget {
                     Text(
                       item.title,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
@@ -296,51 +488,91 @@ class TaskListScreen extends ConsumerWidget {
                       Text(
                         item.description,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
-                        const Icon(Icons.stars, color: Color(0xFFF59E0B), size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          '+${item.points} Poin',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFD97706),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: Text(
+                            '+${item.points} poin',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFB45309),
+                            ),
                           ),
                         ),
+                        if (item.targetTime != null && item.targetTime!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFC7D2FE)),
+                            ),
+                            child: Text(
+                              '⏰ ${item.targetTime}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF4338CA),
+                              ),
+                            ),
+                          ),
+                        if (_selectedMode == 'all' && item.dueDate.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              AppDateUtils.formatDisplay(item.dueDate),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ],
                 ),
               ),
-              _buildStatusBadge(item),
+              _buildStatusBadge(item, isFuture),
             ],
           ),
 
           // Rejection reason note if rejected
           if (item.isRejected && item.rejectionReason != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: const Color(0xFFFFF1F2),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                border: Border.all(color: const Color(0xFFFECDD3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Color(0xFFEF4444), size: 16),
+                  const Icon(Icons.info_outline, color: Color(0xFFE11D48), size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Alasan: ${item.rejectionReason}',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF991B1B)),
+                      'Catatan penolakan: ${item.rejectionReason}',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFFBE123C), fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -348,25 +580,147 @@ class TaskListScreen extends ConsumerWidget {
             ),
           ],
 
-          // Action Button (Submit Proof if pending or rejected)
-          if (item.isPending || item.isRejected) ...[
-            const SizedBox(height: 14),
+          // Submission note if submitted
+          if (item.submissionNote != null && item.submissionNote!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Text(
+                'Catatanmu: "${item.submissionNote}"',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: const Color(0xFF475569),
+                ),
+              ),
+            ),
+          ],
+
+          // Proof photo preview if submitted
+          if (fullPhotoUrl != null) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 100,
+                width: double.infinity,
+                color: const Color(0xFFF1F5F9),
+                child: Image.network(
+                  fullPhotoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Text('Foto bukti terunggah', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // Action Button
+          const SizedBox(height: 12),
+          if (isFuture) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: Text(
+                  'Terjadwal untuk masa depan',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ] else if (item.isApproved) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, size: 14, color: Color(0xFF047857)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tugas Disetujui! Poin telah didapatkan 🎉',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (item.isSubmitted) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F9FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBAE6FD)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.schedule, size: 14, color: Color(0xFF0369A1)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Menunggu Review Orang Tua ⏳',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (!canModify) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.lock_outline, size: 14, color: Color(0xFF94A3B8)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Terkunci (> 1 hari yang lalu)',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
             SizedBox(
               width: double.infinity,
-              height: 40,
+              height: 38,
               child: ElevatedButton.icon(
                 onPressed: () => SubmitTaskDialog.show(context, item),
-                icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                icon: const Icon(Icons.camera_alt_rounded, size: 16),
                 label: Text(
-                  item.isRejected ? 'Kirim Ulang Bukti' : 'Kirim Bukti Tugas',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold),
+                  item.isRejected ? 'Perbaiki & Kirim Ulang Bukti' : 'Kirim Bukti Tugas',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: item.isRejected ? const Color(0xFFE11D48) : const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
+                  elevation: 0,
                 ),
               ),
             ),
@@ -376,94 +730,96 @@ class TaskListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusBadge(TaskAssignmentModel item) {
+  Widget _buildStatusBadge(TaskAssignmentModel item, bool isFuture) {
+    if (isFuture) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFC7D2FE)),
+        ),
+        child: Text(
+          'Terjadwal',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF4338CA),
+          ),
+        ),
+      );
+    }
+
     if (item.isApproved) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFD1FAE5),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFA7F3D0)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, size: 12, color: Color(0xFF059669)),
-            const SizedBox(width: 4),
-            Text(
-              'Disetujui',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF059669),
-              ),
-            ),
-          ],
+        child: Text(
+          'Disetujui',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF047857),
+          ),
         ),
       );
     }
 
     if (item.isSubmitted) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFFF0F9FF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFBAE6FD)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.schedule, size: 12, color: Color(0xFFD97706)),
-            const SizedBox(width: 4),
-            Text(
-              'Menunggu',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFD97706),
-              ),
-            ),
-          ],
+        child: Text(
+          'Terkirim',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0369A1),
+          ),
         ),
       );
     }
 
     if (item.isRejected) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFFECDD3)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cancel, size: 12, color: Color(0xFFDC2626)),
-            const SizedBox(width: 4),
-            Text(
-              'Perlu Diulang',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFDC2626),
-              ),
-            ),
-          ],
+        child: Text(
+          'Ditolak',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFBE123C),
+          ),
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFDE68A)),
       ),
       child: Text(
-        'Belum Selesai',
+        'Menunggu',
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF64748B),
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFFB45309),
         ),
       ),
     );
