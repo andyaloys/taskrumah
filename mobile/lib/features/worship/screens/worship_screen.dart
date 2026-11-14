@@ -14,16 +14,14 @@ class WorshipScreen extends ConsumerStatefulWidget {
 }
 
 class _WorshipScreenState extends ConsumerState<WorshipScreen> {
-  String _dateMode = 'today'; // 'today', 'yesterday', 'twoDaysAgo', 'custom'
+  String _dateMode = 'today'; // 'today', 'yesterday', 'custom'
   DateTime? _customDate;
 
   final DateTime _today = DateTime.now();
   late final DateTime _yesterday = _today.subtract(const Duration(days: 1));
-  late final DateTime _twoDaysAgo = _today.subtract(const Duration(days: 2));
 
   String _getActiveDateYmd() {
     if (_dateMode == 'yesterday') return AppDateUtils.formatYmd(_yesterday);
-    if (_dateMode == 'twoDaysAgo') return AppDateUtils.formatYmd(_twoDaysAgo);
     if (_dateMode == 'custom' && _customDate != null) return AppDateUtils.formatYmd(_customDate!);
     return AppDateUtils.formatYmd(_today);
   }
@@ -34,7 +32,7 @@ class _WorshipScreenState extends ConsumerState<WorshipScreen> {
       final todayMidnight = DateTime(_today.year, _today.month, _today.day);
       final activeMidnight = DateTime(active.year, active.month, active.day);
       final diff = todayMidnight.difference(activeMidnight).inDays;
-      return diff > 2 || diff < 0; // Lebih dari 2 hari lalu atau masa depan
+      return diff > 1 || diff < 0; // Lebih dari 1 hari lalu (H-1) atau masa depan
     } catch (_) {
       return false;
     }
@@ -142,15 +140,9 @@ class _WorshipScreenState extends ConsumerState<WorshipScreen> {
                         ),
                         const SizedBox(width: 6),
                         _buildDatePill(
-                          label: 'Kemarin',
+                          label: 'Kemarin (H-1)',
                           isSelected: _dateMode == 'yesterday',
                           onTap: () => _selectDate('yesterday'),
-                        ),
-                        const SizedBox(width: 6),
-                        _buildDatePill(
-                          label: '2 Hari Lalu',
-                          isSelected: _dateMode == 'twoDaysAgo',
-                          onTap: () => _selectDate('twoDaysAgo'),
                         ),
                         const SizedBox(width: 6),
                         GestureDetector(
@@ -260,7 +252,7 @@ class _WorshipScreenState extends ConsumerState<WorshipScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Catatan ibadah lebih dari 2 hari yang lalu telah dikunci (hanya baca).',
+                        'Catatan ibadah lebih dari 1 hari yang lalu telah dikunci (hanya baca).',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -502,7 +494,7 @@ class _WorshipScreenState extends ConsumerState<WorshipScreen> {
   void _showLockedSnackBar() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Catatan ibadah lebih dari 2 hari yang lalu telah dikunci.'),
+        content: Text('Catatan ibadah lebih dari 1 hari yang lalu telah dikunci.'),
         backgroundColor: Color(0xFFDC2626),
         duration: Duration(seconds: 2),
       ),

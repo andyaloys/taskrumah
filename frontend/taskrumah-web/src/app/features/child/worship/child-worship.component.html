@@ -17,25 +17,19 @@
     </div>
   </div>
 
-  <!-- Day Selector Buttons (Hari Ini, Kemarin, 2 Hari Lalu) -->
+  <!-- Day Selector Buttons (Hari Ini & Kemarin) -->
   <div class="bg-white rounded-xl p-1.5 border border-slate-200/80 shadow-2xs flex gap-1.5">
     <button (click)="selectDay('today')"
       [class]="dateViewMode() === 'today' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-slate-100 font-medium'"
-      class="flex-1 py-2 px-2 rounded-lg text-xs transition-all text-center cursor-pointer flex flex-col items-center justify-center">
+      class="flex-1 py-2 px-3 rounded-lg text-xs transition-all text-center cursor-pointer flex items-center justify-center gap-1.5">
       <span>Hari Ini</span>
-      <span [class]="dateViewMode() === 'today' ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] font-normal">{{ today | date:'dd MMM' }}</span>
+      <span [class]="dateViewMode() === 'today' ? 'text-indigo-200' : 'text-slate-400'" class="text-[11px] font-normal">({{ today | date:'dd MMM yyyy' }})</span>
     </button>
     <button (click)="selectDay('yesterday')"
       [class]="dateViewMode() === 'yesterday' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-slate-100 font-medium'"
-      class="flex-1 py-2 px-2 rounded-lg text-xs transition-all text-center cursor-pointer flex flex-col items-center justify-center">
+      class="flex-1 py-2 px-3 rounded-lg text-xs transition-all text-center cursor-pointer flex items-center justify-center gap-1.5">
       <span>Kemarin</span>
-      <span [class]="dateViewMode() === 'yesterday' ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] font-normal">{{ yesterday | date:'dd MMM' }}</span>
-    </button>
-    <button (click)="selectDay('twoDaysAgo')"
-      [class]="dateViewMode() === 'twoDaysAgo' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-slate-100 font-medium'"
-      class="flex-1 py-2 px-2 rounded-lg text-xs transition-all text-center cursor-pointer flex flex-col items-center justify-center">
-      <span>2 Hari Lalu</span>
-      <span [class]="dateViewMode() === 'twoDaysAgo' ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] font-normal">{{ twoDaysAgo | date:'dd MMM' }}</span>
+      <span [class]="dateViewMode() === 'yesterday' ? 'text-indigo-200' : 'text-slate-400'" class="text-[11px] font-normal">({{ yesterday | date:'dd MMM yyyy' }})</span>
     </button>
   </div>
 
@@ -44,7 +38,7 @@
       <svg class="w-4 h-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
       </svg>
-      <span>Catatan ibadah lebih dari 2 hari yang lalu telah terkunci.</span>
+      <span>Catatan ibadah lebih dari 1 hari yang lalu telah terkunci.</span>
     </div>
   }
 

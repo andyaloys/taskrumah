@@ -102,11 +102,11 @@ public class WorshipController : ControllerBase
             ? parsed.Date
             : JakartaTime.Today;
 
-        // Restriction: can modify up to 2 days back (today, yesterday, 2 days ago)
+        // Restriction: can only modify today and yesterday (H-1)
         var today = JakartaTime.Today;
-        if (targetDate < today.AddDays(-2))
+        if (targetDate < today.AddDays(-1))
         {
-            return BadRequest(new { message = "Data ibadah yang sudah lewat lebih dari 2 hari telah dikunci." });
+            return BadRequest(new { message = "Data ibadah yang sudah lewat lebih dari 1 hari telah dikunci." });
         }
 
         var startUtc = JakartaTime.StartOfDayUtc(targetDate);

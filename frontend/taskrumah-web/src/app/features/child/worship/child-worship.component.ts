@@ -30,10 +30,9 @@ export class ChildWorshipComponent implements OnInit {
   });
 
   selectedDate = signal<string>(this.formatDate(new Date()));
-  dateViewMode = signal<'today' | 'yesterday' | 'twoDaysAgo'>('today');
+  dateViewMode = signal<'today' | 'yesterday'>('today');
   today = new Date();
   yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
   loading = signal(true);
   saving = signal(false);
 
@@ -79,13 +78,11 @@ export class ChildWorshipComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  selectDay(mode: 'today' | 'yesterday' | 'twoDaysAgo') {
+  selectDay(mode: 'today' | 'yesterday') {
     this.dateViewMode.set(mode);
     const d = new Date();
     if (mode === 'yesterday') {
       d.setDate(d.getDate() - 1);
-    } else if (mode === 'twoDaysAgo') {
-      d.setDate(d.getDate() - 2);
     }
     this.selectedDate.set(this.formatDate(d));
     this.loadWorshipData();
@@ -97,7 +94,7 @@ export class ChildWorshipComponent implements OnInit {
     today.setHours(0, 0, 0, 0);
     sel.setHours(0, 0, 0, 0);
     const diffDays = Math.round((today.getTime() - sel.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays > 2 || diffDays < 0;
+    return diffDays > 1 || diffDays < 0; // Hanya Hari Ini (H) dan Kemarin (H-1) yang bisa diubah
   }
 
   loadSetting() {
