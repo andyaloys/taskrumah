@@ -36,7 +36,7 @@ class LocalNotificationService {
         AndroidFlutterLocalNotificationsPlugin>();
     if (androidImpl != null) {
       await androidImpl.requestNotificationsPermission();
-      
+
       // Create notification channel
       const channel = AndroidNotificationChannel(
         _channelId,
@@ -101,6 +101,10 @@ class LocalNotificationService {
       final token = await StorageService().getToken();
       if (token == null || token.isEmpty) return;
 
+      final user = await StorageService().getUser();
+      final currentUserId = user?['id']?.toString() ?? '';
+      final currentRole = user?['role']?.toString() ?? 'Child';
+
       final response = await client.dio.get('/notifications/reminders-summary');
       final data = response.data as Map<String, dynamic>;
 
@@ -108,15 +112,42 @@ class LocalNotificationService {
       final now = DateTime.now();
       final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      // 1. Check Unread Notifications from Backend (e.g. "Tugas Disetujui! 🎉", "Tugas Dikirim! 📋")
+      // 1. Check Unread Notifications from Backend with STRICT Role/User filtering
       final unreadList = (data['unreadNotifications'] as List<dynamic>?) ?? [];
       for (final n in unreadList) {
         final notifMap = n as Map<String, dynamic>;
         final notifId = notifMap['id']?.toString() ?? '';
         final title = notifMap['title']?.toString() ?? 'FamilyTask';
         final message = notifMap['message']?.toString() ?? '';
+        final type = notifMap['type']?.toString();
 
-        final seenKey = 'notif_seen_$notifId';
+        // Admin ONLY receives notifications intended for parents:
+        // - TaskSubmitted ("Tugas Dikirim! 📋", "Tugas Tambahan Baru! 🌟")
+        // - Reward claims ("Permintaan Hadiah Baru! 🎁")
+        // Admin NEVER receives late task warnings, prayer reminders, or personal task due alerts.
+        if (currentRole == 'Admin') {
+          final isForAdmin = type == 'TaskSubmitted' ||
+              title.contains('Dikirim') ||
+              title.contains('Laporan') ||
+              title.contains('Permintaan Hadiah') ||
+              title.contains('Tugas Tambahan Baru');
+          if (!isForAdmin) {
+            continue; // Skip!
+          }
+        }
+
+        // Child ONLY receives approval, rejection, reward approval, or their own late task notice.
+        // Child NEVER receives admin review prompts.
+        if (currentRole == 'Child') {
+          final isAdminPrompt = type == 'TaskSubmitted' ||
+              title.contains('Tugas Dikirim') ||
+              title.contains('Permintaan Hadiah Baru');
+          if (isAdminPrompt) {
+            continue; // Skip!
+          }
+        }
+
+        final seenKey = 'notif_seen_${currentUserId}_$notifId';
         if (!prefs.getBool(seenKey).isTrue()) {
           final notifyId = notifId.hashCode.abs() % 100000;
           await showNotification(
@@ -129,18 +160,19 @@ class LocalNotificationService {
         }
       }
 
-      // If user is child, evaluate worship and task reminders
-      final role = data['role']?.toString();
-      if (role != 'Child') return;
+      // If user is Admin/Parent, STOP HERE!
+      // Parents DO NOT have personal prayer checklist deadlines, tilawah alarms, or chore alarms.
+      if (currentRole != 'Child') return;
 
       final worship = data['worship'] as Map<String, dynamic>?;
       final worshipSetting = data['worshipSetting'] as Map<String, dynamic>?;
       final reminderMinutes = (worshipSetting?['reminderMinutesBeforeEnd'] as num?)?.toInt() ?? 30;
       final quranReminderTime = worshipSetting?['quranReminderTime']?.toString() ?? '19:00';
 
-      // 2. Prayer Deadline Reminders (Before prayer window expires)
+      // 2. Prayer Deadline Reminders for this Child (Before prayer window expires)
       if (worship != null) {
         _evaluatePrayerReminder(
+          userId: currentUserId,
           name: 'Subuh',
           status: worship['subuh'] as int? ?? 0,
           deadlineHour: 5,
@@ -152,6 +184,7 @@ class LocalNotificationService {
         );
 
         _evaluatePrayerReminder(
+          userId: currentUserId,
           name: 'Dzuhur',
           status: worship['dzuhur'] as int? ?? 0,
           deadlineHour: 15,
@@ -163,6 +196,7 @@ class LocalNotificationService {
         );
 
         _evaluatePrayerReminder(
+          userId: currentUserId,
           name: 'Ashar',
           status: worship['ashar'] as int? ?? 0,
           deadlineHour: 17,
@@ -174,6 +208,7 @@ class LocalNotificationService {
         );
 
         _evaluatePrayerReminder(
+          userId: currentUserId,
           name: 'Maghrib',
           status: worship['maghrib'] as int? ?? 0,
           deadlineHour: 19,
@@ -185,6 +220,7 @@ class LocalNotificationService {
         );
 
         _evaluatePrayerReminder(
+          userId: currentUserId,
           name: 'Isya',
           status: worship['isya'] as int? ?? 0,
           deadlineHour: 23,
@@ -204,7 +240,7 @@ class LocalNotificationService {
           final quranDateTime = DateTime(now.year, now.month, now.day, qHour, qMinute);
 
           if (now.isAfter(quranDateTime)) {
-            final key = 'quran_reminded_$todayStr';
+            final key = 'quran_reminded_${currentUserId}_$todayStr';
             if (!prefs.getBool(key).isTrue()) {
               await showNotification(
                 id: 10006,
@@ -217,7 +253,7 @@ class LocalNotificationService {
         }
       }
 
-      // 4. Pending Tasks Reminders
+      // 4. Pending Tasks Reminders for this Child only
       final pendingTasks = (data['pendingTasks'] as List<dynamic>?) ?? [];
       for (final t in pendingTasks) {
         final taskMap = t as Map<String, dynamic>;
@@ -232,7 +268,7 @@ class LocalNotificationService {
           final targetDateTime = DateTime(now.year, now.month, now.day, tHour, tMinute);
 
           if (now.isAfter(targetDateTime)) {
-            final key = 'task_reminded_${taskId}_$todayStr';
+            final key = 'task_reminded_${currentUserId}_${taskId}_$todayStr';
             if (!prefs.getBool(key).isTrue()) {
               await showNotification(
                 id: 20000 + (taskId.hashCode.abs() % 10000),
@@ -245,20 +281,20 @@ class LocalNotificationService {
         }
       }
 
-      // General evening reminder (16:30 and 20:00) if pending tasks exist
+      // General evening reminder (16:30 and 20:00) if pending tasks exist for this child
       if (pendingTasks.isNotEmpty) {
         if (now.hour >= 16 && now.hour < 19) {
-          final key = 'tasks_afternoon_reminded_$todayStr';
+          final key = 'tasks_afternoon_reminded_${currentUserId}_$todayStr';
           if (!prefs.getBool(key).isTrue()) {
             await showNotification(
               id: 30001,
               title: '📋 ${pendingTasks.length} Tugas Belum Selesai',
-              body: 'Sore Kak/Dek! Masih ada ${pendingTasks.length} tugas harian yang belum selesai. Yuk kerjakan sebelum malam! 🌟',
+              body: 'Sore Kak/Dek! Masih ada ${pendingTasks.length} tugas harianmu yang belum selesai. Yuk kerjakan sebelum malam! 🌟',
             );
             await prefs.setBool(key, true);
           }
         } else if (now.hour >= 20) {
-          final key = 'tasks_night_reminded_$todayStr';
+          final key = 'tasks_night_reminded_${currentUserId}_$todayStr';
           if (!prefs.getBool(key).isTrue()) {
             await showNotification(
               id: 30002,
@@ -275,6 +311,7 @@ class LocalNotificationService {
   }
 
   void _evaluatePrayerReminder({
+    required String userId,
     required String name,
     required int status,
     required int deadlineHour,
@@ -292,7 +329,7 @@ class LocalNotificationService {
 
     // If current time is between reminderTime and deadline
     if (now.isAfter(reminderTime) && now.isBefore(deadline)) {
-      final key = 'prayer_reminded_${name.toLowerCase()}_$todayStr';
+      final key = 'prayer_reminded_${userId}_${name.toLowerCase()}_$todayStr';
       if (!prefs.getBool(key).isTrue()) {
         final diffMins = deadline.difference(now).inMinutes;
         final minutesText = diffMins > 0 ? '$diffMins menit' : 'beberapa saat';

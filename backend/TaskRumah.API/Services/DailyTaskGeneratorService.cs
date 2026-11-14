@@ -61,14 +61,17 @@ public class DailyTaskGeneratorService : BackgroundService
         foreach (var assignment in overdueAssignments)
         {
             assignment.Status = AssignmentStatus.Late;
-            var notifSvc = scope.ServiceProvider.GetRequiredService<NotificationService>();
-            await notifSvc.CreateAsync(
-                assignment.AssignedToId,
-                "Tugas Terlambat! ⏰",
-                $"Kamu terlambat menyelesaikan tugas kemarin. Jangan terulang ya!",
-                NotificationType.TaskDue,
-                assignment.Id
-            );
+            if (assignment.AssignedTo != null && assignment.AssignedTo.Role == UserRole.Child)
+            {
+                var notifSvc = scope.ServiceProvider.GetRequiredService<NotificationService>();
+                await notifSvc.CreateAsync(
+                    assignment.AssignedToId,
+                    "Tugas Terlambat! ⏰",
+                    $"Kamu terlambat menyelesaikan tugas kemarin. Jangan terulang ya!",
+                    NotificationType.TaskDue,
+                    assignment.Id
+                );
+            }
         }
 
         // Generate daily and specific days task assignments for today
