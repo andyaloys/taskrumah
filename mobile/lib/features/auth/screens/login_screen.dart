@@ -14,7 +14,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  List<Map<String, dynamic>> _quickUsers = [];
+
+  static const Map<String, String> _quickPasswords = {
+    'ayah@taskrumah.com': 'Ayah@123',
+    'ibu@taskrumah.com': 'Ibu@123',
+    'anak1@taskrumah.com': 'Anak1@123',
+    'anak2@taskrumah.com': 'Anak2@123',
+  };
+
+  List<Map<String, dynamic>> _quickUsers = [
+    {'name': 'Papah', 'email': 'ayah@taskrumah.com', 'role': 'Admin'},
+    {'name': 'Mamah', 'email': 'ibu@taskrumah.com', 'role': 'Admin'},
+    {'name': 'Kakak', 'email': 'anak1@taskrumah.com', 'role': 'Child'},
+    {'name': 'Dedee', 'email': 'anak2@taskrumah.com', 'role': 'Child'},
+  ];
 
   @override
   void initState() {
@@ -26,7 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final repo = ref.read(authRepositoryProvider);
       final users = await repo.getQuickUsers();
-      if (mounted) {
+      if (mounted && users.isNotEmpty) {
         setState(() {
           _quickUsers = users;
         });
@@ -38,7 +51,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _onQuickLogin(String email) {
     _emailController.text = email;
-    _passwordController.text = 'password123';
+    final lower = email.toLowerCase().trim();
+    if (_quickPasswords.containsKey(lower)) {
+      _passwordController.text = _quickPasswords[lower]!;
+    } else if (lower.contains('ayah') || lower.contains('papah')) {
+      _passwordController.text = 'Ayah@123';
+    } else if (lower.contains('ibu') || lower.contains('mamah')) {
+      _passwordController.text = 'Ibu@123';
+    } else if (lower.contains('anak1') || lower.contains('kakak')) {
+      _passwordController.text = 'Anak1@123';
+    } else if (lower.contains('anak2') || lower.contains('dedee')) {
+      _passwordController.text = 'Anak2@123';
+    } else {
+      _passwordController.text = 'password123';
+    }
     _submit();
   }
 
