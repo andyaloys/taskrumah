@@ -51,23 +51,33 @@ export class AdminDashboardComponent implements OnInit {
 
   selectDateMode(mode: 'today' | 'yesterday' | 'tomorrow' | 'dayAfter' | 'custom', customDate?: string) {
     this.dateViewMode.set(mode);
+    let targetDateStr = '';
     if (mode === 'today') {
+      targetDateStr = this.formatDate(this.today);
       this.selectedDate.set('');
       this.currentWeekOffset.set(0);
     } else if (mode === 'yesterday') {
-      this.selectedDate.set(this.formatDate(this.yesterdayDate));
+      targetDateStr = this.formatDate(this.yesterdayDate);
+      this.selectedDate.set(targetDateStr);
       this.currentWeekOffset.set(0);
     } else if (mode === 'tomorrow') {
-      this.selectedDate.set(this.formatDate(this.tomorrow));
+      targetDateStr = this.formatDate(this.tomorrow);
+      this.selectedDate.set(targetDateStr);
       this.currentWeekOffset.set(0);
     } else if (mode === 'dayAfter') {
-      this.selectedDate.set(this.formatDate(this.dayAfter));
+      targetDateStr = this.formatDate(this.dayAfter);
+      this.selectedDate.set(targetDateStr);
       this.currentWeekOffset.set(0);
     } else if (mode === 'custom' && customDate) {
+      targetDateStr = customDate;
       this.selectedDate.set(customDate);
       this.currentWeekOffset.set(0);
     }
+
+    // Synchronize both tasks dashboard and worship monitoring
+    this.worshipDate.set(targetDateStr || this.formatDate(this.today));
     this.loadDashboard();
+    this.loadWorshipSummary();
   }
 
   onCustomDateChange(event: Event) {
@@ -94,15 +104,19 @@ export class AdminDashboardComponent implements OnInit {
   changeWeek(delta: number) {
     this.selectedDate.set('');
     this.dateViewMode.set('today');
+    this.worshipDate.set(this.formatDate(this.today));
     this.currentWeekOffset.update(w => w + delta);
     this.loadDashboard();
+    this.loadWorshipSummary();
   }
 
   setWeek(offset: number) {
     this.selectedDate.set('');
     this.dateViewMode.set('today');
+    this.worshipDate.set(this.formatDate(this.today));
     this.currentWeekOffset.set(offset);
     this.loadDashboard();
+    this.loadWorshipSummary();
   }
 
   abs(val: number): number {
@@ -193,14 +207,12 @@ export class AdminDashboardComponent implements OnInit {
   onWorshipDateChange(ev: Event) {
     const val = (ev.target as HTMLInputElement).value;
     if (val) {
-      this.worshipDate.set(val);
-      this.loadWorshipSummary();
+      this.selectDateMode('custom', val);
     }
   }
 
   setWorshipDatePreset(mode: 'today' | 'yesterday') {
-    this.worshipDate.set(mode === 'yesterday' ? getYesterdayDateString() : getTodayDateString());
-    this.loadWorshipSummary();
+    this.selectDateMode(mode);
   }
 
   getPrayerLabel(status: PrayerStatus | string): string {
