@@ -285,15 +285,38 @@ export class AdminTasksComponent implements OnInit {
   }
 
   deleteTask(task: ChoreTask) {
-    if (!confirm(`Apakah Anda yakin ingin menghapus tugas "${task.title}" secara permanen? Semua riwayat penugasan tugas ini juga akan dihapus.`)) {
-      return;
-    }
-    this.taskService.deleteTask(task.id).subscribe({
-      next: () => {
-        this.loadData();
+    this.taskService.getTaskUsage(task.id).subscribe({
+      next: (usage) => {
+        let confirmMsg = '';
+        if (usage.hasHistory) {
+          confirmMsg = `⚠️ PERHATIAN: Tugas "${task.title}" SUDAH PERNAH DIGUNAKAN!\n\n` +
+            `• Pernah diselesaikan anak: ${usage.completedAssignments} kali\n` +
+            `• Total riwayat penugasan: ${usage.totalAssignments} kali\n\n` +
+            `✅ Poin bintang anak yang sudah diperoleh TETAP AMAN dan TIDAK AKAN berkurang.\n` +
+            `ℹ️ Namun catatan riwayat penugasan tugas ini akan ikut dihapus dari database.\n\n` +
+            `💡 Tips: Jika hanya ingin menghentikan tugas ini agar tidak muncul lagi, Anda cukup memilih tombol 'Nonaktifkan'.\n\n` +
+            `Apakah Anda TETAP YAKIN ingin menghapus tugas ini secara permanen?`;
+        } else {
+          confirmMsg = `Tugas "${task.title}" belum pernah dikerjakan oleh anak.\n\nApakah Anda yakin ingin menghapus tugas ini secara permanen?`;
+        }
+
+        if (!confirm(confirmMsg)) return;
+
+        this.taskService.deleteTask(task.id).subscribe({
+          next: () => {
+            this.loadData();
+          },
+          error: (err) => {
+            alert(err.error?.message || 'Gagal menghapus tugas');
+          }
+        });
       },
-      error: (err) => {
-        alert(err.error?.message || 'Gagal menghapus tugas');
+      error: () => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus tugas "${task.title}" secara permanen?`)) return;
+        this.taskService.deleteTask(task.id).subscribe({
+          next: () => this.loadData(),
+          error: (err) => alert(err.error?.message || 'Gagal menghapus tugas')
+        });
       }
     });
   }

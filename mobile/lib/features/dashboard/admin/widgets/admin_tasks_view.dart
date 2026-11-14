@@ -249,16 +249,103 @@ class _AdminTaskListTab extends ConsumerWidget {
                               if (val == 'edit') {
                                 _showTaskDialog(context, ref, task: task);
                               } else if (val == 'delete') {
+                                final usage = await repo.getTaskUsage(id);
+                                final bool hasHistory = usage['hasHistory'] == true;
+                                final int completedCount = (usage['completedAssignments'] as num?)?.toInt() ?? 0;
+                                final int totalCount = (usage['totalAssignments'] as num?)?.toInt() ?? 0;
+
+                                if (!context.mounted) return;
+
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    title: const Text('Hapus Tugas?'),
-                                    content: Text('Apakah Anda yakin ingin menghapus tugas "$title"?'),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                    title: Row(
+                                      children: [
+                                        Icon(
+                                          hasHistory ? Icons.warning_amber_rounded : Icons.delete_outline,
+                                          color: hasHistory ? const Color(0xFFF59E0B) : const Color(0xFFEF4444),
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            hasHistory ? 'Tugas Pernah Digunakan' : 'Hapus Tugas?',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color(0xFF1E293B),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (hasHistory) ...[
+                                            Text(
+                                              'Tugas "$title" sudah memiliki riwayat penugasan:',
+                                              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF334155)),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text('• Pernah selesai: $completedCount kali', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                                            Text('• Total penugasan: $totalCount kali', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF475569))),
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF0FDF4),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                                              ),
+                                              child: Text(
+                                                '✅ Poin anak yang sudah didapat TETAP AMAN & TIDAK BERKURANG.',
+                                                style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF15803D)),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEFF6FF),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                                              ),
+                                              child: Text(
+                                                '💡 Tips: Anda juga cukup menonaktifkan saklar jika hanya ingin menghentikan tugas tanpa menghapus riwayat.',
+                                                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF1D4ED8)),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              'Apakah Anda tetap yakin ingin menghapus tugas ini secara permanen?',
+                                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFDC2626)),
+                                            ),
+                                          ] else ...[
+                                            Text(
+                                              'Tugas "$title" belum pernah dikerjakan oleh anak.\n\nApakah Anda yakin ingin menghapus tugas ini?',
+                                              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF334155)),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
                                       TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: Text('Batal', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B))),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFEF4444),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
                                         onPressed: () => Navigator.pop(ctx, true),
-                                        child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                                        child: Text(hasHistory ? 'Tetap Hapus' : 'Hapus', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
                                       ),
                                     ],
                                   ),

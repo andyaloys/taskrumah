@@ -134,6 +134,15 @@ class AdminRepository {
     }
   }
 
+  Future<Map<String, dynamic>> getTaskUsage(String id) async {
+    try {
+      final response = await _client.dio.get('${ApiConstants.tasks}/$id/usage');
+      return response.data as Map<String, dynamic>;
+    } catch (_) {
+      return {'hasHistory': false, 'totalAssignments': 0, 'completedAssignments': 0};
+    }
+  }
+
   // --- Pengaturan Poin Ibadah ---
   Future<Map<String, dynamic>> getWorshipSetting() async {
     try {

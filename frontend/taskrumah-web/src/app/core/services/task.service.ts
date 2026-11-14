@@ -35,6 +35,17 @@ export class TaskService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
+  getTaskUsage(id: string) {
+    return this.http.get<{
+      taskId: string;
+      title: string;
+      totalAssignments: number;
+      completedAssignments: number;
+      pendingAssignments: number;
+      hasHistory: boolean;
+    }>(`${this.apiUrl}/${id}/usage`);
+  }
+
   assignTask(id: string, req: { assignedToId?: string; dueDate?: string }) {
     return this.http.post<{ message: string }>(`${this.apiUrl}/${id}/assign`, req);
   }

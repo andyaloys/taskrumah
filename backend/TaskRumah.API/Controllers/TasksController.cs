@@ -87,6 +87,28 @@ public class TasksController : ControllerBase
             task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt, task.TargetTime));
     }
 
+    [HttpGet("{id:guid}/usage")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetTaskUsage(Guid id)
+    {
+        var task = await _db.ChoreTasks.FindAsync(id);
+        if (task == null) return NotFound();
+
+        var totalAssignments = await _db.TaskAssignments.CountAsync(a => a.TaskId == id);
+        var completedAssignments = await _db.TaskAssignments.CountAsync(a => a.TaskId == id && a.Status == AssignmentStatus.Approved);
+        var pendingAssignments = await _db.TaskAssignments.CountAsync(a => a.TaskId == id && (a.Status == AssignmentStatus.Pending || a.Status == AssignmentStatus.Submitted));
+
+        return Ok(new
+        {
+            taskId = task.Id,
+            title = task.Title,
+            totalAssignments,
+            completedAssignments,
+            pendingAssignments,
+            hasHistory = totalAssignments > 0
+        });
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateTaskRequest req)
