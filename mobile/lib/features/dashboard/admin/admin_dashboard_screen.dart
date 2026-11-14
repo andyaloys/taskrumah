@@ -97,6 +97,20 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
     return AppDateUtils.formatYmd(_today);
   }
 
+  String _formatDisplayDate(String dateYmd) {
+    try {
+      final d = DateTime.parse(dateYmd);
+      return DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(d);
+    } catch (_) {
+      try {
+        final d = DateTime.parse(dateYmd);
+        return DateFormat('EEEE, dd MMMM yyyy').format(d);
+      } catch (_) {
+        return dateYmd;
+      }
+    }
+  }
+
   bool _isFutureDate() {
     final active = _getActiveDateYmd();
     final today = AppDateUtils.formatYmd(_today);
@@ -364,7 +378,7 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
                       child: Row(
                         children: [
                           Text(
-                            'Menampilkan: ${DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(activeDateYmd))}',
+                            'Menampilkan: ${_formatDisplayDate(activeDateYmd)}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,

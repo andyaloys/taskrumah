@@ -30,9 +30,10 @@ export class ChildWorshipComponent implements OnInit {
   });
 
   selectedDate = signal<string>(this.formatDate(new Date()));
-  dateViewMode = signal<'today' | 'yesterday'>('today');
+  dateViewMode = signal<'today' | 'yesterday' | 'twoDaysAgo'>('today');
   today = new Date();
   yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
   loading = signal(true);
   saving = signal(false);
 
@@ -78,23 +79,25 @@ export class ChildWorshipComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  selectDay(mode: 'today' | 'yesterday') {
+  selectDay(mode: 'today' | 'yesterday' | 'twoDaysAgo') {
     this.dateViewMode.set(mode);
     const d = new Date();
     if (mode === 'yesterday') {
       d.setDate(d.getDate() - 1);
+    } else if (mode === 'twoDaysAgo') {
+      d.setDate(d.getDate() - 2);
     }
     this.selectedDate.set(this.formatDate(d));
     this.loadWorshipData();
   }
 
   isReadOnly(): boolean {
-    const sel = this.selectedDate();
-    const today = this.formatDate(new Date());
-    const yest = new Date();
-    yest.setDate(yest.getDate() - 1);
-    const yestStr = this.formatDate(yest);
-    return sel !== today && sel !== yestStr;
+    const sel = new Date(this.selectedDate());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    sel.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((today.getTime() - sel.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays > 2 || diffDays < 0;
   }
 
   loadSetting() {

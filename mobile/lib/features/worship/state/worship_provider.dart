@@ -42,19 +42,19 @@ class WorshipNotifier extends AsyncNotifier<DailyWorshipModel?> {
     DailyWorshipModel updated;
     switch (prayerName.toLowerCase()) {
       case 'subuh':
-        updated = current.copyWith(subuh: newStatus);
+        updated = current.copyWith(date: _dateYmd, subuh: newStatus);
         break;
       case 'dzuhur':
-        updated = current.copyWith(dzuhur: newStatus);
+        updated = current.copyWith(date: _dateYmd, dzuhur: newStatus);
         break;
       case 'ashar':
-        updated = current.copyWith(ashar: newStatus);
+        updated = current.copyWith(date: _dateYmd, ashar: newStatus);
         break;
       case 'maghrib':
-        updated = current.copyWith(maghrib: newStatus);
+        updated = current.copyWith(date: _dateYmd, maghrib: newStatus);
         break;
       case 'isya':
-        updated = current.copyWith(isya: newStatus);
+        updated = current.copyWith(date: _dateYmd, isya: newStatus);
         break;
       default:
         return;
@@ -76,7 +76,7 @@ class WorshipNotifier extends AsyncNotifier<DailyWorshipModel?> {
     final current = state.value;
     if (current == null) return;
 
-    final updated = current.copyWith(quranDone: !current.quranDone);
+    final updated = current.copyWith(date: _dateYmd, quranDone: !current.quranDone);
     state = AsyncValue.data(updated);
     try {
       final repo = ref.read(worshipRepositoryProvider);

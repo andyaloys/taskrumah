@@ -48,6 +48,7 @@ class DailyWorshipModel {
   }
 
   DailyWorshipModel copyWith({
+    String? date,
     int? subuh,
     int? dzuhur,
     int? ashar,
@@ -58,7 +59,7 @@ class DailyWorshipModel {
     return DailyWorshipModel(
       id: id,
       userId: userId,
-      date: date,
+      date: date ?? this.date,
       subuh: subuh ?? this.subuh,
       dzuhur: dzuhur ?? this.dzuhur,
       ashar: ashar ?? this.ashar,
