@@ -63,6 +63,12 @@ class TasksNotifier extends AsyncNotifier<List<TaskAssignmentModel>> {
     state = await AsyncValue.guard(() => _fetch());
   }
 
+  Future<void> changeDate(String ymd) async {
+    _dateYmd = ymd;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _fetch());
+  }
+
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetch());
