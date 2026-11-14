@@ -50,9 +50,15 @@ class AdminRepository {
 
   AdminRepository(this._client);
 
-  Future<AdminDashboardModel> getDashboard() async {
+  Future<AdminDashboardModel> getDashboard({int weekOffset = 0, String? date}) async {
     try {
-      final response = await _client.dio.get(ApiConstants.adminDashboard);
+      final response = await _client.dio.get(
+        ApiConstants.adminDashboard,
+        queryParameters: {
+          'weekOffset': weekOffset,
+          if (date != null && date.isNotEmpty) 'date': date,
+        },
+      );
       return AdminDashboardModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Gagal memuat dashboard admin.');

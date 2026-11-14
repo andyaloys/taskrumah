@@ -9,6 +9,12 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) {
 });
 
 class AdminDashboardNotifier extends AsyncNotifier<AdminDashboardModel> {
+  int _weekOffset = 0;
+  String? _date;
+
+  int get weekOffset => _weekOffset;
+  String? get selectedDate => _date;
+
   @override
   Future<AdminDashboardModel> build() async {
     return _fetch();
@@ -16,12 +22,30 @@ class AdminDashboardNotifier extends AsyncNotifier<AdminDashboardModel> {
 
   Future<AdminDashboardModel> _fetch() async {
     final repo = ref.read(adminRepositoryProvider);
-    return await repo.getDashboard();
+    return await repo.getDashboard(weekOffset: _weekOffset, date: _date);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetch());
+  }
+
+  Future<void> setDateFilter(String? date) async {
+    _date = date;
+    _weekOffset = 0;
+    await refresh();
+  }
+
+  Future<void> changeWeek(int delta) async {
+    _date = null;
+    _weekOffset += delta;
+    await refresh();
+  }
+
+  Future<void> resetToToday() async {
+    _date = null;
+    _weekOffset = 0;
+    await refresh();
   }
 
   Future<bool> approveTask(String assignmentId) async {

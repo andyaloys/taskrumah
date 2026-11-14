@@ -9,6 +9,7 @@ class ChildProgressModel {
   final int tasksToday;
   final int tasksCompleted;
   final int tasksPending;
+  final List<TaskAssignmentModel> todayTasks;
   final int weeklyPoints;
 
   ChildProgressModel({
@@ -20,10 +21,12 @@ class ChildProgressModel {
     required this.tasksToday,
     required this.tasksCompleted,
     required this.tasksPending,
+    required this.todayTasks,
     required this.weeklyPoints,
   });
 
   factory ChildProgressModel.fromJson(Map<String, dynamic> json) {
+    final rawTasks = (json['todayTasks'] as List<dynamic>?) ?? [];
     return ChildProgressModel(
       userId: json['userId']?.toString() ?? '',
       name: json['name'] as String? ?? '',
@@ -33,6 +36,7 @@ class ChildProgressModel {
       tasksToday: (json['tasksToday'] as num?)?.toInt() ?? 0,
       tasksCompleted: (json['tasksCompleted'] as num?)?.toInt() ?? 0,
       tasksPending: (json['tasksPending'] as num?)?.toInt() ?? 0,
+      todayTasks: rawTasks.map((e) => TaskAssignmentModel.fromJson(e as Map<String, dynamic>)).toList(),
       weeklyPoints: (json['weeklyPoints'] as num?)?.toInt() ?? 0,
     );
   }
@@ -43,12 +47,20 @@ class AdminDashboardModel {
   final List<TaskAssignmentModel> pendingReviews;
   final int totalTasksToday;
   final int totalApprovedToday;
+  final String? weekStart;
+  final String? weekEnd;
+  final int weekOffset;
+  final String? targetDate;
 
   AdminDashboardModel({
     required this.children,
     required this.pendingReviews,
     required this.totalTasksToday,
     required this.totalApprovedToday,
+    this.weekStart,
+    this.weekEnd,
+    this.weekOffset = 0,
+    this.targetDate,
   });
 
   factory AdminDashboardModel.fromJson(Map<String, dynamic> json) {
@@ -60,6 +72,10 @@ class AdminDashboardModel {
       pendingReviews: rawReviews.map((e) => TaskAssignmentModel.fromJson(e as Map<String, dynamic>)).toList(),
       totalTasksToday: (json['totalTasksToday'] as num?)?.toInt() ?? 0,
       totalApprovedToday: (json['totalApprovedToday'] as num?)?.toInt() ?? 0,
+      weekStart: json['weekStart'] as String?,
+      weekEnd: json['weekEnd'] as String?,
+      weekOffset: (json['weekOffset'] as num?)?.toInt() ?? 0,
+      targetDate: json['targetDate'] as String?,
     );
   }
 }
