@@ -192,5 +192,5 @@ public class DashboardController : ControllerBase
         a.AssignedToId, a.AssignedTo?.Name ?? "", a.AssignedTo?.AvatarUrl,
         a.DueDate, a.Status, a.ProofPhotoUrl, a.SubmissionNote,
         a.CompletedAt, a.ReviewedAt, a.ReviewedBy?.Name, a.RejectionReason,
-        a.CreatedAt, a.Comments?.Count ?? 0);
+        a.CreatedAt, a.Comments?.Count ?? 0, a.Task?.TargetTime);
 }

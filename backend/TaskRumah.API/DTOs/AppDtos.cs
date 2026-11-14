@@ -48,7 +48,8 @@ public record CreateTaskRequest(
     Guid? AssignedToId,
     int Points,
     string IconEmoji,
-    DateTime? DueDate
+    DateTime? DueDate,
+    string? TargetTime = null
 );
 
 public record UpdateTaskRequest(
@@ -59,7 +60,8 @@ public record UpdateTaskRequest(
     Guid? AssignedToId,
     int? Points,
     string? IconEmoji,
-    bool? IsActive
+    bool? IsActive,
+    string? TargetTime = null
 );
 
 public record AssignTaskRequest(
@@ -85,7 +87,8 @@ public record ChoreTaskDto(
     int Points,
     string IconEmoji,
     bool IsActive,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string? TargetTime = null
 );
 
 public record TaskAssignmentDto(
@@ -106,7 +109,8 @@ public record TaskAssignmentDto(
     string? ReviewedByName,
     string? RejectionReason,
     DateTime CreatedAt,
-    int CommentCount
+    int CommentCount,
+    string? TargetTime = null
 );
 
 public record SubmitTaskRequest(

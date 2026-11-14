@@ -14,6 +14,8 @@ export interface WorshipSetting {
   soloPoints: number;
   mosquePoints: number;
   quranPoints: number;
+  reminderMinutesBeforeEnd?: number;
+  quranReminderTime?: string;
   updatedAt: string;
 }
 

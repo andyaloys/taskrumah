@@ -16,6 +16,7 @@ export interface ChoreTask {
   createdByName: string;
   points: number;
   iconEmoji: string;
+  targetTime?: string;
   isActive: boolean;
   createdAt: Date;
 }
@@ -29,6 +30,7 @@ export interface CreateTaskRequest {
   points: number;
   iconEmoji: string;
   dueDate?: string;
+  targetTime?: string;
 }
 
 export interface UpdateTaskRequest {
@@ -39,6 +41,7 @@ export interface UpdateTaskRequest {
   assignedToId?: string;
   points?: number;
   iconEmoji?: string;
+  targetTime?: string;
   isActive?: boolean;
 }
 

@@ -205,6 +205,20 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"Worship table migration note: {ex.Message}");
     }
+
+    // Add reminder and target time columns if not exists
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            ALTER TABLE ""ChoreTasks"" ADD COLUMN IF NOT EXISTS ""TargetTime"" text;
+            ALTER TABLE ""WorshipSettings"" ADD COLUMN IF NOT EXISTS ""ReminderMinutesBeforeEnd"" integer NOT NULL DEFAULT 30;
+            ALTER TABLE ""WorshipSettings"" ADD COLUMN IF NOT EXISTS ""QuranReminderTime"" text NOT NULL DEFAULT '19:00';
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Reminder schema migration note: {ex.Message}");
+    }
 }
 
 app.Run();

@@ -13,6 +13,7 @@ public class ChoreTask
     public User CreatedBy { get; set; } = null!;
     public int Points { get; set; }
     public string IconEmoji { get; set; } = "✅";
+    public string? TargetTime { get; set; } // e.g. "05:10", "21:00" (optional reminder time)
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 

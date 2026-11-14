@@ -49,6 +49,9 @@ public class WorshipController : ControllerBase
         setting.SoloPoints = Math.Max(0, req.SoloPoints);
         setting.MosquePoints = Math.Max(0, req.MosquePoints);
         setting.QuranPoints = Math.Max(0, req.QuranPoints);
+        setting.ReminderMinutesBeforeEnd = req.ReminderMinutesBeforeEnd > 0 ? req.ReminderMinutesBeforeEnd : 30;
+        if (!string.IsNullOrWhiteSpace(req.QuranReminderTime))
+            setting.QuranReminderTime = req.QuranReminderTime;
         setting.UpdatedAt = JakartaTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -218,6 +221,8 @@ public class UpdateWorshipSettingRequest
     public int SoloPoints { get; set; } = 3;
     public int MosquePoints { get; set; } = 5;
     public int QuranPoints { get; set; } = 5;
+    public int ReminderMinutesBeforeEnd { get; set; } = 30;
+    public string QuranReminderTime { get; set; } = "19:00";
 }
 
 public class SaveWorshipRequest

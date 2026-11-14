@@ -37,7 +37,7 @@ public class TasksController : ControllerBase
             .Select(t => new ChoreTaskDto(
                 t.Id, t.Title, t.Description, t.TaskType, t.DaysOfWeek,
                 t.AssignedToId, t.AssignedTo != null ? t.AssignedTo.Name : null,
-                t.CreatedById, t.CreatedBy.Name, t.Points, t.IconEmoji, t.IsActive, t.CreatedAt))
+                t.CreatedById, t.CreatedBy.Name, t.Points, t.IconEmoji, t.IsActive, t.CreatedAt, t.TargetTime))
             .ToListAsync();
 
         return Ok(tasks);
@@ -65,7 +65,7 @@ public class TasksController : ControllerBase
             .Select(t => new ChoreTaskDto(
                 t.Id, t.Title, t.Description, t.TaskType, t.DaysOfWeek,
                 t.AssignedToId, t.AssignedTo != null ? t.AssignedTo.Name : null,
-                t.CreatedById, t.CreatedBy.Name, t.Points, t.IconEmoji, t.IsActive, t.CreatedAt))
+                t.CreatedById, t.CreatedBy.Name, t.Points, t.IconEmoji, t.IsActive, t.CreatedAt, t.TargetTime))
             .ToListAsync();
 
         return Ok(tasks);
@@ -84,7 +84,7 @@ public class TasksController : ControllerBase
         return Ok(new ChoreTaskDto(
             task.Id, task.Title, task.Description, task.TaskType, task.DaysOfWeek,
             task.AssignedToId, task.AssignedTo?.Name,
-            task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt));
+            task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt, task.TargetTime));
     }
 
     [HttpPost]
@@ -104,6 +104,7 @@ public class TasksController : ControllerBase
             CreatedById = createdById,
             Points = req.Points,
             IconEmoji = req.IconEmoji,
+            TargetTime = req.TargetTime,
             IsActive = true,
             CreatedAt = JakartaTime.UtcNow
         };
@@ -121,7 +122,7 @@ public class TasksController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = task.Id },
             new ChoreTaskDto(task.Id, task.Title, task.Description, task.TaskType, task.DaysOfWeek,
                 task.AssignedToId, task.AssignedTo?.Name,
-                task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt));
+                task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt, task.TargetTime));
     }
 
     [HttpPut("{id}")]
@@ -143,6 +144,7 @@ public class TasksController : ControllerBase
         if (req.Points.HasValue) task.Points = req.Points.Value;
         if (req.IconEmoji != null) task.IconEmoji = req.IconEmoji;
         if (req.IsActive.HasValue) task.IsActive = req.IsActive.Value;
+        if (req.TargetTime != null) task.TargetTime = string.IsNullOrWhiteSpace(req.TargetTime) ? null : req.TargetTime;
 
         await _db.SaveChangesAsync();
 
@@ -161,7 +163,7 @@ public class TasksController : ControllerBase
 
         return Ok(new ChoreTaskDto(task.Id, task.Title, task.Description, task.TaskType, task.DaysOfWeek,
             task.AssignedToId, task.AssignedTo?.Name,
-            task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt));
+            task.CreatedById, task.CreatedBy.Name, task.Points, task.IconEmoji, task.IsActive, task.CreatedAt, task.TargetTime));
     }
 
     [HttpPost("{id}/assign")]

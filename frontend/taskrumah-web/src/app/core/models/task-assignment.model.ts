@@ -25,6 +25,7 @@ export interface TaskAssignment {
   rejectionReason?: string;
   createdAt: Date;
   commentCount: number;
+  targetTime?: string;
 }
 
 export interface TaskComment {

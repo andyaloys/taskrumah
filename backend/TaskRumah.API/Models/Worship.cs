@@ -15,6 +15,8 @@ public class WorshipSetting
     public int SoloPoints { get; set; } = 3;      // Sholat di Sekolah atau Sendiri
     public int MosquePoints { get; set; } = 5;    // Sholat Jamaah di Masjid
     public int QuranPoints { get; set; } = 5;     // Ngaji / Tilawah
+    public int ReminderMinutesBeforeEnd { get; set; } = 30; // Pengingat X menit sebelum batas sholat habis
+    public string QuranReminderTime { get; set; } = "19:00"; // Jam pengingat tilawah Al-Quran (e.g. 19:00)
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

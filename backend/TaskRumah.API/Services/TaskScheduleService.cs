@@ -107,7 +107,8 @@ public class TaskScheduleService
                                 null,
                                 null,
                                 startOfDay,
-                                0
+                                0,
+                                task.TargetTime
                             ));
                         }
                         else
@@ -130,7 +131,8 @@ public class TaskScheduleService
                                 null,
                                 null,
                                 startOfDay,
-                                0
+                                0,
+                                task.TargetTime
                             ));
                         }
                     }
@@ -165,6 +167,7 @@ public class TaskScheduleService
         a.ReviewedBy?.Name,
         a.RejectionReason,
         a.CreatedAt,
-        a.Comments?.Count ?? 0
+        a.Comments?.Count ?? 0,
+        a.Task?.TargetTime
     );
 }

@@ -82,13 +82,16 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: [''],
       points: [10, [Validators.required, Validators.min(1)]],
       iconEmoji: ['✅', Validators.required],
+      targetTime: [''],
       dueDate: [getTodayDateString()]
     });
 
     this.worshipForm = this.fb.group({
       soloPoints: [3, [Validators.required, Validators.min(0)]],
       mosquePoints: [5, [Validators.required, Validators.min(0)]],
-      quranPoints: [5, [Validators.required, Validators.min(0)]]
+      quranPoints: [5, [Validators.required, Validators.min(0)]],
+      reminderMinutesBeforeEnd: [30, [Validators.required, Validators.min(5), Validators.max(120)]],
+      quranReminderTime: ['19:00', Validators.required]
     });
   }
 
@@ -117,7 +120,9 @@ export class AdminTasksComponent implements OnInit {
         this.worshipForm.patchValue({
           soloPoints: s.soloPoints,
           mosquePoints: s.mosquePoints,
-          quranPoints: s.quranPoints
+          quranPoints: s.quranPoints,
+          reminderMinutesBeforeEnd: s.reminderMinutesBeforeEnd ?? 30,
+          quranReminderTime: s.quranReminderTime ?? '19:00'
         });
       }
     });
@@ -146,6 +151,7 @@ export class AdminTasksComponent implements OnInit {
       taskType: TaskType.Daily,
       points: 10,
       iconEmoji: '✅',
+      targetTime: '',
       dueDate: getTodayDateString()
     });
     this.showForm.set(true);
@@ -161,6 +167,7 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: task.assignedToId || '',
       points: task.points,
       iconEmoji: task.iconEmoji || '✅',
+      targetTime: task.targetTime || '',
       dueDate: getTodayDateString()
     });
     this.showForm.set(true);
@@ -211,6 +218,7 @@ export class AdminTasksComponent implements OnInit {
       assignedToId: val.assignedToId || null,
       points: val.points,
       iconEmoji: val.iconEmoji,
+      targetTime: val.targetTime ? val.targetTime : undefined,
       dueDate: undefined
     };
 
