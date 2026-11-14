@@ -30,6 +30,11 @@ class WorshipNotifier extends AsyncNotifier<DailyWorshipModel?> {
     state = await AsyncValue.guard(() => _fetch());
   }
 
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _fetch());
+  }
+
   Future<void> updatePrayer(String prayerName, int newStatus) async {
     final current = state.value;
     if (current == null) return;

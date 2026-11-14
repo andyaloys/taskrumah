@@ -20,9 +20,30 @@ class RewardRepository {
 
   Future<void> claimReward(String rewardId) async {
     try {
-      await _client.dio.post(ApiConstants.claimReward(rewardId));
+      await _client.dio.post(ApiConstants.redeemReward(rewardId));
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? 'Gagal menukarkan hadiah.');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRedemptions() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.redemptions);
+      final list = response.data as List<dynamic>;
+      return list.map((e) => e as Map<String, dynamic>).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat riwayat penukaran hadiah.');
+    }
+  }
+
+  Future<void> processRedemption(String id, String status, {String? notes}) async {
+    try {
+      await _client.dio.put(
+        ApiConstants.processRedemption(id),
+        data: {'status': status, 'notes': notes},
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memproses penukaran hadiah.');
     }
   }
 }

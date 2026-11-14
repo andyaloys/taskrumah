@@ -23,6 +23,30 @@ class DailyWorshipModel {
     required this.totalPointsEarned,
   });
 
+  static int parsePrayerStatus(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) {
+      final s = value.toLowerCase().trim();
+      if (s == 'solo' || s == '1') return 1;
+      if (s == 'mosque' || s == '2') return 2;
+      return 0; // 'none', '0', etc.
+    }
+    return 0;
+  }
+
+  static String statusToString(int status) {
+    switch (status) {
+      case 1:
+        return 'Solo';
+      case 2:
+        return 'Mosque';
+      default:
+        return 'None';
+    }
+  }
+
   DailyWorshipModel copyWith({
     int? subuh,
     int? dzuhur,
@@ -50,24 +74,24 @@ class DailyWorshipModel {
       id: json['id']?.toString() ?? '',
       userId: json['userId']?.toString() ?? '',
       date: json['date'] as String? ?? '',
-      subuh: json['subuh'] as int? ?? 0,
-      dzuhur: json['dzuhur'] as int? ?? 0,
-      ashar: json['ashar'] as int? ?? 0,
-      maghrib: json['maghrib'] as int? ?? 0,
-      isya: json['isya'] as int? ?? 0,
-      quranDone: json['quranDone'] as bool? ?? false,
-      totalPointsEarned: json['totalPointsEarned'] as int? ?? 0,
+      subuh: parsePrayerStatus(json['subuh']),
+      dzuhur: parsePrayerStatus(json['dzuhur']),
+      ashar: parsePrayerStatus(json['ashar']),
+      maghrib: parsePrayerStatus(json['maghrib']),
+      isya: parsePrayerStatus(json['isya']),
+      quranDone: json['quranDone'] == true || json['quranDone'] == 'true',
+      totalPointsEarned: (json['totalPointsEarned'] as num?)?.toInt() ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'date': date,
-      'subuh': subuh,
-      'dzuhur': dzuhur,
-      'ashar': ashar,
-      'maghrib': maghrib,
-      'isya': isya,
+      'subuh': statusToString(subuh),
+      'dzuhur': statusToString(dzuhur),
+      'ashar': statusToString(ashar),
+      'maghrib': statusToString(maghrib),
+      'isya': statusToString(isya),
       'quranDone': quranDone,
     };
   }

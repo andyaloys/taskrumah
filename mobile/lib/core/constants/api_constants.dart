@@ -7,6 +7,10 @@ class ApiConstants {
   static const String profile = '/auth/profile';
   static const String quickUsers = '/auth/quick-users';
 
+  // Dashboard
+  static const String adminDashboard = '/dashboard/admin';
+  static const String childDashboard = '/dashboard/child';
+
   // Tasks
   static const String tasks = '/tasks';
   static const String extraTasks = '/tasks/extra';
@@ -26,10 +30,9 @@ class ApiConstants {
 
   // Rewards
   static const String rewards = '/rewards';
-  static const String myClaims = '/rewards/my-claims';
-  static String claimReward(String id) => '/rewards/$id/claim';
-  static String approveClaim(String id) => '/rewards/claims/$id/approve';
-  static String rejectClaim(String id) => '/rewards/claims/$id/reject';
+  static const String redemptions = '/rewards/redemptions';
+  static String redeemReward(String id) => '/rewards/$id/redeem';
+  static String processRedemption(String id) => '/rewards/redemptions/$id';
 
   // Users
   static const String users = '/users';
