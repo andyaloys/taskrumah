@@ -90,4 +90,149 @@ class AdminRepository {
       throw Exception(e.response?.data?['message'] ?? 'Gagal memuat monitoring ibadah.');
     }
   }
+
+  // --- Kelola Master Tugas ---
+  Future<List<Map<String, dynamic>>> getTasks({bool activeOnly = false}) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.tasks,
+        queryParameters: {'activeOnly': activeOnly},
+      );
+      return (response.data as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat master tugas.');
+    }
+  }
+
+  Future<void> createTask(Map<String, dynamic> data) async {
+    try {
+      await _client.dio.post(ApiConstants.tasks, data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal membuat tugas baru.');
+    }
+  }
+
+  Future<void> updateTask(String id, Map<String, dynamic> data) async {
+    try {
+      await _client.dio.put('${ApiConstants.tasks}/$id', data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memperbarui tugas.');
+    }
+  }
+
+  Future<void> deleteTask(String id) async {
+    try {
+      await _client.dio.delete('${ApiConstants.tasks}/$id');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menghapus tugas.');
+    }
+  }
+
+  // --- Pengaturan Poin Ibadah ---
+  Future<Map<String, dynamic>> getWorshipSetting() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.worshipSetting);
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat pengaturan ibadah.');
+    }
+  }
+
+  Future<void> updateWorshipSetting(Map<String, dynamic> data) async {
+    try {
+      await _client.dio.put(ApiConstants.worshipSetting, data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menyimpan pengaturan ibadah.');
+    }
+  }
+
+  // --- Kelola Hadiah & Klaim ---
+  Future<List<Map<String, dynamic>>> getRewards() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.rewards);
+      return (response.data as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat katalog hadiah.');
+    }
+  }
+
+  Future<void> createReward(Map<String, dynamic> data) async {
+    try {
+      await _client.dio.post(ApiConstants.rewards, data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menambah hadiah.');
+    }
+  }
+
+  Future<void> updateReward(String id, Map<String, dynamic> data) async {
+    try {
+      await _client.dio.put('${ApiConstants.rewards}/$id', data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memperbarui hadiah.');
+    }
+  }
+
+  Future<void> deleteReward(String id) async {
+    try {
+      await _client.dio.delete('${ApiConstants.rewards}/$id');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menghapus hadiah.');
+    }
+  }
+
+  Future<void> processRedemption(String id, String status) async {
+    try {
+      await _client.dio.put(
+        ApiConstants.processRedemption(id),
+        data: {'status': status},
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memproses klaim.');
+    }
+  }
+
+  // --- Kelola Pengguna (Anak & Orang Tua) ---
+  Future<List<Map<String, dynamic>>> getUsers() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.users);
+      return (response.data as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memuat pengguna.');
+    }
+  }
+
+  Future<void> createUser(Map<String, dynamic> data) async {
+    try {
+      await _client.dio.post(ApiConstants.users, data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menambahkan pengguna.');
+    }
+  }
+
+  Future<void> updateUser(String id, Map<String, dynamic> data) async {
+    try {
+      await _client.dio.put(ApiConstants.userDetail(id), data: data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal memperbarui pengguna.');
+    }
+  }
+
+  Future<void> uploadAvatar(String id, String filePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+      });
+      await _client.dio.post('${ApiConstants.users}/$id/avatar', data: formData);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal mengupload avatar.');
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    try {
+      await _client.dio.delete(ApiConstants.userDetail(id));
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Gagal menonaktifkan pengguna.');
+    }
+  }
 }

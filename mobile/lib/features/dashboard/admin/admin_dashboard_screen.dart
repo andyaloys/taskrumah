@@ -7,9 +7,9 @@ import '../../auth/state/auth_provider.dart';
 import '../../tasks/models/task_assignment_model.dart';
 import 'models/admin_dashboard_model.dart';
 import 'state/admin_provider.dart';
-import 'widgets/admin_worship_view.dart';
+import 'widgets/admin_tasks_view.dart';
 import 'widgets/admin_rewards_view.dart';
-import 'widgets/admin_profile_view.dart';
+import 'widgets/admin_users_view.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -25,9 +25,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const _AdminHomeTab(),
-      const AdminWorshipView(),
+      const AdminTasksView(),
       const AdminRewardsView(),
-      const AdminProfileView(),
+      const AdminUsersView(),
     ];
 
     return Scaffold(
@@ -40,28 +40,28 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           });
         },
         backgroundColor: Colors.white,
-        elevation: 4,
+        elevation: 8,
         indicatorColor: const Color(0xFFEEF2FF),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard_rounded, color: Color(0xFF6366F1)),
-            label: 'Beranda',
+            label: 'Ringkasan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.mosque_outlined),
-            selectedIcon: Icon(Icons.mosque_rounded, color: Color(0xFF10B981)),
-            label: 'Ibadah',
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment_rounded, color: Color(0xFF6366F1)),
+            label: 'Tugas',
           ),
           NavigationDestination(
             icon: Icon(Icons.card_giftcard_outlined),
-            selectedIcon: Icon(Icons.card_giftcard_rounded, color: Color(0xFFF59E0B)),
+            selectedIcon: Icon(Icons.card_giftcard_rounded, color: Color(0xFF6366F1)),
             label: 'Hadiah',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person_rounded, color: Color(0xFF6366F1)),
-            label: 'Profil',
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people_rounded, color: Color(0xFF6366F1)),
+            label: 'Pengguna',
           ),
         ],
       ),
@@ -82,33 +82,95 @@ class _AdminHomeTab extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
+        titleSpacing: 16,
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: const Color(0xFFEEF2FF),
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFC7D2FE)),
               ),
-              child: const Icon(Icons.shield, color: Color(0xFFD97706), size: 20),
+              alignment: Alignment.center,
+              child: const Text('🏠', style: TextStyle(fontSize: 18)),
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Admin FamilyTask',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: const Color(0xFF0F172A),
+                    ),
+                    children: const [
+                      TextSpan(text: 'Family'),
+                      TextSpan(text: 'Task', style: TextStyle(color: Color(0xFF6366F1))),
+                    ],
+                  ),
+                ),
+                Text(
+                  'Orang Tua • ${user?.name ?? 'Admin'}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         actions: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFC7D2FE)),
+            ),
+            child: Text(
+              'Admin',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4338CA),
+              ),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+            icon: const Icon(Icons.refresh, color: Color(0xFF64748B), size: 20),
             tooltip: 'Segarkan',
             onPressed: () => ref.read(adminDashboardNotifierProvider.notifier).refresh(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 20),
+            tooltip: 'Keluar Akun',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Keluar Akun?'),
+                  content: const Text('Apakah Anda yakin ingin keluar dari akun Orang Tua?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Keluar', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref.read(authNotifierProvider.notifier).logout();
+              }
+            },
           ),
         ],
       ),

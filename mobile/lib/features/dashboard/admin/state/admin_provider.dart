@@ -55,3 +55,23 @@ final adminWorshipSummaryProvider = FutureProvider.family<List<AdminChildWorship
   final repo = ref.read(adminRepositoryProvider);
   return await repo.getWorshipSummary(dateYmd);
 });
+
+final adminTasksListProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return await repo.getTasks(activeOnly: false);
+});
+
+final adminWorshipSettingProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return await repo.getWorshipSetting();
+});
+
+final adminRewardsListProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return await repo.getRewards();
+});
+
+final adminUsersListProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return await repo.getUsers();
+});
