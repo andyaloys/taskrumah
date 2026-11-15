@@ -4,6 +4,25 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../state/admin_provider.dart';
 
+int _parseTaskTypeInt(dynamic val) {
+  if (val == null) return 0;
+  if (val is num) {
+    if (val == 2) return 1; // SpecificDays in C# enum -> 1 in UI
+    if (val == 1) return 2; // OneTime in C# enum -> 2 in UI
+    return 0; // Daily
+  }
+  final s = val.toString().trim().toLowerCase();
+  if (s == 'specificdays' || s == '2') return 1;
+  if (s == 'onetime' || s == '1') return 2;
+  return 0;
+}
+
+String _taskTypeToBackendString(int uiType) {
+  if (uiType == 1) return 'SpecificDays';
+  if (uiType == 2) return 'OneTime';
+  return 'Daily';
+}
+
 class AdminTasksView extends ConsumerStatefulWidget {
   const AdminTasksView({super.key});
 
@@ -132,9 +151,10 @@ class _AdminTaskListTab extends ConsumerWidget {
                 final points = (task['points'] as num?)?.toInt() ?? 0;
                 final targetTime = task['targetTime'] as String?;
                 final isActive = task['isActive'] == true;
-                final taskType = (task['taskType'] as num?)?.toInt() ?? 0;
+                final taskType = _parseTaskTypeInt(task['taskType']);
                 final daysOfWeek = task['daysOfWeek'] as String?;
-                final assignedToName = task['assignedTo'] != null ? task['assignedTo']['name'] as String? : null;
+                final assignedToName = (task['assignedToName'] as String?) ??
+                    (task['assignedTo'] is Map ? task['assignedTo']['name'] as String? : null);
 
                 String scheduleLabel = 'Rutin Setiap Hari';
                 if (taskType == 1) {
@@ -591,7 +611,7 @@ class _AdminTaskListTab extends ConsumerWidget {
     final targetTimeController = TextEditingController(text: task?['targetTime'] as String? ?? '07:00');
     final customEmojiController = TextEditingController();
     String selectedEmoji = task?['iconEmoji'] as String? ?? '🧹';
-    int taskType = (task?['taskType'] as num?)?.toInt() ?? 0; // 0: Daily, 1: SpecificDays, 2: OneTime
+    int taskType = _parseTaskTypeInt(task?['taskType']); // 0: Daily, 1: SpecificDays, 2: OneTime
     String? assignedToId = task?['assignedToId']?.toString();
 
     final Set<String> selectedDays = {};
@@ -878,7 +898,7 @@ class _AdminTaskListTab extends ConsumerWidget {
                     'points': points,
                     'iconEmoji': selectedEmoji,
                     'targetTime': targetTimeController.text.trim(),
-                    'taskType': taskType,
+                    'taskType': _taskTypeToBackendString(taskType),
                     'daysOfWeek': taskType == 1 ? (selectedDays.toList()..sort()).join(',') : null,
                     'assignedToId': (assignedToId != null && assignedToId!.isNotEmpty) ? assignedToId : null,
                   };
