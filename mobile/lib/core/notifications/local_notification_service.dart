@@ -13,6 +13,10 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   Timer? _pollingTimer;
+  bool _isChecking = false;
+
+  // In-memory deduplication set to prevent concurrent or repeat notifications in the same session
+  final Set<String> _deliveredKeys = {};
 
   static const String _channelId = 'familytask_reminders';
   static const String _channelName = 'FamilyTask Notifikasi & Pengingat';
@@ -83,7 +87,7 @@ class LocalNotificationService {
 
   void startPolling(ApiClient client) {
     _pollingTimer?.cancel();
-    // Run immediately once
+    // Run initial check
     checkAndTriggerReminders(client);
     // Poll every 60 seconds
     _pollingTimer = Timer.periodic(const Duration(seconds: 60), (_) {
@@ -97,6 +101,10 @@ class LocalNotificationService {
   }
 
   Future<void> checkAndTriggerReminders(ApiClient client) async {
+    // Prevent overlapping checks
+    if (_isChecking) return;
+    _isChecking = true;
+
     try {
       final token = await StorageService().getToken();
       if (token == null || token.isEmpty) return;
@@ -112,7 +120,7 @@ class LocalNotificationService {
       final now = DateTime.now();
       final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      // 1. Check Unread Notifications from Backend with STRICT Role/User filtering
+      // 1. Check Unread Notifications from Backend with STRICT Role/User filtering & Deduplication
       final unreadList = (data['unreadNotifications'] as List<dynamic>?) ?? [];
       for (final n in unreadList) {
         final notifMap = n as Map<String, dynamic>;
@@ -120,6 +128,8 @@ class LocalNotificationService {
         final title = notifMap['title']?.toString() ?? 'FamilyTask';
         final message = notifMap['message']?.toString() ?? '';
         final type = notifMap['type']?.toString();
+
+        if (notifId.isEmpty) continue;
 
         // Admin ONLY receives notifications intended for parents:
         // - TaskSubmitted ("Tugas Dikirim! 📋", "Tugas Tambahan Baru! 🌟")
@@ -148,15 +158,28 @@ class LocalNotificationService {
         }
 
         final seenKey = 'notif_seen_${currentUserId}_$notifId';
-        if (!prefs.getBool(seenKey).isTrue()) {
-          final notifyId = notifId.hashCode.abs() % 100000;
-          await showNotification(
-            id: notifyId,
-            title: title,
-            body: message,
-            payload: notifId,
-          );
-          await prefs.setBool(seenKey, true);
+        // Strict deduplication: check in-memory set and SharedPreferences
+        if (_deliveredKeys.contains(seenKey) || prefs.getBool(seenKey) == true) {
+          continue;
+        }
+
+        // Mark as seen immediately in memory and disk to prevent duplicate alerts
+        _deliveredKeys.add(seenKey);
+        await prefs.setBool(seenKey, true);
+
+        final notifyId = notifId.hashCode.abs() % 100000;
+        await showNotification(
+          id: notifyId,
+          title: title,
+          body: message,
+          payload: notifId,
+        );
+
+        // Tell backend to mark notification as read so it won't be returned by future polls
+        try {
+          await client.dio.put('/notifications/$notifId/read');
+        } catch (_) {
+          // Ignore network errors on marking read
         }
       }
 
@@ -171,7 +194,7 @@ class LocalNotificationService {
 
       // 2. Prayer Deadline Reminders for this Child (Before prayer window expires)
       if (worship != null) {
-        _evaluatePrayerReminder(
+        await _evaluatePrayerReminder(
           userId: currentUserId,
           name: 'Subuh',
           status: worship['subuh'] as int? ?? 0,
@@ -183,7 +206,7 @@ class LocalNotificationService {
           prefs: prefs,
         );
 
-        _evaluatePrayerReminder(
+        await _evaluatePrayerReminder(
           userId: currentUserId,
           name: 'Dzuhur',
           status: worship['dzuhur'] as int? ?? 0,
@@ -195,7 +218,7 @@ class LocalNotificationService {
           prefs: prefs,
         );
 
-        _evaluatePrayerReminder(
+        await _evaluatePrayerReminder(
           userId: currentUserId,
           name: 'Ashar',
           status: worship['ashar'] as int? ?? 0,
@@ -207,7 +230,7 @@ class LocalNotificationService {
           prefs: prefs,
         );
 
-        _evaluatePrayerReminder(
+        await _evaluatePrayerReminder(
           userId: currentUserId,
           name: 'Maghrib',
           status: worship['maghrib'] as int? ?? 0,
@@ -219,7 +242,7 @@ class LocalNotificationService {
           prefs: prefs,
         );
 
-        _evaluatePrayerReminder(
+        await _evaluatePrayerReminder(
           userId: currentUserId,
           name: 'Isya',
           status: worship['isya'] as int? ?? 0,
@@ -241,13 +264,14 @@ class LocalNotificationService {
 
           if (now.isAfter(quranDateTime)) {
             final key = 'quran_reminded_${currentUserId}_$todayStr';
-            if (!prefs.getBool(key).isTrue()) {
+            if (!_deliveredKeys.contains(key) && prefs.getBool(key) != true) {
+              _deliveredKeys.add(key);
+              await prefs.setBool(key, true);
               await showNotification(
                 id: 10006,
                 title: '📖 Pengingat Tilawah Qur\'an',
                 body: 'Jangan lupa mengaji / tilawah Al-Qur\'an hari ini yaa untuk raih pahala dan poin! 🌟',
               );
-              await prefs.setBool(key, true);
             }
           }
         }
@@ -269,13 +293,14 @@ class LocalNotificationService {
 
           if (now.isAfter(targetDateTime)) {
             final key = 'task_reminded_${currentUserId}_${taskId}_$todayStr';
-            if (!prefs.getBool(key).isTrue()) {
+            if (!_deliveredKeys.contains(key) && prefs.getBool(key) != true) {
+              _deliveredKeys.add(key);
+              await prefs.setBool(key, true);
               await showNotification(
                 id: 20000 + (taskId.hashCode.abs() % 10000),
                 title: '⏰ Pengingat Tugas: $title',
                 body: 'Waktu target untuk tugas "$title" sudah tiba. Yuk selesaikan sekarang! 💪',
               );
-              await prefs.setBool(key, true);
             }
           }
         }
@@ -285,32 +310,36 @@ class LocalNotificationService {
       if (pendingTasks.isNotEmpty) {
         if (now.hour >= 16 && now.hour < 19) {
           final key = 'tasks_afternoon_reminded_${currentUserId}_$todayStr';
-          if (!prefs.getBool(key).isTrue()) {
+          if (!_deliveredKeys.contains(key) && prefs.getBool(key) != true) {
+            _deliveredKeys.add(key);
+            await prefs.setBool(key, true);
             await showNotification(
               id: 30001,
               title: '📋 ${pendingTasks.length} Tugas Belum Selesai',
               body: 'Sore Kak/Dek! Masih ada ${pendingTasks.length} tugas harianmu yang belum selesai. Yuk kerjakan sebelum malam! 🌟',
             );
-            await prefs.setBool(key, true);
           }
         } else if (now.hour >= 20) {
           final key = 'tasks_night_reminded_${currentUserId}_$todayStr';
-          if (!prefs.getBool(key).isTrue()) {
+          if (!_deliveredKeys.contains(key) && prefs.getBool(key) != true) {
+            _deliveredKeys.add(key);
+            await prefs.setBool(key, true);
             await showNotification(
               id: 30002,
               title: '🌙 Cek Tugas Terakhir Hari Ini',
               body: 'Masih ada ${pendingTasks.length} tugas yang belum selesai hari ini. Jangan sampai terlambat yaa! ✨',
             );
-            await prefs.setBool(key, true);
           }
         }
       }
     } catch (e) {
       debugPrint('Error checking reminders: $e');
+    } finally {
+      _isChecking = false;
     }
   }
 
-  void _evaluatePrayerReminder({
+  Future<void> _evaluatePrayerReminder({
     required String userId,
     required String name,
     required int status,
@@ -330,21 +359,21 @@ class LocalNotificationService {
     // If current time is between reminderTime and deadline
     if (now.isAfter(reminderTime) && now.isBefore(deadline)) {
       final key = 'prayer_reminded_${userId}_${name.toLowerCase()}_$todayStr';
-      if (!prefs.getBool(key).isTrue()) {
-        final diffMins = deadline.difference(now).inMinutes;
-        final minutesText = diffMins > 0 ? '$diffMins menit' : 'beberapa saat';
-
-        await showNotification(
-          id: 10000 + deadlineHour,
-          title: '🕌 Waktu Sholat $name Segera Habis',
-          body: 'Waktu sholat $name tinggal $minutesText lagi lho! Yuk sholat sekarang jangan sampai terlewat (+poin)',
-        );
-        await prefs.setBool(key, true);
+      if (_deliveredKeys.contains(key) || prefs.getBool(key) == true) {
+        return;
       }
+
+      _deliveredKeys.add(key);
+      await prefs.setBool(key, true);
+
+      final diffMins = deadline.difference(now).inMinutes;
+      final minutesText = diffMins > 0 ? '$diffMins menit' : 'beberapa saat';
+
+      await showNotification(
+        id: 10000 + deadlineHour,
+        title: '🕌 Waktu Sholat $name Segera Habis',
+        body: 'Waktu sholat $name tinggal $minutesText lagi lho! Yuk sholat sekarang jangan sampai terlewat (+poin)',
+      );
     }
   }
-}
-
-extension BoolNullSafe on bool? {
-  bool isTrue() => this == true;
 }

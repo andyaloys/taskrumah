@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_version.dart';
 import '../state/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -393,6 +394,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     }).toList(),
                   ),
                 ],
+                const SizedBox(height: 32),
+                Center(
+                  child: Text(
+                    'FamilyTask Mobile ${AppVersion.fullVersion}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

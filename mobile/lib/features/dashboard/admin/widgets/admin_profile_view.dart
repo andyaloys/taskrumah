@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/constants/app_version.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/state/auth_provider.dart';
 
@@ -99,7 +100,7 @@ class AdminProfileView extends ConsumerWidget {
                 children: [
                   _buildRow('Aplikasi', 'FamilyTask Mobile'),
                   const Divider(height: 16),
-                  _buildRow('Versi', 'v1.1.0'),
+                  _buildRow('Versi', AppVersion.fullVersion),
                   const Divider(height: 16),
                   _buildRow('Server', 'familytask.web.id'),
                 ],

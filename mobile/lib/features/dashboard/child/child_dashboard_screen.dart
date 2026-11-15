@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_version.dart';
 import '../../../core/widgets/user_avatar_widget.dart';
 import '../../auth/state/auth_provider.dart';
 import '../../tasks/models/task_assignment_model.dart';
@@ -88,6 +89,23 @@ class _ChildDashboardScreenState extends ConsumerState<ChildDashboardScreen> {
           ],
         ),
         actions: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Text(
+              'v${AppVersion.versionName}',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF475569),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(

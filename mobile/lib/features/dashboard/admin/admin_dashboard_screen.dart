@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/constants/app_version.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_date_utils.dart';
 import '../../../core/widgets/user_avatar_widget.dart';
@@ -207,6 +208,23 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF4338CA),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Text(
+              'v${AppVersion.versionName}',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF475569),
               ),
             ),
           ),

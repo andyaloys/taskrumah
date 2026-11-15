@@ -16,6 +16,17 @@ class FamilyTaskApp extends ConsumerStatefulWidget {
 
 class _FamilyTaskAppState extends ConsumerState<FamilyTaskApp> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = ref.read(authNotifierProvider);
+      if (auth.status == AuthStatus.authenticated && auth.user != null) {
+        LocalNotificationService().startPolling(ref.read(apiClientProvider));
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated && next.user != null) {
@@ -51,8 +62,6 @@ class _FamilyTaskAppState extends ConsumerState<FamilyTaskApp> {
           }
 
           if (authState.status == AuthStatus.authenticated && authState.user != null) {
-            LocalNotificationService().startPolling(ref.read(apiClientProvider));
-
             if (authState.user!.isAdmin) {
               return const AdminDashboardScreen();
             } else {
