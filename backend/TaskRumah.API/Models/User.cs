@@ -14,6 +14,7 @@ public class User
     public DateTime LastStreakDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? FcmToken { get; set; }
 
     public ICollection<ChoreTask> AssignedTasks { get; set; } = new List<ChoreTask>();
     public ICollection<ChoreTask> CreatedTasks { get; set; } = new List<ChoreTask>();

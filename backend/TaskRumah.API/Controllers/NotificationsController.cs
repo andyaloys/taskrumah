@@ -142,4 +142,18 @@ public class NotificationsController : ControllerBase
             pendingTasks = pendingTasksList
         });
     }
+
+    [HttpPost("fcm-token")]
+    public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenDto req)
+    {
+        if (string.IsNullOrWhiteSpace(req.FcmToken)) return BadRequest(new { message = "FCM token is required." });
+
+        var user = await _db.Users.FindAsync(CurrentUserId);
+        if (user == null) return NotFound();
+
+        user.FcmToken = req.FcmToken.Trim();
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "FCM token updated successfully." });
+    }
 }

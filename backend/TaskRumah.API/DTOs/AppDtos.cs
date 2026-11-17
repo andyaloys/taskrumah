@@ -2,6 +2,8 @@ using TaskRumah.API.Models;
 
 namespace TaskRumah.API.DTOs;
 
+public record UpdateFcmTokenDto(string FcmToken);
+
 public record LoginRequest(string Email, string Password);
 
 public record LoginResponse(

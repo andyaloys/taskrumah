@@ -70,6 +70,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<FileStorageService>();
+builder.Services.AddSingleton<FcmPushNotificationService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TaskScheduleService>();
 builder.Services.AddHostedService<DailyTaskGeneratorService>();
@@ -94,6 +95,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("ALTER TABLE \"ChoreTasks\" ADD COLUMN IF NOT EXISTS \"DaysOfWeek\" text;");
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"FcmToken\" text;");
 
     // Configure database timezone to Asia/Jakarta (WIB)
     try

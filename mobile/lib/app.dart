@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/notifications/local_notification_service.dart';
+import 'core/notifications/fcm_service.dart';
 import 'core/theme/app_colors.dart';
 import 'features/auth/state/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
@@ -22,6 +23,7 @@ class _FamilyTaskAppState extends ConsumerState<FamilyTaskApp> {
       final auth = ref.read(authNotifierProvider);
       if (auth.status == AuthStatus.authenticated && auth.user != null) {
         LocalNotificationService().startPolling(ref.read(apiClientProvider));
+        FcmService().syncTokenWithBackend(ref.read(apiClientProvider));
       }
     });
   }
@@ -31,6 +33,7 @@ class _FamilyTaskAppState extends ConsumerState<FamilyTaskApp> {
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated && next.user != null) {
         LocalNotificationService().startPolling(ref.read(apiClientProvider));
+        FcmService().syncTokenWithBackend(ref.read(apiClientProvider));
       } else if (next.status == AuthStatus.unauthenticated) {
         LocalNotificationService().stopPolling();
       }

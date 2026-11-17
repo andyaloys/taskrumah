@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "957858653330",
+    "project_id": "familytask-c8fdd",
+    "storage_bucket": "familytask-c8fdd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957858653330:android:bc7e01e60b21318dbb724b",
+        "android_client_info": {
+          "package_name": "com.taskrumah.familytask_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4qIEodUuNN1WRJOkIWrOnXVGdWDHr0hE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
