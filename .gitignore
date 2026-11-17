@@ -36,3 +36,7 @@ backend_dist/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Secrets & Service Accounts
+*firebase-service-account*.json
+*adminsdk*.json

@@ -17,25 +17,47 @@ public class FcmPushNotificationService
         {
             if (FirebaseApp.DefaultInstance == null)
             {
-                var credentialsPath = config["Firebase:CredentialsPath"] ?? "firebase-service-account.json";
-                if (!Path.IsPathRooted(credentialsPath))
-                {
-                    credentialsPath = Path.Combine(AppContext.BaseDirectory, credentialsPath);
-                }
+                var envJson = Environment.GetEnvironmentVariable("FIREBASE_SERVICE_ACCOUNT_JSON")
+                    ?? config["Firebase:ServiceAccountJson"];
 
-                if (File.Exists(credentialsPath))
+                if (!string.IsNullOrWhiteSpace(envJson))
                 {
                     FirebaseApp.Create(new AppOptions
                     {
-                        Credential = GoogleCredential.FromFile(credentialsPath)
+                        Credential = GoogleCredential.FromJson(envJson)
                     });
                     _isConfigured = true;
-                    _logger.LogInformation("Firebase Admin SDK initialized successfully from {Path}", credentialsPath);
+                    _logger.LogInformation("Firebase Admin SDK initialized successfully from environment variable");
                 }
                 else
                 {
-                    _logger.LogWarning("Firebase service account credentials not found at {Path}. Push notifications to closed devices will be queued until file is added.", credentialsPath);
-                    _isConfigured = false;
+                    var credentialsPath = config["Firebase:CredentialsPath"] ?? "firebase-service-account.json";
+                    if (!Path.IsPathRooted(credentialsPath))
+                    {
+                        var baseDirFile = Path.Combine(AppContext.BaseDirectory, credentialsPath);
+                        var currentDirFile = Path.Combine(Directory.GetCurrentDirectory(), credentialsPath);
+                        if (File.Exists(baseDirFile))
+                            credentialsPath = baseDirFile;
+                        else if (File.Exists(currentDirFile))
+                            credentialsPath = currentDirFile;
+                        else
+                            credentialsPath = baseDirFile;
+                    }
+
+                    if (File.Exists(credentialsPath))
+                    {
+                        FirebaseApp.Create(new AppOptions
+                        {
+                            Credential = GoogleCredential.FromFile(credentialsPath)
+                        });
+                        _isConfigured = true;
+                        _logger.LogInformation("Firebase Admin SDK initialized successfully from {Path}", credentialsPath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Firebase service account credentials not found at {Path}. Push notifications to closed devices will be queued until file is added.", credentialsPath);
+                        _isConfigured = false;
+                    }
                 }
             }
             else
