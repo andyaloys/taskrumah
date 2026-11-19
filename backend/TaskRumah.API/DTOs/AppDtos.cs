@@ -112,7 +112,9 @@ public record TaskAssignmentDto(
     string? RejectionReason,
     DateTime CreatedAt,
     int CommentCount,
-    string? TargetTime = null
+    string? TargetTime = null,
+    bool IsDuplicateProof = false,
+    string? DuplicateWarning = null
 );
 
 public record SubmitTaskRequest(

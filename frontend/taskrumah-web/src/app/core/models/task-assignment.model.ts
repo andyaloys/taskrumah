@@ -26,6 +26,8 @@ export interface TaskAssignment {
   createdAt: Date;
   commentCount: number;
   targetTime?: string;
+  isDuplicateProof?: boolean;
+  duplicateWarning?: string;
 }
 
 export interface TaskComment {

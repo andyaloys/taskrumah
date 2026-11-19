@@ -19,17 +19,20 @@ public class TaskAssignmentsController : ControllerBase
     private readonly FileStorageService _fileStorage;
     private readonly NotificationService _notificationService;
     private readonly TaskScheduleService _scheduleService;
+    private readonly IPhotoDuplicationService _photoDuplication;
 
     public TaskAssignmentsController(
         AppDbContext db,
         FileStorageService fileStorage,
         NotificationService notificationService,
-        TaskScheduleService scheduleService)
+        TaskScheduleService scheduleService,
+        IPhotoDuplicationService photoDuplication)
     {
         _db = db;
         _fileStorage = fileStorage;
         _notificationService = notificationService;
         _scheduleService = scheduleService;
+        _photoDuplication = photoDuplication;
     }
 
     private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -167,9 +170,31 @@ public class TaskAssignmentsController : ControllerBase
         var endOfDay = JakartaTime.EndOfDayUtc(today);
 
         string? photoUrl = null;
+        string? photoHash = null;
+        long? visualHash = null;
+        bool isDuplicate = false;
+        string? duplicateWarning = null;
+
         if (photo != null)
         {
+            byte[] photoBytes;
+            using (var ms = new MemoryStream())
+            {
+                await photo.CopyToAsync(ms);
+                photoBytes = ms.ToArray();
+            }
+
+            var dupResult = await _photoDuplication.CheckDuplicationAsync(CurrentUserId, photoBytes, null, choreTask.Title);
+            if (dupResult.IsIdentical)
+            {
+                return BadRequest(new { message = dupResult.RejectionMessage });
+            }
+
             photoUrl = await _fileStorage.SaveFileAsync(photo, "uploads/proofs");
+            photoHash = dupResult.PhotoHash;
+            visualHash = dupResult.VisualHash;
+            isDuplicate = dupResult.IsVisuallySimilar;
+            duplicateWarning = dupResult.WarningMessage;
         }
 
         var assignment = new TaskAssignment
@@ -181,6 +206,10 @@ public class TaskAssignmentsController : ControllerBase
             Status = AssignmentStatus.Submitted,
             CompletedAt = JakartaTime.UtcNow,
             ProofPhotoUrl = photoUrl,
+            ProofPhotoHash = photoHash,
+            ProofVisualHash = visualHash,
+            IsDuplicateProof = isDuplicate,
+            DuplicateWarning = duplicateWarning,
             SubmissionNote = submissionNote,
             CreatedAt = JakartaTime.UtcNow
         };
@@ -194,7 +223,7 @@ public class TaskAssignmentsController : ControllerBase
         var timeStr = JakartaTime.FormatWib();
         await _notificationService.CreateForAdminsAsync(
             $"Tugas Tambahan Dikerjakan! 🌟",
-            $"{assignment.AssignedTo.Name} telah melaporkan tugas tambahan '{choreTask.Title}' (+{choreTask.Points} poin) pada {timeStr}",
+            $"{assignment.AssignedTo?.Name ?? "Anak"} telah melaporkan tugas tambahan '{choreTask.Title}' (+{choreTask.Points} poin) pada {timeStr}{(assignment.IsDuplicateProof ? $" ({assignment.DuplicateWarning})" : "")}",
             NotificationType.TaskSubmitted,
             assignment.Id
         );
@@ -264,7 +293,26 @@ public class TaskAssignmentsController : ControllerBase
             return BadRequest(new { message = "Tugas tidak dalam status yang bisa dikirim" });
 
         if (photo != null)
+        {
+            byte[] photoBytes;
+            using (var ms = new MemoryStream())
+            {
+                await photo.CopyToAsync(ms);
+                photoBytes = ms.ToArray();
+            }
+
+            var dupResult = await _photoDuplication.CheckDuplicationAsync(CurrentUserId, photoBytes, assignment.Id, assignment.Task?.Title);
+            if (dupResult.IsIdentical)
+            {
+                return BadRequest(new { message = dupResult.RejectionMessage });
+            }
+
             assignment.ProofPhotoUrl = await _fileStorage.SaveFileAsync(photo, "uploads/proofs");
+            assignment.ProofPhotoHash = dupResult.PhotoHash;
+            assignment.ProofVisualHash = dupResult.VisualHash;
+            assignment.IsDuplicateProof = dupResult.IsVisuallySimilar;
+            assignment.DuplicateWarning = dupResult.WarningMessage;
+        }
 
         assignment.SubmissionNote = req.SubmissionNote;
         assignment.Status = AssignmentStatus.Submitted;
@@ -275,7 +323,7 @@ public class TaskAssignmentsController : ControllerBase
         var timeStr = JakartaTime.FormatWib();
         await _notificationService.CreateForAdminsAsync(
             $"Tugas Dikirim! 📋",
-            $"{assignment.AssignedTo.Name} telah mengajukan bukti tugas '{assignment.Task.Title}' pada {timeStr}",
+            $"{assignment.AssignedTo?.Name ?? "Anak"} telah mengajukan bukti tugas '{assignment.Task?.Title ?? "Tugas"}' pada {timeStr}{(assignment.IsDuplicateProof ? $" ({assignment.DuplicateWarning})" : "")}",
             NotificationType.TaskSubmitted,
             assignment.Id
         );
@@ -487,5 +535,5 @@ public class TaskAssignmentsController : ControllerBase
         a.AssignedToId, a.AssignedTo?.Name ?? "", a.AssignedTo?.AvatarUrl,
         a.DueDate, a.Status, a.ProofPhotoUrl, a.SubmissionNote,
         a.CompletedAt, a.ReviewedAt, a.ReviewedBy?.Name, a.RejectionReason,
-        a.CreatedAt, a.Comments?.Count ?? 0, a.Task?.TargetTime);
+        a.CreatedAt, a.Comments?.Count ?? 0, a.Task?.TargetTime, a.IsDuplicateProof, a.DuplicateWarning);
 }

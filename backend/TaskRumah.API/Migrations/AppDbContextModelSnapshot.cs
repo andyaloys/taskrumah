@@ -32,10 +32,13 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("DaysOfWeek")
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -49,6 +52,9 @@ namespace TaskRumah.API.Migrations
 
                     b.Property<int>("Points")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TargetTime")
+                        .HasColumnType("text");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("integer");
@@ -132,6 +138,56 @@ namespace TaskRumah.API.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TaskRumah.API.Models.DailyWorship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Ashar")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Dzuhur")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Isya")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Maghrib")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("QuranDone")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("QuranNote")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Subuh")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalPointsEarned")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("DailyWorships");
+                });
+
             modelBuilder.Entity("TaskRumah.API.Models.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -139,7 +195,7 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("boolean");
@@ -175,7 +231,7 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
@@ -249,13 +305,13 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid?>("ProcessedById")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("RewardId")
                         .HasColumnType("uuid");
@@ -287,22 +343,34 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DuplicateWarning")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDuplicateProof")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProofPhotoHash")
+                        .HasColumnType("text");
 
                     b.Property<string>("ProofPhotoUrl")
                         .HasColumnType("text");
+
+                    b.Property<long?>("ProofVisualHash")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid?>("ReviewedById")
                         .HasColumnType("uuid");
@@ -338,7 +406,7 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("TaskAssignmentId")
                         .HasColumnType("uuid");
@@ -365,7 +433,7 @@ namespace TaskRumah.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("CurrentStreak")
                         .HasColumnType("integer");
@@ -374,11 +442,14 @@ namespace TaskRumah.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FcmToken")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("LastStreakDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("LongestStreak")
                         .HasColumnType("integer");
@@ -409,10 +480,10 @@ namespace TaskRumah.API.Migrations
                             CurrentStreak = 0,
                             Email = "ayah@taskrumah.com",
                             IsActive = true,
-                            LastStreakDate = new DateTime(2026, 11, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LastStreakDate = new DateTime(2026, 11, 19, 0, 0, 0, 0, DateTimeKind.Utc),
                             LongestStreak = 0,
-                            Name = "Ayah",
-                            PasswordHash = "$2a$11$wVwt6PDOid.lvq/uiLm.5.eYN3Jh3rCYq6iD.1MND4Vx62VQ7fyu6",
+                            Name = "Papah",
+                            PasswordHash = "$2a$11$yzsQ7uLzRuSaV0nCgCj06OH6jLZR1IXybWY1WiE5H7dfzlktVwXnu",
                             Role = 0,
                             TotalPoints = 0
                         },
@@ -423,10 +494,10 @@ namespace TaskRumah.API.Migrations
                             CurrentStreak = 0,
                             Email = "ibu@taskrumah.com",
                             IsActive = true,
-                            LastStreakDate = new DateTime(2026, 11, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LastStreakDate = new DateTime(2026, 11, 19, 0, 0, 0, 0, DateTimeKind.Utc),
                             LongestStreak = 0,
-                            Name = "Ibu",
-                            PasswordHash = "$2a$11$2PDMb4/TxbTa73Llpk5LuuYKdvbBDBvEY2GCOnmyMHFiju9YDtF0a",
+                            Name = "Mamah",
+                            PasswordHash = "$2a$11$6hueuvc.HQCt8JppAd3lVOTJztPOevqKeR.6R3a7m/pqTAMFkAFhq",
                             Role = 0,
                             TotalPoints = 0
                         },
@@ -437,10 +508,10 @@ namespace TaskRumah.API.Migrations
                             CurrentStreak = 0,
                             Email = "anak1@taskrumah.com",
                             IsActive = true,
-                            LastStreakDate = new DateTime(2026, 11, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LastStreakDate = new DateTime(2026, 11, 19, 0, 0, 0, 0, DateTimeKind.Utc),
                             LongestStreak = 0,
                             Name = "Anak Pertama",
-                            PasswordHash = "$2a$11$.bEPeQXiYMRT7NxsHubAcexjwM8gg9xVa3qwkWBPgeytHPv6CKCXi",
+                            PasswordHash = "$2a$11$5odPCh3I5UQwbVDTLlOgIO5wP8Zck/mqzAc5dPsbr1dKFtQEY/psC",
                             Role = 1,
                             TotalPoints = 0
                         },
@@ -451,12 +522,54 @@ namespace TaskRumah.API.Migrations
                             CurrentStreak = 0,
                             Email = "anak2@taskrumah.com",
                             IsActive = true,
-                            LastStreakDate = new DateTime(2026, 11, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LastStreakDate = new DateTime(2026, 11, 19, 0, 0, 0, 0, DateTimeKind.Utc),
                             LongestStreak = 0,
                             Name = "Anak Kedua",
-                            PasswordHash = "$2a$11$dhJPW3Ut2EM.vI/eaFrKh.okoQWFtWhLA1u6r10NLYDeBnzL4kdV.",
+                            PasswordHash = "$2a$11$tEpGgy4ExS1FLks3fAvmjuCcc1P98caJ8jLhpQWNuY6qvNnZnr4gi",
                             Role = 1,
                             TotalPoints = 0
+                        });
+                });
+
+            modelBuilder.Entity("TaskRumah.API.Models.WorshipSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("MosquePoints")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuranPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("QuranReminderTime")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReminderMinutesBeforeEnd")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SoloPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WorshipSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-999999999999"),
+                            MosquePoints = 5,
+                            QuranPoints = 5,
+                            QuranReminderTime = "19:00",
+                            ReminderMinutesBeforeEnd = 30,
+                            SoloPoints = 3,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -476,6 +589,17 @@ namespace TaskRumah.API.Migrations
                     b.Navigation("AssignedTo");
 
                     b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("TaskRumah.API.Models.DailyWorship", b =>
+                {
+                    b.HasOne("TaskRumah.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TaskRumah.API.Models.Notification", b =>

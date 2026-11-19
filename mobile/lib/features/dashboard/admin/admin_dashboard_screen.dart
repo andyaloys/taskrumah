@@ -1120,6 +1120,34 @@ class _AdminHomeTabState extends ConsumerState<_AdminHomeTab> {
               ),
             ],
           ),
+          if (task.isDuplicateProof) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFCD34D)),
+              ),
+              child: Row(
+                children: [
+                  const Text('âš ï¸', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      task.duplicateWarning ?? 'Terindikasi kemiripan foto dengan tugas sebelumnya',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (task.submissionNote != null && task.submissionNote!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(

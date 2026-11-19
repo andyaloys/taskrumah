@@ -35,6 +35,16 @@
         </div>
       }
 
+      @if (assignment()!.isDuplicateProof) {
+        <div class="mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-start space-x-3">
+          <span class="text-2xl">⚠️</span>
+          <div>
+            <p class="font-bold text-amber-800 text-sm">Peringatan Deteksi Foto Mirip</p>
+            <p class="text-xs text-amber-700 mt-1 font-medium">{{ assignment()!.duplicateWarning }}</p>
+          </div>
+        </div>
+      }
+
       @if (assignment()!.proofPhotoUrl) {
         <div class="mt-4">
           <p class="font-bold text-sm text-gray-600 mb-2">📸 Foto Bukti:</p>

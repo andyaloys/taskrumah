@@ -580,6 +580,36 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
             ),
           ],
 
+          // Duplicate warning banner if flagged
+          if (item.isDuplicateProof) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFCD34D)),
+              ),
+              child: Row(
+                children: [
+                  const Text('âš ï¸', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      item.duplicateWarning ?? 'Terindikasi kemiripan foto dengan tugas sebelumnya',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // Submission note if submitted
           if (item.submissionNote != null && item.submissionNote!.isNotEmpty) ...[
             const SizedBox(height: 8),

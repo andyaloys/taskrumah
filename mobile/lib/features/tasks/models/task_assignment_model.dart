@@ -48,6 +48,8 @@ class TaskAssignmentModel {
   final String? proofPhotoUrl;
   final String? completedAt;
   final String? rejectionReason;
+  final bool isDuplicateProof;
+  final String? duplicateWarning;
 
   TaskAssignmentModel({
     required this.id,
@@ -67,6 +69,8 @@ class TaskAssignmentModel {
     this.proofPhotoUrl,
     this.completedAt,
     this.rejectionReason,
+    this.isDuplicateProof = false,
+    this.duplicateWarning,
   });
 
   bool get isPending => status == 'Pending';
@@ -118,6 +122,8 @@ class TaskAssignmentModel {
       proofPhotoUrl: json['proofPhotoUrl'] as String?,
       completedAt: json['completedAt'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
+      isDuplicateProof: json['isDuplicateProof'] as bool? ?? false,
+      duplicateWarning: json['duplicateWarning'] as String?,
     );
   }
 }

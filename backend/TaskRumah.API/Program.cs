@@ -73,6 +73,7 @@ builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddSingleton<FcmPushNotificationService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TaskScheduleService>();
+builder.Services.AddScoped<IPhotoDuplicationService, PhotoDuplicationService>();
 builder.Services.AddHostedService<DailyTaskGeneratorService>();
 
 var app = builder.Build();
@@ -89,6 +90,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+app.MapGet("/api/app/version-check", () =>
+{
+    return Results.Ok(new
+    {
+        latestVersion = "1.2.1",
+        latestBuildNumber = 16,
+        minRequiredVersion = "1.2.0",
+        minRequiredBuildNumber = 15,
+        forceUpdate = false,
+        downloadUrl = "https://familytask.web.id/download/FamilyTask-latest.apk",
+        releaseNotes = "Pembaruan deteksi cerdas foto bukti duplikat dan peningkatan performa."
+    });
+});
+
 // Apply migrations and seed data
 using (var scope = app.Services.CreateScope())
 {
@@ -96,6 +111,10 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("ALTER TABLE \"ChoreTasks\" ADD COLUMN IF NOT EXISTS \"DaysOfWeek\" text;");
     db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"FcmToken\" text;");
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofPhotoHash\" text;");
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofVisualHash\" bigint;");
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"IsDuplicateProof\" boolean DEFAULT false;");
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"DuplicateWarning\" text;");
 
     // Configure database timezone to Asia/Jakarta (WIB)
     try

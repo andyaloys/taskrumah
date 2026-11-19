@@ -10,6 +10,10 @@ public class TaskAssignment
     public DateTime DueDate { get; set; }
     public AssignmentStatus Status { get; set; } = AssignmentStatus.Pending;
     public string? ProofPhotoUrl { get; set; }
+    public string? ProofPhotoHash { get; set; }
+    public long? ProofVisualHash { get; set; }
+    public bool IsDuplicateProof { get; set; } = false;
+    public string? DuplicateWarning { get; set; }
     public string? SubmissionNote { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime? ReviewedAt { get; set; }
