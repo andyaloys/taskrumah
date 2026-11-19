@@ -593,7 +593,7 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen> {
               ),
               child: Row(
                 children: [
-                  const Text('âš ï¸', style: TextStyle(fontSize: 14)),
+                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(

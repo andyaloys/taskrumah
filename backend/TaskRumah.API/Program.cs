@@ -108,13 +108,28 @@ app.MapGet("/api/app/version-check", () =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"ChoreTasks\" ADD COLUMN IF NOT EXISTS \"DaysOfWeek\" text;");
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"FcmToken\" text;");
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofPhotoHash\" text;");
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofVisualHash\" bigint;");
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"IsDuplicateProof\" boolean DEFAULT false;");
-    db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"DuplicateWarning\" text;");
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Migration] Note (safe to continue): {ex.Message}");
+    }
+
+    try
+    {
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"ChoreTasks\" ADD COLUMN IF NOT EXISTS \"DaysOfWeek\" text;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"FcmToken\" text;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofPhotoHash\" text;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"ProofVisualHash\" bigint;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"IsDuplicateProof\" boolean DEFAULT false;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"TaskAssignments\" ADD COLUMN IF NOT EXISTS \"DuplicateWarning\" text;");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Schema] Note: {ex.Message}");
+    }
 
     // Configure database timezone to Asia/Jakarta (WIB)
     try

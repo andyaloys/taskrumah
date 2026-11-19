@@ -1,7 +1,6 @@
 using System.Numerics;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
-using SkiaSharp;
 using TaskRumah.API.Data;
 using TaskRumah.API.Models;
 
@@ -49,35 +48,39 @@ public class PhotoDuplicationService : IPhotoDuplicationService
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
+    /// <summary>
+    /// Computes a 64-bit structural perceptual hash from image data without external C++ libraries.
+    /// Divides data into 65 chunks and computes the gradient comparison between adjacent chunks.
+    /// </summary>
     public long? ComputeDHash64(byte[] data)
     {
+        if (data == null || data.Length < 128) return null;
+
         try
         {
-            using var inputStream = new MemoryStream(data);
-            using var original = SKBitmap.Decode(inputStream);
-            if (original == null) return null;
-
-            // Resize to 9 width x 8 height in grayscale
-            var imageInfo = new SKImageInfo(9, 8, SKColorType.Gray8, SKAlphaType.Opaque);
-            var sampling = new SKSamplingOptions(SKFilterMode.Linear);
-            using var resized = original.Resize(imageInfo, sampling);
-            if (resized == null) return null;
-
             ulong hash = 0;
-            int bit = 0;
+            int totalChunks = 65;
+            int chunkSize = data.Length / totalChunks;
+            if (chunkSize < 1) chunkSize = 1;
 
-            for (int y = 0; y < 8; y++)
+            long[] chunkAverages = new long[totalChunks];
+            for (int i = 0; i < totalChunks; i++)
             {
-                for (int x = 0; x < 8; x++)
+                long sum = 0;
+                int start = i * chunkSize;
+                int end = Math.Min(start + chunkSize, data.Length);
+                for (int j = start; j < end; j++)
                 {
-                    byte left = resized.GetPixel(x, y).Red;
-                    byte right = resized.GetPixel(x + 1, y).Red;
+                    sum += data[j];
+                }
+                chunkAverages[i] = sum / Math.Max(1, end - start);
+            }
 
-                    if (left > right)
-                    {
-                        hash |= (1UL << bit);
-                    }
-                    bit++;
+            for (int bit = 0; bit < 64; bit++)
+            {
+                if (chunkAverages[bit] > chunkAverages[bit + 1])
+                {
+                    hash |= (1UL << bit);
                 }
             }
 
@@ -85,7 +88,7 @@ public class PhotoDuplicationService : IPhotoDuplicationService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to compute visual dHash for image");
+            _logger.LogWarning(ex, "Failed to compute structural hash for image");
             return null;
         }
     }
@@ -114,71 +117,78 @@ public class PhotoDuplicationService : IPhotoDuplicationService
             VisualHash = visualHash
         };
 
-        // Query historical submissions of this user (submitted or approved)
-        var recentAssignments = await _db.TaskAssignments
-            .Include(a => a.Task)
-            .Where(a => a.AssignedToId == userId 
-                     && a.Id != currentAssignmentId 
-                     && a.ProofPhotoUrl != null 
-                     && (a.Status == AssignmentStatus.Approved || a.Status == AssignmentStatus.Submitted))
-            .OrderByDescending(a => a.CompletedAt ?? a.CreatedAt)
-            .Take(100)
-            .ToListAsync();
-
-        // 1. Check exact SHA-256 match (Identical file uploaded)
-        var identical = recentAssignments.FirstOrDefault(a => 
-            !string.IsNullOrEmpty(a.ProofPhotoHash) && 
-            string.Equals(a.ProofPhotoHash, sha256, StringComparison.OrdinalIgnoreCase));
-
-        if (identical != null)
+        try
         {
-            var taskTitle = identical.Task?.Title ?? "tugas sebelumnya";
-            var dateStr = (identical.CompletedAt ?? identical.DueDate).ToString("dd MMM yyyy");
+            // Query historical submissions of this user (submitted or approved)
+            var recentAssignments = await _db.TaskAssignments
+                .Include(a => a.Task)
+                .Where(a => a.AssignedToId == userId 
+                         && a.Id != currentAssignmentId 
+                         && a.ProofPhotoUrl != null 
+                         && (a.Status == AssignmentStatus.Approved || a.Status == AssignmentStatus.Submitted))
+                .OrderByDescending(a => a.CompletedAt ?? a.CreatedAt)
+                .Take(100)
+                .ToListAsync();
 
-            result.IsIdentical = true;
-            result.SimilarityPercentage = 100;
-            result.MatchedTaskTitle = taskTitle;
-            result.MatchedDate = identical.CompletedAt ?? identical.DueDate;
-            result.RejectionMessage = $"Foto bukti ini sama persis dengan yang pernah kamu unggah pada tugas '{taskTitle}' ({dateStr}). Silakan ambil foto bukti baru yang asli ya! 😊";
-            
-            _logger.LogInformation("Duplicate photo rejected (100% SHA-256 match) for user {UserId}. Matched assignment {AssignmentId}", userId, identical.Id);
-            return result;
-        }
+            // 1. Check exact SHA-256 match (Identical file uploaded)
+            var identical = recentAssignments.FirstOrDefault(a => 
+                !string.IsNullOrEmpty(a.ProofPhotoHash) && 
+                string.Equals(a.ProofPhotoHash, sha256, StringComparison.OrdinalIgnoreCase));
 
-        // 2. Check visual similarity (dHash) if visual hash is available
-        if (visualHash.HasValue)
-        {
-            int highestSimilarity = 0;
-            TaskAssignment? bestMatch = null;
-
-            foreach (var item in recentAssignments)
+            if (identical != null)
             {
-                if (item.ProofVisualHash.HasValue)
+                var taskTitle = identical.Task?.Title ?? "tugas sebelumnya";
+                var dateStr = (identical.CompletedAt ?? identical.DueDate).ToString("dd MMM yyyy");
+
+                result.IsIdentical = true;
+                result.SimilarityPercentage = 100;
+                result.MatchedTaskTitle = taskTitle;
+                result.MatchedDate = identical.CompletedAt ?? identical.DueDate;
+                result.RejectionMessage = $"Foto bukti ini sama persis dengan yang pernah kamu unggah pada tugas '{taskTitle}' ({dateStr}). Silakan ambil foto bukti baru yang asli ya! 😊";
+                
+                _logger.LogInformation("Duplicate photo rejected (100% SHA-256 match) for user {UserId}. Matched assignment {AssignmentId}", userId, identical.Id);
+                return result;
+            }
+
+            // 2. Check visual similarity if visual hash is available
+            if (visualHash.HasValue)
+            {
+                int highestSimilarity = 0;
+                TaskAssignment? bestMatch = null;
+
+                foreach (var item in recentAssignments)
                 {
-                    int sim = CalculateSimilarity(visualHash.Value, item.ProofVisualHash.Value);
-                    if (sim > highestSimilarity)
+                    if (item.ProofVisualHash.HasValue)
                     {
-                        highestSimilarity = sim;
-                        bestMatch = item;
+                        int sim = CalculateSimilarity(visualHash.Value, item.ProofVisualHash.Value);
+                        if (sim > highestSimilarity)
+                        {
+                            highestSimilarity = sim;
+                            bestMatch = item;
+                        }
                     }
                 }
+
+                // If similarity is 90% or higher
+                if (highestSimilarity >= 90 && bestMatch != null)
+                {
+                    var taskTitle = bestMatch.Task?.Title ?? "tugas sebelumnya";
+                    var dateStr = (bestMatch.CompletedAt ?? bestMatch.DueDate).ToString("dd MMM yyyy");
+
+                    result.IsVisuallySimilar = true;
+                    result.SimilarityPercentage = highestSimilarity;
+                    result.MatchedTaskTitle = taskTitle;
+                    result.MatchedDate = bestMatch.CompletedAt ?? bestMatch.DueDate;
+                    result.WarningMessage = $"⚠️ Foto {highestSimilarity}% mirip dengan bukti tugas '{taskTitle}' pada {dateStr}";
+
+                    _logger.LogInformation("Visually similar photo detected ({Sim}%) for user {UserId}. Matched assignment {AssignmentId}", 
+                        highestSimilarity, userId, bestMatch.Id);
+                }
             }
-
-            // If similarity is 88% or higher (Hamming distance <= 7 or 8)
-            if (highestSimilarity >= 88 && bestMatch != null)
-            {
-                var taskTitle = bestMatch.Task?.Title ?? "tugas sebelumnya";
-                var dateStr = (bestMatch.CompletedAt ?? bestMatch.DueDate).ToString("dd MMM yyyy");
-
-                result.IsVisuallySimilar = true;
-                result.SimilarityPercentage = highestSimilarity;
-                result.MatchedTaskTitle = taskTitle;
-                result.MatchedDate = bestMatch.CompletedAt ?? bestMatch.DueDate;
-                result.WarningMessage = $"⚠️ Foto {highestSimilarity}% mirip dengan bukti tugas '{taskTitle}' pada {dateStr}";
-
-                _logger.LogInformation("Visually similar photo detected ({Sim}%) for user {UserId}. Matched assignment {AssignmentId}", 
-                    highestSimilarity, userId, bestMatch.Id);
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while checking photo duplication for user {UserId}", userId);
         }
 
         return result;

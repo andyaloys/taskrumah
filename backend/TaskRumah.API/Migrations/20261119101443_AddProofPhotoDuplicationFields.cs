@@ -12,12 +12,6 @@ namespace TaskRumah.API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "FcmToken",
-                table: "Users",
-                type: "text",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
                 name: "DuplicateWarning",
                 table: "TaskAssignments",
                 type: "text",
@@ -46,10 +40,6 @@ namespace TaskRumah.API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "FcmToken",
-                table: "Users");
-
             migrationBuilder.DropColumn(
                 name: "DuplicateWarning",
                 table: "TaskAssignments");
